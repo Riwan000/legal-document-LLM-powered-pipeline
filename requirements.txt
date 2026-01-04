@@ -1,0 +1,44 @@
+# Backend Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Frontend
+streamlit==1.28.1
+
+# Document Processing & RAG
+llama-index==0.9.13
+pypdf==3.17.1
+python-docx==1.1.0
+
+# OCR Support (for scanned/image-based PDFs)
+pytesseract==0.3.10
+pdf2image==1.16.3
+Pillow==10.1.0
+
+# Vector Database
+faiss-cpu==1.7.4
+
+# LLM Client
+ollama==0.1.6
+
+# Embeddings (Multilingual Support)
+sentence-transformers>=2.7.0
+torch>=2.2.0
+transformers>=4.35.0
+
+# Configuration & Utilities
+python-dotenv==1.0.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Additional utilities
+numpy==1.24.3
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+reportlab==4.0.7  # For creating test PDFs
+httpx==0.25.2  # For FastAPI TestClient
+requests==2.31.0  # For manual API testing
+
