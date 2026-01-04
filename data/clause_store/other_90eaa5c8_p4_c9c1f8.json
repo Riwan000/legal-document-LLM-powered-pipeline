@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p4_c9c1f8",
+  "title": "The claim is brought in misuse of private information; harassment; trespass to goods; and assault.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 4,
+      "paragraph": 1,
+      "line_start": 67,
+      "line_end": 67,
+      "raw_text": "18.\t\tThe claim is brought in misuse of private information; harassment; trespass to goods; and assault.",
+      "clean_text": "18.\t\tThe claim is brought in misuse of private information; harassment; trespass to goods; and assault."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

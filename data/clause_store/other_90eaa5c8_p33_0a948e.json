@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p33_0a948e",
+  "title": "Entire Tort Rule Application",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 33,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 34,
+      "raw_text": " \n         \n          \n          \n            \n             \n            \n        \n            \n           \n            \n             \n          \n            \n            \n       \n         \n          \n          \n            \n  \n                  \n               \n   \n                 \n                \n                \n              \n            \n                  \n                \n             \n           \n       ",
+      "clean_text": "At least two of our sister circuits have applied the “entire tort” rule as well. See O'Bryan v. Holy See, 556 F.3d 361, 382 (6th Cir.2009); Asociacion de Reclamantes v. United Mexican States , 735 F.2d 1517, 1525 (D.C.Cir.1984) (“Even if the [alleged tort] had the effect of retroactively rendering the prior acts on United States soil tortious, at the very least the entire tort would not have occurred here....”).”"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

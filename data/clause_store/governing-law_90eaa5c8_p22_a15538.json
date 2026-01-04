@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p22_a15538",
+  "title": "Jurisdictional Issues",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 22,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 27,
+      "raw_text": "\n              \n               \n              \n            \n              \n    \n               \n              \n              \n               \n             \n                \n             \n        \n              \n              \n             \n             \n           ",
+      "clean_text": "The plaintiffs were given leave by the Master to serve the contempt proceedings out of the jurisdiction, and he made other orders for service. The matter came before Laws J on the defendants’ application to set the Master’s orders aside, on the grounds of immunity."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

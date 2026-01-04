@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p13_4e2076",
+  "title": "'Revocable and retroactive' are used to refer to ‘raj’i’ – a type of divorce where the husband can return his divorced wife to him before the passage of idda.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 13,
+      "paragraph": 1,
+      "line_start": 10,
+      "line_end": 17,
+      "raw_text": "er of the Document                  \nالخلوة  \n         Lawful privacy                                     19 \n \nThe term ‘lawful privacy’ was chosen based on the modulation translation procedure; it reflects \ntranslator’s understanding of the term as a state of privacy between couples on the condition of \nbeing lawful and not violating laws or norms of society on the basis of marriage. Thus, the choice \nof strategy depe",
+      "clean_text": "'Revocable and retroactive' are used to refer to ‘raj’i’ – a type of divorce where the husband can return hi s divorced wife to him before the passage of idda. Essentially, talaq raji’ is defined as “a man and his divorced wife may return to each other without remarrying” (a new marriage contract). This occurs after the \"first or second divorce\" before the passag e of the waiting period or ‘idddah’ (Saleh, 2011, p.235)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p16_223974",
+  "consistency_flag": "review_required",
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

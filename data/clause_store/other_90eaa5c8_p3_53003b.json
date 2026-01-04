@@ -1,0 +1,45 @@
+{
+  "clause_id": "other_90eaa5c8_p3_53003b",
+  "title": "Requirements for s. 5",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 11,
+      "line_end": 24,
+      "raw_text": "         \n                 \n             \n              \n                  \n           \n        \n            \n          \n      \n             \n                \n                \n ",
+      "clean_text": "Does the claim fail to meet the requirements of s 5 because the alleged personal injury resulting from the spyware claims was not caused entirely by acts or omissions in the UK?"
+    },
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 11,
+      "line_end": 24,
+      "raw_text": "   \n                 \n             \n              \n                  \n           \n        \n            \n          \n      \n             \n                \n                \n       ",
+      "clean_text": "Does the claim fail to meet the requirements of s 5 because there is insufficient evidence of the Defendant’s responsibility for the persons responsible for the alleged spyware?"
+    },
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 12,
+      "line_end": 25,
+      "raw_text": "               \n             \n              \n                  \n           \n        \n            \n          \n      \n             \n                \n                \n              \n      ",
+      "clean_text": "Does the claim fail to meet the requirements of s 5 because there is insufficient evidence of the Defendant’s responsibility for the persons responsible for the assault on the Claimant?"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

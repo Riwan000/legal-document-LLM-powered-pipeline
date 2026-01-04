@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p26_6d8811",
+  "title": "Section 5 operates to remove the immunity otherwise conferred by s 1",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 26,
+      "paragraph": 1,
+      "line_start": 13,
+      "line_end": 33,
+      "raw_text": "   \n            \n              \n            \n      \n                   \n    \n             \n              \n              \n                 \n \n            \n           \n         \n          \n           \n           \n            \n \n",
+      "clean_text": "Section 5 operates to remove the immunity otherwise conferred by s 1 on a foreign state in relation to all acts committed by it, whether sovereign or private, subject obviously to the other requirements of s 5 being satisfied."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "clause_id": "conduct-discipline_90eaa5c8_p5_4bcc11",
+  "title": "s 5 exception to state immunity",
+  "type": "conduct_discipline",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 28,
+      "raw_text": " \n            \n   \n \n                \n                \n               \n              \n            \n \n                \n                \n               \n                 \n               \n      \n \n   \n \n  \n                  \n              \n           \n               \n               \n            \n              \n              ",
+      "clean_text": "23.\tThe s 5 exception to state immunity applies to claims for personal injury, including psychiatric injury. It is not limited to cases in which personal injury is a ‘direct consequence’ of the conduct complained of: Federal Republic of Nigeria v Ogbonna [2012] 1 WLR 139, [6(5)] and [13], per Underhill J (as he then was)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

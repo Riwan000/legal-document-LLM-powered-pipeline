@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p17_bfab00",
+  "title": "Torture can only be committed by a public official",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 17,
+      "paragraph": 1,
+      "line_start": 6,
+      "line_end": 40,
+      "raw_text": "  \n                \n                \n               \n                     \n              \n                     \n \n                 \n                \n               \n             \n               \n          \n             \n          \n \n                 \n               \n             \n                \n              \n      \n \n                   \n                 \n               \n \n             \n        \n            \n          \n          \n           \n  ",
+      "clean_text": "As a matter of domestic and international law, torture can only be committed by a public official (or at their instigation) and those acting in an official capacity: see s 134, Criminal Justice Act 1988; Article 1 of the UN Convention Against Torture (considered at length in R v Bow Street Magistrates Court ex parte Pinochet Ugarte (No 3) [2000] AC 147); and Article 1 of UN General Assembly Resolution 3452 (1975), cited in Al-Adsani (No 2), p540."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

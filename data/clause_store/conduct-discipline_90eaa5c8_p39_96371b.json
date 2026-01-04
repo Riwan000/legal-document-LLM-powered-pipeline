@@ -1,0 +1,29 @@
+{
+  "clause_id": "conduct-discipline_90eaa5c8_p39_96371b",
+  "title": "I also conclude that the available technical evidence is consistent with the Pegasus spyware having been installed on Mr al-Masarir's two iPhones for the following outline reasons",
+  "type": "conduct_discipline",
+  "subtype": null,
+  "authority_level": "administrative",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 39,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 52,
+      "raw_text": " \n  \n         \n         \n          \n        \n   \n \n           \n          \n         \n \n          \n            \n         \n           \n \n        \n           \n          \n          \n          \n           \n           \n          \n          \n        \n           \n \n \n          \n        \n         \n          \n  \n \n         \n       \n      \n        \n      \n        \n       \n        \n        \n       \n      \n         \n         \n        b. KINGDOM is linked to NSO Group’s Pegasus spyware \n(paragraphs 15-19 of my first witness statement), and is \nlikely to repre",
+      "clean_text": "a. As stated in my first witness statement, I observed that both phones had received text messages with links corresponding to websites associated with the KINGDOM and the installation of Pegasus malware. One such message on each of Mr al-Masarir's phones was indicated as having been read. b. I also observed that neither of Mr al-Masarir's phones were able to update the software for their operating systems. Disabling a phone's software update mechanism for its operating system is a known behavior of some versions of NSO Group's Pegasus spyware."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

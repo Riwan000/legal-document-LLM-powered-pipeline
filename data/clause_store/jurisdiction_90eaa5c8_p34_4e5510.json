@@ -1,0 +1,29 @@
+{
+  "clause_id": "jurisdiction_90eaa5c8_p34_4e5510",
+  "title": "English courts should be cautious before placing too much reliance on foreign decisions that are concerned with different legislation which has different wording and a different legislative history",
+  "type": "jurisdiction",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 34,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 29,
+      "raw_text": " \n                  \n                 \n                 \n \n           \n \n   \n \n          \n            \n       \n         \n          \n            \n           \n \n  \n \n            \n             \n         \n                 \n             \n       \n              \n             \n  \n   ",
+      "clean_text": "As I have already remarked, English courts should be cautious before placing too much reliance on foreign decisions that are concerned with different legislation which has different wording and a different legislative history, as the FSIA does when compared with the SIA 1978."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

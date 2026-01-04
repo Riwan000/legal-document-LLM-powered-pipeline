@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p24_2e570c",
+  "title": "Passage was obiter dicta",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 24,
+      "paragraph": 1,
+      "line_start": 3,
+      "line_end": 22,
+      "raw_text": "               \n                 \n \n                \n               \n             \n                \n         \n \n         \n         \n         \n           \n          \n          \n           \n           \n          \n          \n  ",
+      "clean_text": "106. Secondly, it seems to me the Claimant is right to say that the passage in issue was, in any event, obiter dicta , given that the judge had already found that the AFP was not entitled to immunity as falling outwith s 14."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

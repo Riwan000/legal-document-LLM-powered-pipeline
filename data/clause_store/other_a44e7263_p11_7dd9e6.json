@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p11_7dd9e6",
+  "title": "The rights a spouse has over his or her partner, or the duties of the spouse.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 11,
+      "paragraph": 1,
+      "line_start": 7,
+      "line_end": 9,
+      "raw_text": " are married. ADJ. \nmatrimonial (p,.312)  \nconjugal rights:  Rights that each spouse can expect from the other, p",
+      "clean_text": "Nuptial rights: The rights a spouse has over his or her partner, or the duties of the spouse (Saleh, 2011, p.85)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p17_221290",
+  "consistency_flag": "review_required",
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

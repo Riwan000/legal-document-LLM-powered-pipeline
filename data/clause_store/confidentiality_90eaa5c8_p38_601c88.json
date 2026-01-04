@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p38_601c88",
+  "title": "History of using spyware products",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": "Saudi Arabia",
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 38,
+      "paragraph": 1,
+      "line_start": 14,
+      "line_end": 51,
+      "raw_text": "  \n             \n             \n              \n          \n \n               \n \n             \n                  \n                      \n             \n                  \n     \n \n             \n                 \n             \n                 \n    \n \n                 \n           \n \n          \n         \n           \n        \n     \n \n           \n            \n          \n        \n    \n \n          \n  and that this discharges the b",
+      "clean_text": "Between around 2012 and 2015 three of the Defendant’s agencies used spyware produced by the ‘Hacking Team’, which is (or was) a commercial spyware company based in Italy. Further, in 2014 and 2015 various servers were found to be running software produced by FinFisher GmbH and/or the Gamma Group (other spyware companies) from within Saudi Arabia, which it can be inferred were used by the Defendant (see POC at [30-31])."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

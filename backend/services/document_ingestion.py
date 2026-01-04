@@ -124,6 +124,16 @@ class DocumentIngestionService:
         # Parse file
         pages = self.parser.parse_file(file_path)
         
+        if not pages:
+            print(f"Warning: No pages extracted from {file_path}")
+            return []
+        
+        # Verify all pages have content
+        total_text_length = sum(len(page_data[0]) for page_data in pages)
+        if total_text_length == 0:
+            print(f"Warning: No text content extracted from {file_path}")
+            return []
+        
         # If clause-aware chunking is requested, organize clauses by page
         if use_clause_aware_chunking and clauses:
             clauses_by_page = {}
@@ -138,6 +148,23 @@ class DocumentIngestionService:
         else:
             # Standard chunking
             chunks = self.chunker.chunk_pages(pages, document_id)
+        
+        # Verification: Ensure all pages are represented in chunks
+        pages_in_chunks = set(chunk.page_number for chunk in chunks)
+        pages_in_document = set(page_data[1] for page_data in pages)
+        missing_pages = pages_in_document - pages_in_chunks
+        
+        if missing_pages:
+            print(f"Warning: Some pages have no chunks: {sorted(missing_pages)}")
+            print(f"  This might indicate pages with no extractable text")
+        
+        # Verify text coverage
+        total_chunked_text = sum(len(chunk.text) for chunk in chunks)
+        coverage_ratio = total_chunked_text / total_text_length if total_text_length > 0 else 0
+        
+        if coverage_ratio < 0.9:  # Less than 90% coverage
+            print(f"Warning: Low text coverage in chunks ({coverage_ratio:.1%})")
+            print(f"  Total text: {total_text_length} chars, Chunked: {total_chunked_text} chars")
         
         return chunks
 

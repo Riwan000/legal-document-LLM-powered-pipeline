@@ -1,0 +1,29 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p21_288879",
+  "title": "Article 11 of the European Convention on State Immunity 1972 (the Basle Convention)",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 21,
+      "paragraph": 1,
+      "line_start": 10,
+      "line_end": 47,
+      "raw_text": "     \n   \n         \n          \n            \n          \n              \n             \n    \n           \n \n            \n          \n            \n         \n           \n           \n           \n        \n         \n         \n         \n            \n         \n \n            \n          \n             \n  \n                    \n             \n              \n      \n               \n             \n            \n              \n          ",
+      "clean_text": "'A Contracting State cannot claim immunity from the jurisdiction of a court of another Contracting State in proceedings which relate to redress for injury to the person or damage to tangible property, if the facts which occasioned the injury or damage occurred in the territory of the State of the forum, and if the author of the injury or damage was present in that territory at the time when those facts occurred.'"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -4,6 +4,49 @@ Pydantic models for document data structures.
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from enum import Enum
+
+
+class LegalHierarchyLevel(str, Enum):
+    """Legal hierarchy levels for clause classification."""
+    LAW = "law"  # External law, statute, regulation
+    CONTRACT = "contract"  # Contract clause
+    POLICY = "policy"  # Employer/policy discretion
+
+
+class ClauseMetadata(BaseModel):
+    """Enhanced metadata for clauses with legal hierarchy information."""
+    chunk_id: Optional[str] = Field(None, description="Unique identifier for the clause chunk")
+    type: str = Field(..., description="Clause type (e.g., Payment Terms, Termination)")
+    topics: List[str] = Field(default_factory=list, description="Topics/keywords associated with clause")
+    language: Optional[str] = Field(None, description="Language of clause (ar, en)")
+    jurisdiction: Optional[str] = Field(None, description="Jurisdiction (e.g., Saudi Arabia)")
+    hierarchy_level: LegalHierarchyLevel = Field(LegalHierarchyLevel.CONTRACT, description="Legal hierarchy level")
+    legal_supremacy: bool = Field(False, description="Whether this clause has legal supremacy or is overridden by law")
+
+
+class QueryClassification(BaseModel):
+    """Classification of user query for rule-based processing."""
+    query_type: str = Field(..., description="Type of query (termination, legality, benefits, compliance, etc.)")
+    requires_legal_hierarchy: bool = Field(False, description="Whether query requires legal hierarchy analysis")
+    scope_topics: List[str] = Field(default_factory=list, description="Topics extracted from query")
+    is_legal_query: bool = Field(False, description="Whether this is a legal/compliance query requiring citations")
+
+
+class AnswerResponse(BaseModel):
+    """Structured response model for legal queries."""
+    status: str = Field(..., description="Status: explicitly_stated, governed_by_law, not_specified, refused")
+    answer: Optional[str] = Field(None, description="Direct answer to the query")
+    citation: Optional[str] = Field(None, description="Citation reference (e.g., Clause 11, Page 4)")
+    confidence: str = Field(..., description="Confidence level: high, medium, low")
+    refusal_reason: Optional[str] = Field(None, description="Reason for refusal if status is refused")
+    hierarchy_analysis: Optional[Dict[str, Any]] = Field(None, description="Legal hierarchy analysis results")
+    sources: List[Dict[str, Any]] = Field(default_factory=list, description="Source chunks with citations")
+    query: str = Field(..., description="Original query")
+
+
+# Alias for backward compatibility
+LegalAnswerResponse = AnswerResponse
 
 
 class DocumentChunk(BaseModel):
@@ -14,6 +57,7 @@ class DocumentChunk(BaseModel):
     chunk_index: int = Field(..., description="Index of chunk within document")
     document_id: str = Field(..., description="Unique identifier for the source document")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    clause_id: Optional[str] = Field(None, description="Unique identifier for the clause (if chunk represents a clause)")
 
 
 class DocumentMetadata(BaseModel):

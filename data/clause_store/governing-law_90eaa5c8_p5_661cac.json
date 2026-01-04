@@ -1,0 +1,29 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p5_661cac",
+  "title": "Exception to sovereign immunity under s 5 of the SIA 1978",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 39,
+      "raw_text": " \n            \n   \n \n                \n                \n               \n              \n            \n \n                \n                \n               \n                 \n               \n      \n \n   \n \n  \n                  \n              \n           \n               \n               \n            \n              \n                 \n               \n          \n               \n                \n               \n             \n             \n           \n \n               \n   ",
+      "clean_text": "21.\tThe Claimant alleges that the Defendant is not immune in respect of the claim because the exception to sovereign immunity under s 5 of the SIA 1978 is applicable, in that these proceedings are in respect of personal injury and damage to or loss of tangible property caused by acts or omissions in the UK, which acts are pleaded at [71] of the POC. The Claimant does not know whether any other acts of relevance to the claim took place outside the jurisdiction."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

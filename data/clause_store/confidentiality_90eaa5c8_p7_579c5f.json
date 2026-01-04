@@ -1,0 +1,32 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p7_579c5f",
+  "title": "The Claimant accepts, for present purposes, that the test to be applied to this aspect of the Defendant's application, at this inter partes stage, is whether, on the balance of probabilities, the claim falls within the exception in s 5, in accordance with the approach adopted by the Court of Appeal in Al-Adsani v Government of Kuwait (No 2) (1996) 107 ILR 536.",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": "Kuwait",
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 7,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 28,
+      "raw_text": " \n                  \n              \n               \n               \n    \n               \n               \n            \n      \n                \n       \n                \n             \n                \n               \n           \n                \n               \n                  \n                \n \n              \n              \n            \n             \n   \n    ",
+      "clean_text": "The Claimant accepts, for present purposes, that the test to be applied to this aspect of the Defendant's application, at this inter partes stage, is whether, on the balance of probabilities, the claim falls within the exception in s 5, in accordance with the approach adopted by the Court of Appeal in Al-Adsani v Government of Kuwait (No 2) (1996) 107 ILR 536."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

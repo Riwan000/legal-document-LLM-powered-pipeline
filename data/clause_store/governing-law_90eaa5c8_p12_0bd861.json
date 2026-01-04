@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p12_0bd861",
+  "title": "Immunity under customary international law",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 12,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 36,
+      "raw_text": " \n  \n           \n          \n      \n             \n            \n            \n         \n         \n          \n             \n        \n               \n            \n         \n           \n          \n        \n           \n          \n         \n            \n   \n            \n              \n                \n                  \n               \n                  \n            \n          \n         \n          \n           \n  ",
+      "clean_text": "In the converse situation, however, in which there would be no immunity under customary international law, there is a more direct correlation between immunity under customary international law and the 1978 Act as a result of the enactment of sections 3 and 4 the Human Rights Act 1998 and the application of article 6 ECHR, together with Article 47 of the Charter of Fundamental Rights of the European Union."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

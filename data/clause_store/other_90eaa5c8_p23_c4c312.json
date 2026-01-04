@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p23_c4c312",
+  "title": "Secondly, by virtue of Section 5(b) of the Act of 1978 the AFP is deprived of immunity, because the proceedings before Potts J were in respect of damage or loss of tangible property caused by an act or omission in the United Kingdom.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 23,
+      "paragraph": 1,
+      "line_start": 9,
+      "line_end": 37,
+      "raw_text": "  \n             \n          \n \n                  \n                     \n   \n           \n             \n        \n              \n          \n            \n           \n            \n           \n           \n           \n            \n             \n             \n            \n             \n          \n           \n           \n           \n          \n    ",
+      "clean_text": "Secondly, by virtue of Section 5(b) of the Act of 1978 the AFP is deprived of immunity, because the proceedings before Potts J were in respect of damage or loss of tangible property caused by an act or omission in the United Kingdom. The property is said to be seized documents. I would not have upheld Mr Pleming's argument on this ground."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

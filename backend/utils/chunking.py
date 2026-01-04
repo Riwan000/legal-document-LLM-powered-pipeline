@@ -55,14 +55,16 @@ class TextChunker:
             
             # If adding this sentence would exceed chunk size, save current chunk
             if current_length + sentence_length > char_chunk_size and current_chunk:
-                chunks.append(DocumentChunk(
-                    text=current_chunk.strip(),
-                    page_number=page_number,
-                    chunk_index=chunk_index,
-                    document_id=document_id,
-                    metadata={"char_length": len(current_chunk), "is_ocr": is_ocr}
-                ))
-                chunk_index += 1
+                chunk_text = current_chunk.strip()
+                if chunk_text:  # Only add non-empty chunks
+                    chunks.append(DocumentChunk(
+                        text=chunk_text,
+                        page_number=page_number,
+                        chunk_index=chunk_index,
+                        document_id=document_id,
+                        metadata={"char_length": len(chunk_text), "is_ocr": is_ocr}
+                    ))
+                    chunk_index += 1
                 
                 # Start new chunk with overlap (last N characters of previous chunk)
                 if char_overlap > 0 and len(current_chunk) > char_overlap:
@@ -77,7 +79,7 @@ class TextChunker:
                 current_chunk += sentence
                 current_length += sentence_length
         
-        # Add final chunk if it exists
+        # Add final chunk if it exists (ensure we don't lose any text)
         if current_chunk.strip():
             chunks.append(DocumentChunk(
                 text=current_chunk.strip(),
@@ -86,6 +88,28 @@ class TextChunker:
                 document_id=document_id,
                 metadata={"char_length": len(current_chunk), "is_ocr": is_ocr}
             ))
+        elif current_chunk:  # Even if only whitespace, preserve minimal content
+            # This handles edge cases where text might be mostly whitespace but still valuable
+            stripped = current_chunk.strip()
+            if stripped or len(current_chunk) > 10:  # Preserve if substantial whitespace
+                chunks.append(DocumentChunk(
+                    text=stripped if stripped else current_chunk[:100],  # Limit if truly empty
+                    page_number=page_number,
+                    chunk_index=chunk_index,
+                    document_id=document_id,
+                    metadata={"char_length": len(current_chunk), "is_ocr": is_ocr, "minimal_content": True}
+                ))
+        
+        # Verification: Ensure all input text is accounted for
+        total_chunked_length = sum(len(chunk.text) for chunk in chunks)
+        input_length = len(text)
+        
+        # Allow some variance due to stripping and overlap, but warn if significant loss
+        if input_length > 0:
+            coverage_ratio = total_chunked_length / input_length
+            if coverage_ratio < 0.8:  # Less than 80% coverage
+                print(f"Warning: Low text coverage in chunking ({coverage_ratio:.1%}). "
+                      f"Input: {input_length} chars, Chunked: {total_chunked_length} chars")
         
         return chunks
     
@@ -171,7 +195,12 @@ class TextChunker:
                         'start': start_idx,
                         'end': end_idx,
                         'type': clause.get('type', 'Unknown'),
-                        'text': clause_text
+                        'text': clause_text,
+                        'clause_id': clause.get('clause_id'),
+                        'hierarchy_level': clause.get('hierarchy_level', 'contract'),
+                        'legal_supremacy': clause.get('legal_supremacy', False),
+                        'topics': clause.get('topics', []),
+                        'jurisdiction': clause.get('jurisdiction')
                     })
         
         # Sort boundaries by start position
@@ -211,13 +240,39 @@ class TextChunker:
             if chunk_text:
                 # Find which clauses are in this chunk
                 chunk_clauses = []
+                chunk_clause_ids = []
+                chunk_hierarchy_levels = []
+                chunk_topics = []
+                has_supremacy = False
+                
                 for boundary in clause_boundaries:
                     if (boundary['start'] >= current_pos and boundary['end'] <= chunk_end) or \
                        (current_pos <= boundary['start'] < chunk_end) or \
                        (current_pos < boundary['end'] <= chunk_end):
                         chunk_clauses.append(boundary['type'])
+                        if boundary.get('clause_id'):
+                            chunk_clause_ids.append(boundary['clause_id'])
+                        if boundary.get('hierarchy_level'):
+                            chunk_hierarchy_levels.append(boundary['hierarchy_level'])
+                        if boundary.get('topics'):
+                            chunk_topics.extend(boundary['topics'])
+                        if boundary.get('legal_supremacy', False):
+                            has_supremacy = True
                 
-                # Create chunk with clause metadata
+                # Generate clause_id if clauses are present
+                clause_id = None
+                if chunk_clause_ids:
+                    clause_id = chunk_clause_ids[0]  # Use first clause ID
+                elif chunk_clauses:
+                    clause_id = f"clause_{page_number}_{chunk_index}"
+                
+                # Determine hierarchy level (prefer law if any clause is law)
+                hierarchy_level = 'contract'  # Default
+                if 'law' in chunk_hierarchy_levels:
+                    hierarchy_level = 'law'
+                elif chunk_hierarchy_levels:
+                    hierarchy_level = chunk_hierarchy_levels[0]
+                
                 metadata = {
                     "char_length": len(chunk_text),
                     "clause_types": list(set(chunk_clauses)) if chunk_clauses else [],
@@ -225,7 +280,11 @@ class TextChunker:
                         current_pos <= b['start'] and b['end'] <= chunk_end
                         for b in clause_boundaries
                     ),
-                    "is_ocr": is_ocr
+                    "is_ocr": is_ocr,
+                    "clause_id": clause_id,
+                    "hierarchy_level": hierarchy_level,
+                    "legal_supremacy": has_supremacy,
+                    "topics": list(set(chunk_topics)) if chunk_topics else []
                 }
                 
                 chunks.append(DocumentChunk(

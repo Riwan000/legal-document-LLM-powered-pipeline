@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p45_1fe248",
+  "title": "Assault and responsibility",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 45,
+      "paragraph": 1,
+      "line_start": 14,
+      "line_end": 34,
+      "raw_text": "  \n                 \n              \n               \n              \n              \n          \n \n   \n \n               \n                  \n \n                  \n             \n \n                   \n               \n                 \n                 \n    ",
+      "clean_text": "If, on a balance of probabilities the Defendant is responsible, then for the reasons given in relation to issue (a), the assault falls within s 5 notwithstanding it may be said to have been of a sovereign nature (an attack on a political dissident)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

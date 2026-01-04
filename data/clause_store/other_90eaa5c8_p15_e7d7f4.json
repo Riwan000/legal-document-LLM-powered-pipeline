@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p15_e7d7f4",
+  "title": "All of this supports the construction of ‘act or omission’ in s 5 as meaning ‘all acts or omissions’, without any restriction as to the nature of the act being read into it.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 15,
+      "paragraph": 1,
+      "line_start": 55,
+      "line_end": 55,
+      "raw_text": "66.\t\tAll of this supports the construction of ‘act or omission’ in s 5 as meaning ‘all acts or omissions’, without any restriction as to the nature of the act being read into it.",
+      "clean_text": "66.\t\tAll of this supports the construction of ‘act or omission’ in s 5 as meaning ‘all acts or omissions’, without any restriction as to the nature of the act being read into it."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

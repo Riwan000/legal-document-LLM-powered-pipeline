@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p42_befe56",
+  "title": "In short, the Claimant’s evidence is not capable of establishing on the balance of probabilities that his alleged personal injury arising from the spyware Claims is properly attributable to the Defendant:",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": "Kuwait",
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 42,
+      "paragraph": 1,
+      "line_start": 6,
+      "line_end": 20,
+      "raw_text": "\n             \n           \n          \n \n           \n          \n          \n        \n           \n          \n \n                   \n                \n            ",
+      "clean_text": "compare Al-Adsani v Government of Kuwait (1996) 107 ILR 536 at 545, 551; Al-Adsani v Government of Kuwait , QBD, 3 May 1995 (Unreported) per Mantell J at 10."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

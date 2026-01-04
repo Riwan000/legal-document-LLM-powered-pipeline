@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p18_b3c77c",
+  "title": "Acts performed by an individual cannot be performed by a state acting in its own name",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 18,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 19,
+      "raw_text": " \n          \n            \n           \n           \n       \n              \n  \n           \n \n            \n           \n           \n            \n   \n \n                  \n                \n              ",
+      "clean_text": "Such acts as legislation, or the expulsion of an alien, or a denial of justice, cannot be performed by an individual acting in his own name. They can be performed only by the state acting as such."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

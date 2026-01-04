@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p18_8368f5",
+  "title": "Torture must be inflicted by or with the connivance of a public official",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 18,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 30,
+      "raw_text": " \n           \n \n            \n           \n           \n            \n   \n \n                  \n                \n                \n \n                \n              \n                 \n               \n              \n                \n                \n               \n                \n     ",
+      "clean_text": "It is, I think, difficult to accept that torture cannot be a governmental or official act, since under article 1 of the Torture Convention torture must, to qualify as such, be inflicted by or with the connivance of a public official or other person acting in an official capacity."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

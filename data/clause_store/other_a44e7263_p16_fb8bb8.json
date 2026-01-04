@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p16_fb8bb8",
+  "title": "Translation results",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 16,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 17,
+      "raw_text": "he translators used ‘udda’ and ‘Uddat’ instead of ‘Iddat’ which is t he accurate transcription \nof the word according to Al -Mawrid dictionary.  \n \n6. Transposition  \nHere is the last procedure for translation of divorce terms:  \n \nزوجية/ zawjeya/  \nTable 22: Translation of the termزوجية  /zawjeya/  \n \nArabic terms",
+      "clean_text": "Results show that ‘nafaqa, ibra’, zawjeya, are fully translated using literal procedure; where ‘nafaqa, and ibra’ are mentioned in 6 documents and 13 documents respectively, and zawjeya is mentioned as an adjective like ‘hoqoq zawjeyya’ in section (2.5) where in all these positions the term is translated literally."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p16_223974",
+  "consistency_flag": "review_required",
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

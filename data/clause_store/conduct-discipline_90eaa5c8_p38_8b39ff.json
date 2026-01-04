@@ -1,0 +1,29 @@
+{
+  "clause_id": "conduct-discipline_90eaa5c8_p38_8b39ff",
+  "title": "Indication of propensity to engage in activities",
+  "type": "conduct_discipline",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 38,
+      "paragraph": 1,
+      "line_start": 14,
+      "line_end": 40,
+      "raw_text": " \n             \n             \n              \n          \n \n               \n \n             \n                  \n                      \n             \n                  \n     \n \n             \n                 \n             \n                 \n    \n \n                 \n           \n \n          \n         \n     ",
+      "clean_text": "it appears from Dr Marczak’s evidence that the Defendant has used Pegasus against other individuals, in circumstances which (at least arguably) bear similarities to the conduct which the Claimant complains about, and which therefore indicates a propensity by the Defendant to engage in such activities."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

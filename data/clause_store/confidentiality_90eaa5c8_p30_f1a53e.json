@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p30_f1a53e",
+  "title": "The question at issue is whether the links between him and the English forum are such as to justify his being brought here",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 30,
+      "paragraph": 1,
+      "line_start": 7,
+      "line_end": 30,
+      "raw_text": "          \n         \n        \n            \n             \n            \n           \n             \n       \n               \n              \n               \n             \n           \n         \n            \n           \n         \n        \n           \n           \n              \n             \n ",
+      "clean_text": "But the defendants are, we think, right to insist that the acts to be considered must be those of the putative defendant, because the question at issue is whether the links between him and the English forum are such as to justify his being brought here to answer the plaintiffs’ claim."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

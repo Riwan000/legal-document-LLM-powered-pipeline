@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p21_aa70a1",
+  "title": "Purpose of the State Immunity Act 1978",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 21,
+      "paragraph": 1,
+      "line_start": 2,
+      "line_end": 21,
+      "raw_text": "  \n       \n         \n          \n            \n         \n            \n   \n              \n   \n         \n          \n            \n          \n              \n             \n    \n           \n \n        ",
+      "clean_text": "'One purpose of the State Immunity Act 1978 was to give effect to the Brussels and Basle Conventions, and thereby enable the United Kingdom to ratify them. It did this in both cases in 1979 …'"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

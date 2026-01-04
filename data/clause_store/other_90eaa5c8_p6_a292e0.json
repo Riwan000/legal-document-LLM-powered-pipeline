@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p6_a292e0",
+  "title": "The requirement in s 5 that the injury or damage be ‘caused by an act or omission in the United Kingdom’ does not require all of the alleged acts to have occurred in the United Kingdom",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 6,
+      "paragraph": 1,
+      "line_start": 3,
+      "line_end": 22,
+      "raw_text": "       \n                \n            \n            \n           \n                    \n               \n           \n               \n              \n                \n              \n  \n                \n                 \n             \n               \n                   \n                  \n                  ",
+      "clean_text": "Issue (b): The requirement in s 5 that the injury or damage be ‘caused by an act or omission in the United Kingdom’ does not require all of the alleged acts to have occurred in the United Kingdom. It is sufficient if a causative act or omission occurs here, even if other causative acts occur abroad."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

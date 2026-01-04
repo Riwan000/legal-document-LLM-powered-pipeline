@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p16_15b448",
+  "title": "Canon of Construction",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 16,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 43,
+      "raw_text": " \n  \n           \n           \n         \n \n \n             \n \n       \n \n      \n \n            \n           \n         \n \n            \n        \n \n             \n   \n \n \n \n             \n           \n           \n \n               \n                \n                \n               \n                 \n            \n        \n               \n          \n            \n       \n             \n          \n     ",
+      "clean_text": "69. The canon of construction that is engaged here is the principle that where Parliament has omitted particular words used in one part of an Act from an equivalent context in another part of the Act, such an omission will generally be treated as deliberate and as connoting a different approach in the two contexts: Bennion, s 21.3; R (M) v Gateshead Council [2007] 1 All ER 1262, [19]."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

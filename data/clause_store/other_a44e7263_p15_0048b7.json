@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p15_0048b7",
+  "title": "Translation of ‘almajlis alshari’المجلس الشرعي",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 15,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 8,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n190 \n \n  \nIn translating بائن بينونة كبرى  as ‘big baena divorce’ the term بائنة baen’  is translated by using \nborrowing translation procedure wher",
+      "clean_text": "Translators of documents 4 & 6 have used the borrowing translation procedure within the direct translation strategy since the same Arabic word of شرعي shar’i’, which is written in English alphabets is used."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p17_0f83b4",
+  "consistency_flag": "review_required",
+  "language": "ar",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

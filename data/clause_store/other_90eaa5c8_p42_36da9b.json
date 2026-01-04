@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p42_36da9b",
+  "title": "These may be sound forensic points",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 42,
+      "paragraph": 1,
+      "line_start": 18,
+      "line_end": 39,
+      "raw_text": "         \n                \n             \n       \n \n                \n               \n             \n              \n              \n          \n \n               \n      \n    \n                 \n              \n                  \n               \n              \n \n ",
+      "clean_text": "and should there be a trial they can be made then, but at this stage they do not dissuade me from concluding that the Claimant has discharged the burden upon him, and especially since Dr Marczak specifically considered them and answered them in Marczak 2."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p17_d94adc",
+  "title": "Choice of a certain translation strategy",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 17,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 10,
+      "raw_text": " respectively. Next, the translators opted for the oblique translation strategy  for the \nfollowing terms: / almajlis alshari’/, /idda/, and / mukallaf/, whereby 18 used ‘modulation’ for : \n/almajlis alshari’ , and 13 used ‘equivalence’ for iddat versus 2 used borrowing for the for",
+      "clean_text": "Choice of a certain transl ation strategy is determined by either translation norms, translator’s decision by depending on their knowledge and understanding to describe the term, and language norms where the nature of the language imposes addition or deletion of certain structures."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p16_223974",
+  "consistency_flag": "review_required",
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

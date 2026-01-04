@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p11_6d6d90",
+  "title": "The rights a spouse can expect from the other, particularly sexual rights but also the rights to society, comfort, and affection.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 11,
+      "paragraph": 1,
+      "line_start": 2,
+      "line_end": 8,
+      "raw_text": "ol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n186 \n \n  \nmatrimony: The state of marriage; the ceremony in which two people are married. ADJ. \nm",
+      "clean_text": "conjugal rights: Rights that each spouse can expect from the other, particularly sexual rights but also the rights to society, comfort, and affection ."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p17_221290",
+  "consistency_flag": "review_required",
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

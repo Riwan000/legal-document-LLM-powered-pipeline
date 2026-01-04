@@ -1,0 +1,32 @@
+{
+  "clause_id": "jurisdiction_90eaa5c8_p35_d25e63",
+  "title": "Territorial jurisdictional requirement",
+  "type": "jurisdiction",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 35,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 18,
+      "raw_text": " \n                       \n              \n                   \n                   \n                \n               \n       \n             \n             \n              \n                  \n           \n          \n            \n       \n           \n        ",
+      "clean_text": "entirety of the tortious activity is governed by the territorial jurisdictional requirement (as the US courts have consistently held). Moreover, as set out above, English courts have accepted that s 5 may apply where only some acts occur in the UK."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

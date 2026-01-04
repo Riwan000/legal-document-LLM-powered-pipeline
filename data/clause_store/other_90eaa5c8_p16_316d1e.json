@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p16_316d1e",
+  "title": "Immunities and Privileges",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 16,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 47,
+      "raw_text": " \n  \n           \n           \n         \n \n \n             \n \n       \n \n      \n \n            \n           \n         \n \n            \n        \n \n             \n   \n \n \n \n             \n           \n           \n \n               \n                \n                \n               \n                 \n            \n        \n               \n          \n            \n       \n             \n          \n             \n      \n             \n           (1) The immunities and privileges conferred by this Part of this \nAct apply to any foreign",
+      "clean_text": "(1) The immunities and privileges conferred by this Part of this Act apply to any foreign or commonwealth State other than the United Kingdom; and references to a State include references to— (a) the sovereign or other head of that State in his public capacity; (b) the government of that State; and (c) any department of that government, but not to any entity (hereafter referred to as a ‘separate entity’) which is distinct from the executive organs of the government of the State and capable of suing or being sued."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

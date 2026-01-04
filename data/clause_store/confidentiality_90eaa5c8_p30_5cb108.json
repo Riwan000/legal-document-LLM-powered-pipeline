@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p30_5cb108",
+  "title": "Significant damage occurred in England where the server was improperly accessed and the confidential and privileged information was viewed and downloaded",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 30,
+      "paragraph": 1,
+      "line_start": 13,
+      "line_end": 48,
+      "raw_text": "           \n             \n       \n               \n              \n               \n             \n           \n         \n            \n           \n         \n        \n           \n           \n              \n             \n            \n        \n         \n           \n         \n           \n            \n           \n          \n         \n         \n            \n          \n       \n \n          \n             \n              \n            would be so. But it would certainly contravene ",
+      "clean_text": "Jonathan Hirst QC (sitting as a deputy judge of the High Court) said: “ [62] Ashton’s computer server was in London. That is where the confidential and privileged information was stored. The attack emanated from Russia but it was directed at the server in London and that is where the hacking occurred. In my view, significant damage occurred in England where the server was improperly accessed and the confidential and privileged information was viewed and downloaded."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

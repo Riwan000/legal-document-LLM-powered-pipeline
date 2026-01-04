@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p39_3ff667",
+  "title": "I conclude that the six publicly described KINGDOM targets, including Mr al-Masarir, show a clear nexus with Saudi Arabia; and no other Pegasus operator active during June 2018 showed a nexus with Saudi Arabia",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": "Saudi Arabia",
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 39,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 50,
+      "raw_text": " \n  \n         \n         \n          \n        \n   \n \n           \n          \n         \n \n          \n            \n         \n           \n \n        \n           \n          \n          \n          \n           \n           \n          \n          \n        \n           \n \n \n          \n        \n         \n          \n  \n \n         \n       \n      \n        \n      \n        \n       \n        \n        \n       \n      \n         \n         \n        b. KINGD",
+      "clean_text": "This conclusion is consistent with my subsequent statement that I had a medium level of confidence that another group of servers active in 2019 and 2020 (which I referred to as MONARCHY) is linked to the Government of Saudi Arabia. In contrast to KINGDOM's six targets with a clear Saudi Arabian nexus, only two MONARCHY targets have been publicly described, and of these two targets, only one shows a clear nexus with Saudi Arabia."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

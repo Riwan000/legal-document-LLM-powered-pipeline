@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p44_1f3b34",
+  "title": "Dr Marczak then divided up the servers associated with Pegasus into 36 groups",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 44,
+      "paragraph": 1,
+      "line_start": 13,
+      "line_end": 28,
+      "raw_text": "  \n               \n     \n                \n         \n              \n                \n             \n              \n             \n            \n              \n             \n              \n              \n             ",
+      "clean_text": "Dr Marczak then divided up the servers associated with Pegasus into 36 groups (which he terms ‘operators’), with each group/operator representing proxy servers which communicated with a single Pegasus C&C server."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

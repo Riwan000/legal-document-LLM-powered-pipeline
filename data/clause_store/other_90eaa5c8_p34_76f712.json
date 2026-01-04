@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p34_76f712",
+  "title": "The Court distinguished Letelier on the basis that that case had involved actions ‘occurring in the United States’ that were tortious, without reference to any action undertaken abroad",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 34,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 21,
+      "raw_text": " \n                  \n                 \n                 \n \n           \n \n   \n \n          \n            \n       \n         \n          \n            \n           \n \n  \n \n            \n             ",
+      "clean_text": "143. The Court distinguished Letelier on the basis that that case had involved actions ‘occurring in the United States’ that were tortious, without reference to any action undertaken abroad."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

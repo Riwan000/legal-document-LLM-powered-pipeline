@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p32_1d7da7",
+  "title": "Entire tort rule summary",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 32,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 19,
+      "raw_text": " \n             \n               \n                 \n           \n                  \n               \n                \n              \n           \n                \n  ",
+      "clean_text": "As noted, the FSIA's non-commercial tort exception provides: ... For this exception to apply, however, the ‘entire tort’ must be committed in the United States."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

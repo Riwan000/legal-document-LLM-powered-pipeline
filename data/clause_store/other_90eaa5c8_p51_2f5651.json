@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p51_2f5651",
+  "title": "Court should take steps to halt misuse of proceedings",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 51,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 4,
+      "raw_text": " \n               \n                 \n  ",
+      "clean_text": "to halt the misuse of the proceedings."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p45_ddaab5",
+  "title": "Pegasus proxy servers",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": "Saudi Arabia",
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 45,
+      "paragraph": 1,
+      "line_start": 15,
+      "line_end": 20,
+      "raw_text": "              \n              \n               \n              \n              \n          ",
+      "clean_text": "He has concluded that that operator was identified as uniquely linked to Saudi Arabia."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

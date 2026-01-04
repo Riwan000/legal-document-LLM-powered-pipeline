@@ -1,0 +1,32 @@
+{
+  "clause_id": "other_90eaa5c8_p6_3c3413",
+  "title": "The s 5 exception applies when the death, injury or damage is ‘caused by an act or omission in the United Kingdom’",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 6,
+      "paragraph": 1,
+      "line_start": 3,
+      "line_end": 26,
+      "raw_text": "      \n                \n            \n            \n           \n                    \n               \n           \n               \n              \n                \n              \n  \n                \n                 \n             \n               \n                   \n                  \n                  \n   \n \n                  \n         ",
+      "clean_text": "30. The s 5 exception applies when the death, injury or damage is ‘caused by an act or omission in the United Kingdom’. In accordance with the plain meaning of this phrase, it is only necessary for a single relevant act or omission causative of the death, injury or damage to take place within the UK in order to engage the exception."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

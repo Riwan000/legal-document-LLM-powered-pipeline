@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p10_2f6d41",
+  "title": "Did the act of installing Pegasus on the Claimant’s iPhones and the assault fall outside the scope of s 5 as acts done in the exercise of the Defendant’s sovereign authority, or does s 5 extend to any act of whatever type done by a foreign state in the UK which causes personal injury?",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 10,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 26,
+      "raw_text": " \n                  \n            \n \n                 \n                   \n                  \n \n \n                  \n              \n       \n \n            \n              \n        \n           \n  \n \n              \n            \n                \n              \n             \n              \n ",
+      "clean_text": "Did the act of installing Pegasus on the Claimant’s iPhones and the assault fall outside the scope of s 5 as acts done in the exercise of the Defendant’s sovereign authority, or does s 5 extend to any act of whatever type done by a foreign state in the UK which causes personal injury?"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

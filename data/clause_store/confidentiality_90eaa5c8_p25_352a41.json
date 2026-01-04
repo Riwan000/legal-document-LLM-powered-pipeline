@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p25_352a41",
+  "title": "Court of Appeal's brief approval of Laws J's approach cannot convert it into a binding ratio",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 25,
+      "paragraph": 1,
+      "line_start": 9,
+      "line_end": 34,
+      "raw_text": "             \n         \n  \n                 \n                   \n                 \n \n \n                  \n                   \n                \n               \n                 \n               \n                \n           \n \n                \n                \n                \n                  \n      \n                 \n                 \n                 \n ",
+      "clean_text": "the Court of Appeal does not appear to have been referred to that decision. I also agree with the Claimant that the terms in which the Court of Appeal expressed itself indicates that no general rule as advanced by the Defendant in this case can be spelled out of the ratio of the case: see Great Western Railway Co v Owners of SS Mostyn [1928] AC 57, [73]."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

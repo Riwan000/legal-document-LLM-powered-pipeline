@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p16_714e75",
+  "title": "Translation procedures",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 16,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 8,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n191 \n \n  \nterm. Nonetheless, the term عدة was inaccurately transcribed in several documents (2 -4 & 6), in \nwhich the translators used ‘",
+      "clean_text": "As a response for the first objective, the study found that translators utilized six translation procedures; they are: equivalence, literal, modulation, adaptation, borrowing, and transposition."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p17_221290",
+  "consistency_flag": "review_required",
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

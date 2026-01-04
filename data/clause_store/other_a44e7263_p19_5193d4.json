@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p19_5193d4",
+  "title": "ABOUT THE AUTHORS",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 19,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 13,
+      "raw_text": "nslating.  E.J. Brill.  \nSaldanha, G., & O'Brien, S. (2014).  Research methodologies in translation studies . London/New York: \nRoutledg e. \nSaleh, M. I. (2011). Dictionary of Islamic words and expressions . Al-Riyadh:  Darussalam.   \nSalem, A. (2003). Sahih Fiqh Al -Sunna.  [ the correct of Sunna jurisprudence].  Cairo: AlTawfikia Bookshop . \nŠar",
+      "clean_text": "CAMELLIA KHALAF\nPhD student at the School of Languages, Literacies and Translation\nUniversiti Sains Malaysia (USM)\ncamy.fay@gmail.com\n\ndr. MOHAMED ABDOU MOINDJIE\nSenior Lecturer\nSchool of Languages, Literaries and Translation\nUniversiti Sains Malaysia (USM)\nmohdmoindjie@usm.my\n\ndr. ILANGKO SUBRAMANIAM\nUniversiti Sains Malaysia (USM)\nilangko@usm.my"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p16_223974",
+  "consistency_flag": "review_required",
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

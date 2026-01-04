@@ -1,0 +1,29 @@
+{
+  "clause_id": "jurisdiction_90eaa5c8_p5_75e8c1",
+  "title": "General background",
+  "type": "jurisdiction",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 22,
+      "raw_text": " \n            \n   \n \n                \n                \n               \n              \n            \n \n                \n                \n               \n                 \n               \n      \n \n   \n \n  \n                  \n  ",
+      "clean_text": "22.\tAs I have indicated, the Claimant accepts that s 1 of the SIA 1978 confers a general immunity on foreign states from the jurisdiction of the UK’s courts except as provided in the relevant exceptions in Part I of the Act."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

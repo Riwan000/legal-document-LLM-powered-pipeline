@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p4_78b19a",
+  "title": "Formality and Highly decorative terms",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 4,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 9,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n179 \n \n  \n \niii. Nominalization where a verb or an adjecti ve is changed to a noun by adding suffixes - ‘tion’, \n‘dom’, and ‘ment’. For example, foundation, freedom an",
+      "clean_text": "ii. Formality and Highly decorative terms: El-Farahaty (2015, P.35) argues Arabic, formality is made through forms of address or honorary titles due to the diverse social and political backgrounds of different Arab countries."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p16_223974",
+  "consistency_flag": "review_required",
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

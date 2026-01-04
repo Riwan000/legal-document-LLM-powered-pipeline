@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p3_6a96e5",
+  "title": "Scope of s. 5",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 9,
+      "line_end": 21,
+      "raw_text": " \n        \n                \n                 \n             \n              \n                  \n           \n        \n            \n          \n      \n     ",
+      "clean_text": "The overarching issue is whether the Claimant has established, to the requisite evidential standard, that the s 5 exception is applicable to his claim."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

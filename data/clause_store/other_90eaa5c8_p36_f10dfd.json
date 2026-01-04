@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p36_f10dfd",
+  "title": "Burden on the Claimant",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 36,
+      "paragraph": 1,
+      "line_start": 11,
+      "line_end": 20,
+      "raw_text": "     \n           \n                  \n            \n \n                 \n              \n                 \n                \n      ",
+      "clean_text": "The burden is on the Claimant. If I cannot decide the issue on the materials before me, then I can order a trial of the issue."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

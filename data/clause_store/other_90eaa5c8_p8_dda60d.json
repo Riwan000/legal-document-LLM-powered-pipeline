@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p8_dda60d",
+  "title": "Section 5 requires the whole tort to take place within the UK",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 8,
+      "paragraph": 1,
+      "line_start": 4,
+      "line_end": 32,
+      "raw_text": "    \n            \n \n   \n \n              \n \n               \n                 \n                \n           \n                 \n             \n               \n               \n                   \n            \n                   \n            \n              \n              \n                \n              \n                \n                \n       \n                  \n             \n          ",
+      "clean_text": "Mr White submitted that s 5 requires the whole tort to take place within the UK and that, subject to de minimis exceptions, where a tort takes place partly inside and partly outside the UK, then it falls outside the exception in s 5 and the foreign state is entitled to immunity: Dickinson, Lindsay and Loonam, State Immunity: Selected Materials and Commentary (OUP, 2004) pp369-370."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

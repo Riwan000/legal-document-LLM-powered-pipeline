@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p12_fe3ec6",
+  "title": "Interpretation of statutory language",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 12,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 35,
+      "raw_text": "          \n         \n         \n          \n             \n        \n               \n            \n         \n           \n          \n        \n           \n          \n         \n            \n   \n            \n              \n                \n                  \n               \n                  \n            \n          \n         \n          \n     ",
+      "clean_text": "This was the approach of Lord Porter in Theophile v Solicitor-General [1950] AC 186, (cited in relation to the SIA 1978 in Al-Adsani (No 2), p548), in which the House of Lords had to consider the impact of the law of nations (now generally referred to as customary international law) upon certain provisions of the Bankruptcy Act 1914."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

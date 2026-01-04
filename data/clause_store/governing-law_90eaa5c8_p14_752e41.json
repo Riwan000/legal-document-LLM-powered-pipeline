@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p14_752e41",
+  "title": "This presumption in favour of grammatical interpretation was stated by a nineteenth-century Lord Chancellor, Lord Selborne, in the words 'there is always some presumption in favour of the more simple and literal interpretation of the words of the statute'.",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 14,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 38,
+      "raw_text": " \n           \n          \n \n \n \n         \n       \n \n          \n           \n         \n            \n          \n           \n           \n            \n        \n \n        \n        \n            \n           \n             \n  \n \n            \n        \n         \n    \n \n           \n            \n           \n         \n \n           \n        ",
+      "clean_text": "This presumption in favour of grammatical interpretation was stated by a nineteenth-century Lord Chancellor, Lord Selborne, in the words 'there is always some presumption in favour of the more simple and literal interpretation of the words of the statute' [Caledonian Rly Co v North British Rly Co (1881) 6 App Cas 114 at 121]"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

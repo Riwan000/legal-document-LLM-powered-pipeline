@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p13_aefd8d",
+  "title": "On a straightforward application of the 1978 Act",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 13,
+      "paragraph": 1,
+      "line_start": 6,
+      "line_end": 33,
+      "raw_text": "       \n                \n               \n           \n            \n         \n           \n          \n         \n        \n          \n            \n           \n          \n           \n        \n           \n          \n           \n            \n             \n           \n             \n            \n             \n              \n             \n",
+      "clean_text": "'On a straightforward application of the 1978 Act, it would follow that the Kingdom’s claim to immunity for itself and its servants or agents should succeed, since this is not one of those exceptional cases, specified in Part 1 of the 1978 Act, in which a state is not immune, and therefore the general rule of immunity prevails.'"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

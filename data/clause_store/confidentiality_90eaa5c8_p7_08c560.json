@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p7_08c560",
+  "title": "This aspect of the Defendant's application is based on the following passage from Propend Finance Pty Ltd v Sing (1997) 111 ILR 611, 662:",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 7,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 11,
+      "raw_text": " \n                  \n              \n               \n               \n    \n               \n               \n            \n      \n              ",
+      "clean_text": "This aspect of the Defendant's application is based on the following passage from Propend Finance Pty Ltd v Sing (1997) 111 ILR 611, 662: \\"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

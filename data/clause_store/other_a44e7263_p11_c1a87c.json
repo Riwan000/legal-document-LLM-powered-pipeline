@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p11_c1a87c",
+  "title": "Rights that each spouse can expect from the other, particularly sexual rights but also the rights to society, comfort, and affection",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 11,
+      "paragraph": 1,
+      "line_start": 9,
+      "line_end": 11,
+      "raw_text": "l rights:  Rights that each spouse can expect from the other, particularly sexual rights but \nalso the rights to society, comfort, and affection .  \nnu",
+      "clean_text": "conjugal rights: Rights that each spouse can expect from the other, particularly sexual rights but also the rights to society, comfort, and affection ."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p16_f8ceec",
+  "consistency_flag": "review_required",
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

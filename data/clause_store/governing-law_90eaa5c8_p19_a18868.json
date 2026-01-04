@@ -1,0 +1,29 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p19_a18868",
+  "title": "Jurisdiction and Subject Matter Jurisdiction",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 19,
+      "paragraph": 1,
+      "line_start": 9,
+      "line_end": 25,
+      "raw_text": "            \n                 \n             \n          \n \n                \n             \n               \n \n \n            \n              \n             \n \n             \n           \n          ",
+      "clean_text": "The Court has no subject matter jurisdiction in that it is entitled to immunity under the Act, which does not cover political assassinations because of their public, governmental character."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

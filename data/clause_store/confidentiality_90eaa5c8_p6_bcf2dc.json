@@ -1,0 +1,32 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p6_bcf2dc",
+  "title": "Nor can s 5 be interpreted so as to require all of the acts and omissions causative of the death, injury or damages, and in respect of which the proceedings are brought, to have taken place in the UK",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 6,
+      "paragraph": 1,
+      "line_start": 3,
+      "line_end": 49,
+      "raw_text": "     \n                \n            \n            \n           \n                    \n               \n           \n               \n              \n                \n              \n  \n                \n                 \n             \n               \n                   \n                  \n                  \n   \n \n                  \n              \n                \n                 \n              \n               \n              \n                 \n               \n                \n           \n \n                 \n              \n                \n              \n               \n               \n           \n           \n             \n        \n                \n        27.\t\tThe Claimant submits that the text of s 5 draws no apparent distinction between \nsovereign and private acts. On its plain terms, s 5 applies to both categor",
+      "clean_text": "30. The s 5 exception applies when the death, injury or damage is ‘caused by an act or omission in the United Kingdom’. In accordance with the plain meaning of this phrase, it is only necessary for a single relevant act or omission causative of the death, injury or damage to take place within the UK in order to engage the exception. Contrary to the Defendant’s submissions, there is no proper basis on which the Court, under the guise of statutory construction, could replace the words ‘caused by an act or omission in the United Kingdom’ with the phrase ‘where the entire tort took place in the United Kingdom’. Nor can s 5 be interpreted so as to require all of the acts and omissions causative of the death, injury or damages, and in respect of which the proceedings are brought, to have taken place in the UK."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

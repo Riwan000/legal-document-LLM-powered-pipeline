@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p13_59ef32",
+  "title": "First canon: Lord Bingham’s stricture",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 13,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 19,
+      "raw_text": "           \n           \n            \n         \n           \n          \n         \n        \n          \n            \n           \n        ",
+      "clean_text": "'The first canon is Lord Bingham’s stricture that the duty of the English court is to apply the plain terms of the domestic statute.'"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

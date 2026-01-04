@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p11_f823ea",
+  "title": "Part I of the State Immunity Act 1978 is a complete code",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 11,
+      "paragraph": 1,
+      "line_start": 6,
+      "line_end": 22,
+      "raw_text": "      \n               \n         \n \n               \n             \n             \n             \n              \n         \n         \n         \n           \n           \n           \n           \n         ",
+      "clean_text": "No one doubts that as a matter of domestic law, Part I of the State Immunity Act 1978 is a complete code. If the case does not fall within one of the exceptions to section 1, the state is immune."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

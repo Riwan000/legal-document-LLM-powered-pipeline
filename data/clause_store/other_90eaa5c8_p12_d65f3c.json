@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p12_d65f3c",
+  "title": "Interpretative obligation",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 12,
+      "paragraph": 1,
+      "line_start": 5,
+      "line_end": 31,
+      "raw_text": "\n             \n            \n            \n         \n         \n          \n             \n        \n               \n            \n         \n           \n          \n        \n           \n          \n         \n            \n   \n            \n              \n                \n                  \n               \n                  \n            ",
+      "clean_text": "Section 3 of the Human Rights Act requires that so far as it is possible to do so, legislation must be given effect in a way which is compatible with the Convention rights. This is an interpretative obligation of strong and far reaching effect which may require the court to depart from the legislative intention of Parliament,"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

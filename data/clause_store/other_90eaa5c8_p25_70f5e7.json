@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p25_70f5e7",
+  "title": "The judge's conclusion on Section 5(b) issue",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 25,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 22,
+      "raw_text": " \n                   \n                 \n             \n                \n               \n                 \n              \n                 \n         \n  \n                 \n                   \n                 \n \n \n                  \n                   \n                \n               \n                 \n",
+      "clean_text": "the act in question was not done by or on behalf of Australia in the UK, but had been done by the Metropolitan Police. He introduced his conclusion with the words, ‘In the alternative I would conclude the Section 5(b) issue against the plaintiffs …’; not, it is to be noted, ‘I would have concluded …’"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

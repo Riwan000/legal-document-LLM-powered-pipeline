@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p3_284f5b",
+  "title": "The use of archaic, Latin and French words: Old and Middle English influenced Modern English through the introduction of Archaic expressions into legal documents and poetry. Words such as 'hereof', 'thereof', and 'whereof’ are examples of archaic words.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 7,
+      "line_end": 10,
+      "raw_text": "th some options \nin the target language, such as the standardized o r normalized words.  \nMeanwhile, Palestinian translators tend to face lexical and semantic issues, which can \nadversely affect their translation work. For instance, Thawabteh and Najjar",
+      "clean_text": "The use of archaic, Latin and French words: Old and Middle English influenced Modern English through the introduction of Archaic expressions into legal documents and poetry. Words such as 'hereof', 'thereof', and 'whereof’ are examples of archaic words."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p16_f8ceec",
+  "consistency_flag": "review_required",
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

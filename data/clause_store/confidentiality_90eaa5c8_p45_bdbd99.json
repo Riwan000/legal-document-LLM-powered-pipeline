@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p45_bdbd99",
+  "title": "Operator attribution",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 45,
+      "paragraph": 1,
+      "line_start": 14,
+      "line_end": 32,
+      "raw_text": "      \n                 \n              \n               \n              \n              \n          \n \n   \n \n               \n                  \n \n                  \n             \n \n                   \n               \n  ",
+      "clean_text": "Dr Marczak contrasts the ‘high’ confidence with which he attributes the KINGDOM operator to the Defendant with the ‘medium’ confidence with which he attributes a different operator, named MONARCHY, to the Defendant."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "clause_id": "dispute-resolution_90eaa5c8_p42_b3ac4e",
+  "title": "There is, moreover, evidence that the Claimant was subject to various forms of online targeting not sued on in the claim which are attributable, either directly or as a matter of inference, to the Defendant, and which is consistent with the pattern of conduct which does form part of this claim.",
+  "type": "dispute_resolution",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 42,
+      "paragraph": 1,
+      "line_start": 18,
+      "line_end": 51,
+      "raw_text": "     \n                \n             \n       \n \n                \n               \n             \n              \n              \n          \n \n               \n      \n    \n                 \n              \n                  \n               \n              \n \n               \n                 \n               \n        \n \n           \n \n          \n           \n            \n          \n           \n           50. Fourth, the Claimant has himself ale",
+      "clean_text": "I refer, here, to the Claimant’s Skeleton Argument at [80]-[82]: ‘80. The evidence also demonstrates that the only state body which might have had any interest in hacking the Claimant’s devices is the Defendant. Not only is the evidence on this point (again) undisputed by the Defendant, but the Defendant also fails to identify any other state body which might conceivably have been motivated to undertake that hack. There is moreover"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p17_fd802e",
+  "title": "Plain meaning of s 5",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 17,
+      "paragraph": 1,
+      "line_start": 6,
+      "line_end": 22,
+      "raw_text": " \n                \n                \n               \n                     \n              \n                     \n \n                 \n                \n               \n             \n               \n          \n             \n          \n",
+      "clean_text": "This is the plain meaning of s 5 of the SIA 1978. Hence, in my judgment, s 5 applies in respect of all acts and omissions of a foreign state, of whatever character, provided they occurred in the UK and caused personal injury, etc."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

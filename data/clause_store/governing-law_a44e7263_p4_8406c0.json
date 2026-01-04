@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_a44e7263_p4_8406c0",
+  "title": "Use of religious, culture-specific and system-based terms and expressions",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 4,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 12,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n179 \n \n  \n \niii. Nominalization where a verb or an adjecti ve is changed to a noun by adding suffixes - ‘tion’, \n‘dom’, and ‘ment’. For example, foundation, freedom and payment (Almanna,2017).  In \nnominalization, meaning lacks a tense, therefore, time modality and agent are missing from the \nsentence (Farhaty,2015). Nevertheless, Tiersma (1999) envisages nominalization as useful in cases \nwhere laws and regulations have to be stated as b",
+      "clean_text": "i. Use of religious, culture -specific and system -based terms and expressions: Emery (1989) and El-Farahaty (2015) argue that Arabic legal language takes many terms and expressions from the Islamic law which is derived from the Holy Quran and the Sunna (Prophet Muhammad’s deeds and utterances).  Here is an example taken from a marriage contract:  ‘Their legal capacity’: أهليتهما According to the Holy Book of Allah and the Sunnah of His Messengeعلي كتاب الله و سنة رسوله El- Farahaty, 2015, p.34)"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "governing-law_a44e7263_p4_fe4c41",
+  "consistency_flag": "review_required",
+  "language": "ar",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

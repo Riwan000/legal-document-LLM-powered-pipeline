@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p22_7ab05e",
+  "title": "Immunity under SIA 1978",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 22,
+      "paragraph": 1,
+      "line_start": 9,
+      "line_end": 34,
+      "raw_text": "              \n               \n              \n            \n              \n    \n               \n              \n              \n               \n             \n                \n             \n        \n              \n              \n             \n             \n               \n               \n           \n            \n  \n                \n                \n   ",
+      "clean_text": "One of the issues he considered was whether the AFP was entitled to immunity under s 14 of the SIA 1978 as falling within the expression ‘the government’ in s 14(1)(b) or a ‘department of that government’ (in s 14(1)(c)), both of which are entitled to the general immunity conferred by s 1(1) and to which the exceptions to immunity in the Act apply."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

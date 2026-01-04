@@ -1,0 +1,29 @@
+{
+  "clause_id": "jurisdiction_90eaa5c8_p6_f5af41",
+  "title": "The approach adopted in s 5 is in contrast to other parts of the SIA 1978",
+  "type": "jurisdiction",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 6,
+      "paragraph": 1,
+      "line_start": 3,
+      "line_end": 45,
+      "raw_text": "         \n                \n            \n            \n           \n                    \n               \n           \n               \n              \n                \n              \n  \n                \n                 \n             \n               \n                   \n                  \n                  \n   \n \n                  \n              \n                \n                 \n              \n               \n              \n                 \n               \n                \n           \n \n                 \n              \n                \n              \n               \n               \n           \n           \n        ",
+      "clean_text": "28. The approach adopted in s 5 is in contrast to other parts of the SIA 1978, in which the scope of immunity is defined by reference to notions of sovereign acts: see s 3(3)(c) (‘any other transaction or activity (whether of a commercial, industrial, financial, professional or other similar character) into which a State enters or in which it engages otherwise than in the exercise of sovereign authority’) and s 14(2) (‘A separate entity is immune from the jurisdiction of the courts of the United Kingdom if, and only if— (a) the proceedings relate to anything done by it in the exercise of sovereign authority…’)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "clause_id": "liability_90eaa5c8_p48_50cfcd",
+  "title": "Claimant's assertion not challenged",
+  "type": "liability",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 48,
+      "paragraph": 1,
+      "line_start": 17,
+      "line_end": 28,
+      "raw_text": "            \n           \n \n           \n            \n           \n         \n       \n \n         \n           \n      ",
+      "clean_text": "I find that the Claimant’s assertion as to who was responsible has not been challenged to any persuasive degree."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p49_6bd585",
+  "title": "Definition of Legal Professional Privilege",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 49,
+      "paragraph": 1,
+      "line_start": 17,
+      "line_end": 29,
+      "raw_text": "  \n         \n \n                \n                \n                  \n               \n                  \n            \n               \n                \n \n    ",
+      "clean_text": "For the avoidance of doubt, I am not authorised to waive legal professional privilege or any immunity over any of the substantive communications involved …"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

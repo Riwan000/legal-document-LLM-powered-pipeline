@@ -64,12 +64,17 @@ class VectorStore:
         
         # Store metadata for each chunk
         for chunk in chunks:
+            # Ensure clause_id is included if present
+            chunk_metadata = chunk.metadata.copy() if chunk.metadata else {}
+            if chunk.clause_id:
+                chunk_metadata['clause_id'] = chunk.clause_id
+            
             self.metadata.append({
                 'document_id': chunk.document_id,
                 'page_number': chunk.page_number,
                 'chunk_index': chunk.chunk_index,
                 'text': chunk.text,
-                **chunk.metadata  # Include any additional metadata
+                **chunk_metadata  # Include any additional metadata (hierarchy_level, clause_types, etc.)
             })
             # Store all chunk information for retrieval
     
@@ -188,6 +193,71 @@ class VectorStore:
             })
         
         return results
+    
+    def search_with_priority(
+        self,
+        query_embedding: np.ndarray,
+        priority_clause_types: List[str] = None,
+        top_k: int = None,
+        document_id_filter: Optional[str] = None,
+        similarity_threshold: Optional[float] = -1.0
+    ) -> List[Dict[str, Any]]:
+        """
+        Search with priority boosting for specific clause types.
+        
+        Args:
+            query_embedding: Query vector of shape (embedding_dim,)
+            priority_clause_types: List of clause types to boost (e.g., ["Governing Law", "Termination"])
+            top_k: Number of results to return
+            document_id_filter: Optional filter by document ID
+            similarity_threshold: Similarity threshold
+            
+        Returns:
+            List of results with boosted scores for priority clause types
+        """
+        # First get standard search results
+        results = self.search(
+            query_embedding=query_embedding,
+            top_k=top_k * 2 if top_k else settings.TOP_K_RESULTS * 2,  # Get more results for re-ranking
+            document_id_filter=document_id_filter,
+            similarity_threshold=similarity_threshold
+        )
+        
+        if not priority_clause_types:
+            # No priority types, return standard results
+            return results[:top_k or settings.TOP_K_RESULTS]
+        
+        # Boost scores for priority clause types
+        priority_set = {pt.lower() for pt in priority_clause_types}
+        boost_factor = 0.15  # Boost by 15% for priority clauses
+        
+        for result in results:
+            # Check if result matches priority clause types
+            # Metadata is already spread into result dict, not nested
+            clause_types = result.get('clause_types', [])
+            hierarchy_level = result.get('hierarchy_level', 'contract')
+            
+            # Check clause types
+            matches_priority = any(
+                pt.lower() in ct.lower() or ct.lower() in pt.lower()
+                for pt in priority_clause_types
+                for ct in clause_types
+            )
+            
+            # Also check hierarchy level for "Governing Law" type
+            if "governing law" in priority_set and hierarchy_level == "law":
+                matches_priority = True
+            
+            if matches_priority:
+                # Boost the score
+                result['score'] = min(1.0, result['score'] + boost_factor)
+                result['priority_boosted'] = True
+        
+        # Re-sort by boosted scores
+        results.sort(key=lambda x: x['score'], reverse=True)
+        
+        # Return top_k results
+        return results[:top_k or settings.TOP_K_RESULTS]
     
     def get_chunks_by_document(self, document_id: str) -> List[Dict[str, Any]]:
         """

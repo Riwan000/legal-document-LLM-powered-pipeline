@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p14_582272",
+  "title": "Hence, the translators adapted the Arabic term ‘raj’i’ to convey the meaning of revocable (may be cancelled or revoked).",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 14,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 10,
+      "raw_text": "egy to translate this term as such divorce genre does not exist in the \nEnglish culture (TL). Hence, the translators adapted the Arabic term ‘raj’i’ to convey the meaning \nof revocable (may be cancelled or revoked). For these translations, translators ",
+      "clean_text": "Hence, the translators adapted the Arabic term ‘raj’i’ to convey the meaning of revocable (may be cancelled or revoked). For these translations, translators rendered upon the translation norms of using the bi -lingual dictionary equivalent of the term."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p17_221290",
+  "consistency_flag": "review_required",
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

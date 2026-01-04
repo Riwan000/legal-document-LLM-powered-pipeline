@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p50_6e2027",
+  "title": "Evaluation of evidence",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 50,
+      "paragraph": 1,
+      "line_start": 13,
+      "line_end": 17,
+      "raw_text": "    \n               \n             \n \n       ",
+      "clean_text": "It is also for me to make my own evaluation."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "clause_id": "conduct-discipline_90eaa5c8_p22_c34aa6",
+  "title": "Contempt Proceedings",
+  "type": "conduct_discipline",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 22,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 30,
+      "raw_text": " \n              \n               \n              \n            \n              \n    \n               \n              \n              \n               \n             \n                \n             \n        \n              \n              \n             \n             \n               \n               \n           \n        ",
+      "clean_text": "The plaintiffs alleged that this communication was in breach of the undertaking and instituted proceedings for contempt of court against the first defendant, who by then had completed his appointment in the UK and returned to Australia, and the Commissioner of the AFP, who was sued as representing the AFP."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

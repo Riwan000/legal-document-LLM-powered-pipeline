@@ -1,0 +1,29 @@
+{
+  "clause_id": "compensation-benefits_a44e7263_p9_03487c",
+  "title": "(c) /nafaqa/ نفقة",
+  "type": "compensation_benefits",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 9,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 13,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n184 \n \n  \n(a)  الدخول الشرعي  ‘aldukhul alshari’  \n \nTable 4: Translation of الدخول الشرعي  aldukhul alshari’  \n \nArabic term                                             English Translation                       Number of the Document  \nالدخول الشرعي                Consummation                                       \n               Intercourse      ",
+      "clean_text": "نفقة   nafaqa/ is identified in 6 documents and was translated as ‘alimony’, ‘allowance’, ‘fees’, and  ‘pension’ – signifying literal translation that belongs to the direct translation strategy, whereby equivalent terms are retrieved from bilingual dictionary. However, some of these terms appear to be inaccurate (i.e., fee & pension), while others reflect a ccurate translation (i.e., alimony & allowance)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": true,
+    "is_employer_cost": false
+  }
+}

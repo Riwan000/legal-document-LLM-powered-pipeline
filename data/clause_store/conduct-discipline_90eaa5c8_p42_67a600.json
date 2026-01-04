@@ -1,0 +1,29 @@
+{
+  "clause_id": "conduct-discipline_90eaa5c8_p42_67a600",
+  "title": "In other words",
+  "type": "conduct_discipline",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": "Saudi Arabia",
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 42,
+      "paragraph": 1,
+      "line_start": 18,
+      "line_end": 51,
+      "raw_text": "        \n                \n             \n       \n \n                \n               \n             \n              \n              \n          \n \n               \n      \n    \n                 \n              \n                  \n               \n              \n \n               \n                 \n               \n        \n \n           \n \n          \n           \n            \n          \n           \n           50. Fourth, the Claimant has himself alerted this Court ",
+      "clean_text": "in light of the evidence advanced by the Claimant, and the relatively modest response by the Defendant, I think it overwhelmingly likely that there is a proper basis for concluding that the Defendant used Pegasus during the relevant period, and that it did so against individuals located outside Saudi Arabia involved in or working on matters of particular interest to the Defendant, in a manner which closely resembles the conduct sued on in this claim."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

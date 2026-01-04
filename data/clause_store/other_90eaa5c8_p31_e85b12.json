@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p31_e85b12",
+  "title": "Where a computer device located in the UK is manipulated and made to perform operations as a result of electronic instructions sent from a computer/operator located abroad then there is authority for the proposition that this is to be regarded as an act within the UK.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "administrative",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 31,
+      "paragraph": 1,
+      "line_start": 12,
+      "line_end": 30,
+      "raw_text": "        \n            \n                 \n     \n                   \n             \n                 \n               \n             \n            \n               \n             \n               \n                      \n           \n           \n              \n             \n     ",
+      "clean_text": "Where a computer device located in the UK is manipulated and made to perform operations as a result of electronic instructions sent from a computer/operator located abroad then there is authority for the proposition that this is to be regarded as an act within the UK."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

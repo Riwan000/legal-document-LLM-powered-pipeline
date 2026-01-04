@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p25_1d9d9a",
+  "title": "The central thrust of Laws J's decision on s 5",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 25,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 18,
+      "raw_text": "     \n                 \n         \n  \n                 \n                   \n                 \n \n \n                  \n      ",
+      "clean_text": "the proceedings in question were, in form, a private law action, in substance they were part of the judicial review claim."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

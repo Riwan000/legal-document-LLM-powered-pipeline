@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p15_d28c86",
+  "title": "'Commercial transaction' means - (a) any contract for the supply of goods or services; (b) any loan or other transaction for the provision of finance and any guarantee or indemnity in respect of any such transaction or of any other financial obligation; and (c) any other transaction or activity (whether of a commercial, industrial, financial, professional or other similar character) into which a State enters or in which it engages otherwise than in the exercise of sovereign authority ;",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 15,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 55,
+      "raw_text": " \n          \n           \n          \n         \n          \n \n                   \n                \n \n                   \n                  \n              \n             \n \n         \n  \n \n           \n \n          \n \n            \n          \n       \n \n             \n          \n           \n           \n          \n \n         \n \n          \n \n            \n           \n      \n \n          \n        \n             \n    \n \n           \n        \n \n       \n \n      here, the meaning is plain. Purposive construction cannot be \nrelied on to create an offence which Parliament has not created. \nNor should the House adopt an untenable construction of the \nsubsection simply because courts in other jurisdictions are shown to have adopted such a construction of rather similar provisions.” \n66.\t\tAll of this supports the construction of ‘act or omission’ in s 5 as meaning ‘all acts or omissions’",
+      "clean_text": "'3 Commercial transactions and contracts to be performed in United Kingdom.\n(1) A State is not immune as respects proceedings relating to—\n(a) a commercial transaction entered into by the State; or\n(b) an obligation of the State which by virtue of a contract (whether a commercial transaction or not) falls to be performed wholly or partly in the United Kingdom.\n(3) In this section ‘commercial transaction’ means -\n(a) any contract for the supply of goods or services;\n(b) any loan or other transaction for the provision of finance and any guarantee or indemnity in respect of any such transaction or of any other financial obligation; and\n(c) any other transaction or activity (whether of a commercial, industrial, financial, professional or other similar character) into which a State enters or in which it engages otherwise than in the exercise of sovereign authority ;"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

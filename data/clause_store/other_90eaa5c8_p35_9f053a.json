@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p35_9f053a",
+  "title": "Entire tort doctrine",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 35,
+      "paragraph": 1,
+      "line_start": 9,
+      "line_end": 24,
+      "raw_text": " \n             \n              \n                  \n           \n          \n            \n       \n           \n          \n             \n            \n         \n          \n       \n       ",
+      "clean_text": "Plaintiffs argue the tort may occur, in whole or in part, in the United States, and that the tort occurs in the United States if the acts or omissions directly affect this country."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

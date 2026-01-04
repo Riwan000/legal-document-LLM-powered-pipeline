@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p48_dac53c",
+  "title": "Embassy confirmation",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": "Saudi Arabia",
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 48,
+      "paragraph": 1,
+      "line_start": 3,
+      "line_end": 26,
+      "raw_text": "     \n                \n               \n \n \n                \n                 \n              \n             \n              \n    \n \n            \n              \n               \n           \n \n           \n            \n           \n         \n       \n \n     ",
+      "clean_text": "Although they were of Saudi nationality, the Defendant's Embassy in London has confirmed that the young men who struck the Claimant were not, and are not, agents of the Defendant and did not act directly or indirectly at the behest of the Defendant."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

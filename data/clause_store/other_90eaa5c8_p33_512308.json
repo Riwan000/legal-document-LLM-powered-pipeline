@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p33_512308",
+  "title": "Kidane v Ethiopia",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 33,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 19,
+      "raw_text": " \n         \n          \n          \n            \n             \n            \n        \n            \n           \n            \n             \n          \n            \n            \n       \n         \n          \n        ",
+      "clean_text": "139.\tMr White placed particular weight on the decision of the US Court of Appeals for the District of Columbia in Kidane v Ethiopia 851 F 3d 7 (2017), whose facts were similar to the facts of the present case."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "clause_id": "other_a44e7263_p1_4fc0c8",
+  "title": "IMPORTANT RULES",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 1,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 11,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n176 \n \n  \nTHE TRANSLATION OF ARABIC LEGAL DOCUMENTS: A CASE \nSTUDY OF PALESTINE DIVORCE DOCUMENTS  \n \nCamellia Khalaf, Mohamed Abdou Moindjie & Ilangko Subramaniam  \n",
+      "clean_text": "- Extract complete legal clauses, not text fragments\n- One clause may span multiple sentences\n- Clauses are defined by legal intent, not formatting\n- Return ONLY clauses found in the text\n- Do NOT create or fabricate clauses"
+    },
+    {
+      "page": 2,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 8,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n177 \n \n  \nReferring to Hanrahan et al., (2015), translators tend to face linguistic and cultural \nchallenges due to context, content, and text type. According to Musa",
+      "clean_text": "- Extract complete legal clauses, not text fragments\n- One clause may span multiple sentences\n- Clauses are defined by legal intent, not formatting\n- Return ONLY clauses found in the text\n- Do NOT create or fabricate clauses"
+    },
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 9,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n180 \n \n  \n‘I take this opportunity to express to you my \nsincere wishes for success and good luck in the \nenormous and difficult task’  أغتنم هذه المناسبة لأعبر لكم ع",
+      "clean_text": "- Extract complete legal clauses, not text fragments\n- One clause may span multiple sentences\n- Clauses are defined by legal intent, not formatting\n- Return ONLY clauses found in the text\n- Do NOT create or fabricate clauses"
+    },
+    {
+      "page": 6,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 8,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n181 \n \n  \n(a) Transposition: This method substitutes one -word class with another without changing the \nmeaning of the message.  El-Farahaty (2015, p.61) suggest that",
+      "clean_text": "- Extract complete legal clauses, not text fragments\n- One clause may span multiple sentences\n- Clauses are defined by legal intent, not formatting\n- Return ONLY clauses found in the text\n- Do NOT create or fabricate clauses"
+    },
+    {
+      "page": 7,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 8,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n182 \n \n  \nwhich a non- probability sampling is used. Data selection can be done randomly or systematically; \n“one might wish to randomly select sentences from a large",
+      "clean_text": "- Extract complete legal clauses, not text fragments\n- One clause may span multiple sentences\n- Clauses are defined by legal intent, not formatting\n- Return ONLY clauses found in the text\n- Do NOT create or fabricate clauses"
+    },
+    {
+      "page": 8,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 8,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n183 \n \n  \ndictionary, 2006, p.195). Thus, ‘legal sexual act ’ is a descriptive equivalent of the Arabic term \nwhere the translator describes the   ‘dukhul’ as sexual ",
+      "clean_text": "- Extract complete legal clauses, not text fragments\n- One clause may span multiple sentences\n- Clauses are defined by legal intent, not formatting\n- Return ONLY clauses found in the text\n- Do NOT create or fabricate clauses"
+    },
+    {
+      "page": 10,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 8,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n185 \n \n  \n          In religious dictionaries, نفقة/nafaqa/ represents the following meaning: maintenance, \nsustenance, and expenditure (Al -Khudrawi, 2004, p.111).  ",
+      "clean_text": "- Extract complete legal clauses, not text fragments\n- One clause may span multiple sentences\n- Clauses are defined by legal intent, not formatting\n- Return ONLY clauses found in the text\n- Do NOT create or fabricate clauses"
+    },
+    {
+      "page": 12,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 10,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n187 \n \n  \n(a)  /mu’aref/ معرف  \nTable 11:  Translation of the term /mu’aref/ معرف  \n \nArabic term                                            English Translation      ",
+      "clean_text": "- Extract complete legal clauses, not text fragments\n- One clause may span multiple sentences\n- Clauses are defined by legal intent, not formatting\n- Return ONLY clauses found in the text\n- Do NOT create or fabricate clauses"
+    },
+    {
+      "page": 15,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 8,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n190 \n \n  \nIn translating بائن بينونة كبرى  as ‘big baena divorce’ the term بائنة baen’  is translated by using \nborrowing translation procedure where the Arabic term ",
+      "clean_text": "- Extract complete legal clauses, not text fragments\n- One clause may span multiple sentences\n- Clauses are defined by legal intent, not formatting\n- Return ONLY clauses found in the text\n- Do NOT create or fabricate clauses"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p16_223974",
+  "consistency_flag": "review_required",
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

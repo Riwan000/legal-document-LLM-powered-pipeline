@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p15_e1a449",
+  "title": "States entitled to immunities and privileges",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 15,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 6,
+      "raw_text": " \n          \n           \n          \n         \n      ",
+      "clean_text": "68.\t\tSection 14 provides (again, emphasis added): \n\\"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

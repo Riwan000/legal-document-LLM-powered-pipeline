@@ -1,0 +1,29 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p2_b695f7",
+  "title": "Exceptions to Immunity",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": "Saudi Arabia",
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 2,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 18,
+      "raw_text": " \n     \n  \n               \n               \n             \n                \n               \n             \n                \n                 \n               \n                  \n                 \n       \n                \n \n     ",
+      "clean_text": "If none of those exceptions apply then the court lacks jurisdiction: Jones v Ministry of the Interior of the Kingdom of Saudi Arabia [2007] 1 AC 270, [9]; Benkharbouche v Embassy of the Republic of Sudan [2019] AC 777, [39]."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

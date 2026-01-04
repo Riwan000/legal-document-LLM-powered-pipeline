@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p41_291e95",
+  "title": "Vicarious Liability",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 41,
+      "paragraph": 1,
+      "line_start": 6,
+      "line_end": 23,
+      "raw_text": "      \n   \n \n            \n         \n           \n            \n           \n         \n            \n     \n \n            \n          \n           \n          \n           \n     ",
+      "clean_text": "The Claimant has not established that the Pegasus operator designated by Citizen Lab as ‘Kingdom’ is a person or persons for whom the Defendant has vicarious liability."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p24_d3add2",
+  "title": "Inspector Sing was entitled to immunity",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 24,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 14,
+      "raw_text": "\n                   \n                \n                 \n \n                \n               \n             \n                \n         \n \n         \n         \n    ",
+      "clean_text": "102. Laws J found that Inspector Sing (the first defendant) was entitled to immunity, and the plaintiffs appealed to the Court of Appeal against that finding."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

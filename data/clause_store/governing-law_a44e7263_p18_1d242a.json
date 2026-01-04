@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_a44e7263_p18_1d242a",
+  "title": "Translating lexical legal terms between English and Arabic.",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 18,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 8,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n193 \n \n  \nAltarabin, M., & Al -Hajjar, S. (2022). Semantic and Pragmatic Implications of Inaccurate Translations of \nShari’a -Court Phrases & Sentence Extracts into English. ",
+      "clean_text": "El-Farahaty, H. (2016). Translating lexical legal terms between English and Arabic. International Journal for the Semiotics. Law-Revue internationale de Sémiotique juridique, 29(2), 473-493. https://doi.org/10.1007/s11196-016-9460-2"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

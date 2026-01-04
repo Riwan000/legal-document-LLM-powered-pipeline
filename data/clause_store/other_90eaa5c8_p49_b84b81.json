@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p49_b84b81",
+  "title": "Vienna Convention on Consular Relations 1963",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 49,
+      "paragraph": 1,
+      "line_start": 18,
+      "line_end": 31,
+      "raw_text": "        \n \n                \n                \n                  \n               \n                  \n            \n               \n                \n \n               \n                  \n       ",
+      "clean_text": "all foreign detained people are entitled to under the Vienna Convention on Consular Relations 1963, as they had not been arrested nor were they likely to be (and so far as I know, were not)"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

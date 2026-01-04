@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p11_187cdf",
+  "title": "The provisions of the Act fall to be construed against the background of the principles of customary international law",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 11,
+      "paragraph": 1,
+      "line_start": 7,
+      "line_end": 51,
+      "raw_text": "              \n         \n \n               \n             \n             \n             \n              \n         \n         \n         \n           \n           \n           \n           \n           \n          \n        \n          \n          \n            \n          \n            \n          \n          \n             \n           \n          \n           \n         \n          \n            \n             \n          \n         \n        \n              \n            \n        \n          \n           \n       of judgments given against the United Kingdom in the courts of \nStates parties to the European Convention on State Immunity; to \nmake new provision with respect to the immunities and privileges \nof hea",
+      "clean_text": "We start with some observations on the relationship between the 1978 Act and public international law. The provisions of the Act fall to be construed against the background of the principles of customary international law, which at the time it was enacted, as now, drew a distinction between claims arising out of those activities which a state undertakes jure imperii , i.e. in the exercise of sovereign authority, and those arising out of activities which it undertakes jure gestionis , i.e. transactions of a kind which might appropriately be undertaken by private individuals instead of sovereign states, in particular what is done in the course of commercial or trading activities."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

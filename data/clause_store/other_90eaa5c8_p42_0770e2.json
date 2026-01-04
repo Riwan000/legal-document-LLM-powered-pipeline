@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p42_0770e2",
+  "title": "Fifth",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": "Saudi Arabia",
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 42,
+      "paragraph": 1,
+      "line_start": 6,
+      "line_end": 19,
+      "raw_text": " \n             \n           \n          \n \n           \n          \n          \n        \n           \n          \n \n                   \n  ",
+      "clean_text": "it is stated (sic) that there is “no clear evidence Saudi Arabian regime hackers are behind the spate of Pegasus attacks” [21/690]."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p25_45d877",
+  "title": "Laws J's language elsewhere smacks of a tentative obiter dictum",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 25,
+      "paragraph": 1,
+      "line_start": 7,
+      "line_end": 19,
+      "raw_text": "          \n              \n                 \n         \n  \n                 \n                   \n                 \n \n \n                  \n                   \n        ",
+      "clean_text": "'There is I think no authority on the point, but I incline to the view that the section's rationale may be … for the most part likely to involve ' (emphasis added)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p34_36da55",
+  "title": "The wording of the US provision (‘the tortious act or omission of that foreign state’) is critically different to s 5 of the SIA 1978, with its reference to ‘an act or omission in the United Kingdom’",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 34,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 26,
+      "raw_text": " \n                  \n                 \n                 \n \n           \n \n   \n \n          \n            \n       \n         \n          \n            \n           \n \n  \n \n            \n             \n         \n                 \n             \n       \n           ",
+      "clean_text": "146. Secondly, it seems to me that the wording of the US provision (‘the tortious act or omission of that foreign state’) is critically different to s 5 of the SIA 1978, with its reference to ‘an act or omission in the United Kingdom’ (emphasis added)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

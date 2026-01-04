@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p21_b9615b",
+  "title": "Description of the Basle Convention",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 21,
+      "paragraph": 1,
+      "line_start": 10,
+      "line_end": 48,
+      "raw_text": "    \n   \n         \n          \n            \n          \n              \n             \n    \n           \n \n            \n          \n            \n         \n           \n           \n           \n        \n         \n         \n         \n            \n         \n \n            \n          \n             \n  \n                    \n             \n              \n      \n               \n             \n            \n              \n            in representing, respectively, the Convention and the 1978 Act’s \nclearest departure from the tradition",
+      "clean_text": "'… a regional treaty drawn up under the auspices of the Council of Europe which identified specified categories of acts done by foreign states in the territory of the forum state which would not attract immunity. These treaties were concerned mainly with acts of a kind which would generally not attract immunity under the restrictive doctrine. But neither of them sought to codify the law of state immunity or to apply the restrictive doctrine generally. In addition, they have attracted limited international support.'"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

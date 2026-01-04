@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p33_5ded69",
+  "title": "US Code Amendment",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 33,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 17,
+      "raw_text": " \n         \n          \n          \n            \n             \n            \n        \n            \n           \n            \n             \n          \n            \n            \n       \n       ",
+      "clean_text": "138.\tIn light of the entire tort rule, the US Code was amended, and 28 USC 1605A inserted for terrorist attacks, in relation to which the said rule does not apply: see Heiser, [99]-[100]."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

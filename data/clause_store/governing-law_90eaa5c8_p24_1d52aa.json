@@ -1,0 +1,29 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p24_1d52aa",
+  "title": "Alternative arguments for Commissioner's lack of immunity",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "administrative",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 24,
+      "paragraph": 1,
+      "line_start": 2,
+      "line_end": 48,
+      "raw_text": "            \n                \n                 \n \n                \n               \n             \n                \n         \n \n         \n         \n         \n           \n          \n          \n           \n           \n          \n          \n               \n  \n                  \n \n             \n           \n              \n    \n               \n                   \n                   \n    \n                 \n              \n                \n                 \n             \n                 \n            \n                    \n                \n                  \n                  \n              \n                 \n                  \n                   101.\t\tLaws J handed down his judgment on 14 March 1",
+      "clean_text": "They also rely by Respondents' Notice on three alternative arguments that the Commissioner has no immunity because (i) the present action constitutes ‘proceedings in respect of … damage or loss of tangible property’ within Section 5(b) of the 1978 Act; (ii) the Commissioner instituted the present action and is therefore deemed to have submitted to the jurisdiction and waived any immunity under Sections 2(1) and (3)(a); and (iii) the Commissioner had submitted to the jurisdiction, by the giving by the Superintendent of the undertakings on the cross-appeal that the action constituted ‘proceedings in respect of … damage or loss of tangible property within s 5(b) of the SIA 1978 (at p664)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

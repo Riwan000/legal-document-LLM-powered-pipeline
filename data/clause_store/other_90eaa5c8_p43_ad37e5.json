@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p43_ad37e5",
+  "title": "Characteristics of malicious text messages",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 43,
+      "paragraph": 1,
+      "line_start": 15,
+      "line_end": 49,
+      "raw_text": "    \n          \n       \n           \n         \n \n           \n            \n          \n           \n          \n          \n           \n            \n           \n           \n           \n          \n          \n            \n         \n              \n         \n          \n       \n              \n                 \n                 \n             \n             \n                \n            \n              \n              \n                 undisputed evidence that the Claimant was subject to variou",
+      "clean_text": "Pegasus spyware can be implanted on a device by various means including by the user of the device clicking on a link in a malicious text message formulated so as to provoke the user’s specific interest. Once implanted and installed on the device, the spyware works by causing the device to communicate with a command and control (C&C) server operated by a Pegasus customer (eg, the foreign state which purchased it) so as to receive commands from, and transmit data to, the customer."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

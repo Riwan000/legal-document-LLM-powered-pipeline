@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p44_8fa361",
+  "title": "Dr Marczak identified one operator which he concluded with high confidence was linked to Saudi Arabia",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": "Saudi Arabia",
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 44,
+      "paragraph": 1,
+      "line_start": 13,
+      "line_end": 36,
+      "raw_text": " \n               \n     \n                \n         \n              \n                \n             \n              \n             \n            \n              \n             \n              \n              \n               \n             \n             \n               \n             \n            \n        \n                \n    ",
+      "clean_text": "Dr Marczak identified one operator which he concluded with high confidence was linked to Saudi Arabia, namely KINGDOM). He explains that the basis for this conclusion was that (a) this was the only operator whose domain names showed likely infections in Saudi Arabia based on Dr Marczak’s DNS Cache Probing results;"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p10_249eb9",
+  "title": "Immunity became more restricted.",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 10,
+      "paragraph": 1,
+      "line_start": 58,
+      "line_end": 61,
+      "raw_text": "Over time, as a matter of customary international law, and as sovereign States increasingly engaged in commercial enterprises, immunity became more restricted. It continued to attach to acts undertaken by a state jure imperii , ie, in the exercise of \nsovereign authority, but not to those arising out of activities which it undertook jure \ngestionis, ie, transactions of a kind which might appropriately be undertaken by private \nindividuals instead of sovereign states, in particular those which were done in the course of commercial or trading activiti",
+      "clean_text": "Over time, as a matter of customary international law, and as sovereign States increasingly engaged in commercial enterprises, immunity became more restricted. It continued to attach to acts undertaken by a state jure imperii , ie, in the exercise of sovereign authority, but not to those arising out of activities which it undertook jure gestionis, ie, transactions of a kind which might appropriately be undertaken by private individuals instead of sovereign states, in particular those which were done in the course of commercial or trading activities."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

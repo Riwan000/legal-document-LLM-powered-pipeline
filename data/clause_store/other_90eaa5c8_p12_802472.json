@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p12_802472",
+  "title": "Alternative remedy of declaration of incompatibility",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 12,
+      "paragraph": 1,
+      "line_start": 7,
+      "line_end": 19,
+      "raw_text": "       \n            \n         \n         \n          \n             \n        \n               \n            \n         \n           \n          \n  ",
+      "clean_text": "The alternative remedy of a declaration of incompatibility under section 4 is a remedy of last resort (Ghaidan at [46], Sheldrake at [28])."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

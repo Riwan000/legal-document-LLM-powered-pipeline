@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p20_abceae",
+  "title": "A state is immune in respect of proceedings relating to a contract of employment between a state and a person who at the time of the contract is neither a national of the UK nor habitually resident there",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 20,
+      "paragraph": 1,
+      "line_start": 7,
+      "line_end": 23,
+      "raw_text": "             \n           \n            \n          \n           \n           \n           \n           \n              \n             \n         \n     \n              \n                 \n                   \n \n     ",
+      "clean_text": "a state is immune in respect of proceedings relating to a contract of employment between a state and a person who at the time of the contract is neither a national of the UK nor habitually resident there"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

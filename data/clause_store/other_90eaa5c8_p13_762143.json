@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p13_762143",
+  "title": "Section 5",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 13,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 13,
+      "raw_text": " \n                    \n                \n      \n                \n                 \n                \n               \n           \n            \n         \n           \n        ",
+      "clean_text": "On its face, it is concerned with all acts and omissions in the UK, of whatever type (ie, both those done jure imperii and those done jure gestionis ) causing death, etc."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

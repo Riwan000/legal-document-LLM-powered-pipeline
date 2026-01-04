@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p33_138db0",
+  "title": "District of Columbia Court Decision",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 33,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 14,
+      "raw_text": " \n         \n          \n          \n            \n             \n            \n        \n            \n           \n            \n             \n          \n           ",
+      "clean_text": "140.\tThe District of Columbia Court found 28 USC 1605(a)(5)) was inapplicable (and so Ethiopia had immunity) because the entire tort did not occur in the US."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

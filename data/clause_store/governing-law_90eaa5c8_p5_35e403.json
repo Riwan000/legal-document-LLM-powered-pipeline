@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p5_35e403",
+  "title": "Purpose of the SIA 1978",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 41,
+      "raw_text": " \n            \n   \n \n                \n                \n               \n              \n            \n \n                \n                \n               \n                 \n               \n      \n \n   \n \n  \n                  \n              \n           \n               \n               \n            \n              \n                 \n               \n          \n               \n                \n               \n             \n             \n           \n \n               \n                \n             \n            ",
+      "clean_text": "25.\tHowever, while it is highly unlikely that Parliament intended to require courts to act contrary to international law unless the clear language of the SIA 1978 were to compel that conclusion, the statute ‘does not do more than this’ since it purports to deal comprehensively with the jurisdiction of the UK courts both to adjudicate upon claims against foreign States and to enforce by legal process judgments pronounced and orders made in the exercise of that adjudicative jurisdiction: Alcom, p600B."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

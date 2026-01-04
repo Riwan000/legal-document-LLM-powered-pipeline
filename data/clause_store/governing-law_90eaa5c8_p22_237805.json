@@ -1,0 +1,29 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p22_237805",
+  "title": "Immunity Claims",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 22,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 21,
+      "raw_text": " \n              \n               \n              \n            \n              \n    \n               \n              \n              \n               \n             \n                \n     ",
+      "clean_text": "The defendants maintained that the Court lacked jurisdiction, because the first defendant was entitled to diplomatic immunity and both defendants were protected by state immunity."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

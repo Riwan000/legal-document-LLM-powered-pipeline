@@ -1,0 +1,29 @@
+{
+  "clause_id": "conduct-discipline_90eaa5c8_p31_35f1a2",
+  "title": "To similar effect are Vidal-Hall v Google Inc [2014] 1 WLR 4155, [78], and Lloyd v Google LLC [2019] 1 WLR 1265, [47], both of which concerned alleged secret transnational tracking of internet users by Google in breach of data protection legislation. Although both Vidal-Hall and Lloyd were subject to appeal, the analysis on these issues was not revisited on appeal.",
+  "type": "conduct_discipline",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 31,
+      "paragraph": 1,
+      "line_start": 11,
+      "line_end": 37,
+      "raw_text": "\n               \n            \n                 \n     \n                   \n             \n                 \n               \n             \n            \n               \n             \n               \n                      \n           \n           \n              \n             \n              \n          \n          \n            \n           \n             \n          \n         ",
+      "clean_text": "To similar effect are Vidal-Hall v Google Inc [2014] 1 WLR 4155, [78], and Lloyd v Google LLC [2019] 1 WLR 1265, [47], both of which concerned alleged secret transnational tracking of internet users by Google in breach of data protection legislation. Although both Vidal-Hall and Lloyd were subject to appeal, the analysis on these issues was not revisited on appeal."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

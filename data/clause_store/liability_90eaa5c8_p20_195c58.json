@@ -1,0 +1,29 @@
+{
+  "clause_id": "liability_90eaa5c8_p20_195c58",
+  "title": "The judge said that a foreign state is not entitled to immunity from an action seeking money damages for personal injury or death caused by the tortious act or omission of that foreign state",
+  "type": "liability",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 20,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 14,
+      "raw_text": " \n                  \n                \n                    \n            \n           \n             \n           \n            \n          \n           \n           \n           \n      ",
+      "clean_text": "a foreign state is not entitled to immunity from an action seeking money damages ‘for personal injury or death . . caused by the tortious act or omission of that foreign state’"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

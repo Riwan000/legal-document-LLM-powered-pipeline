@@ -1,0 +1,32 @@
+{
+  "clause_id": "jurisdiction_a44e7263_p3_d3fdf9",
+  "title": "Although divorce documents are religion-related documents that incorporate Islamic terms, they are classified as legal document as they come under judicial writing that includes verdicts and texts by courts, along with sharia court that operates on the basis of state-stipulated regulations.",
+  "type": "jurisdiction",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 7,
+      "line_end": 11,
+      "raw_text": "h some options \nin the target language, such as the standardized o r normalized words.  \nMeanwhile, Palestinian translators tend to face lexical and semantic issues, which can \nadversely affect their translation work. For instance, Thawabteh and Najjar (2014) identified errors \nmade by tran",
+      "clean_text": "Although divorce documents are religion-related documents that incorporate Islamic terms, they are classified as legal document as they come under judicial writing that includes verdicts and texts by courts, along with sharia court that operates on the basis of state-stipulated regulations."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

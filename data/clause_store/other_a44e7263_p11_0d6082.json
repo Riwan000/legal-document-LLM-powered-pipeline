@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p11_0d6082",
+  "title": "The literal translation of قيام الزوجية.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 11,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 10,
+      "raw_text": "trimonial (p,.312)  \nconjugal rights:  Rights that each spouse can expect from the other, particularly sexual rights but \nalso the rights to society, comfort, and af",
+      "clean_text": "In translating سبق قيام الزوجية as ‘marriage relationship’ reflects the literal t ranslation of قيام الزوجية, where a noun phrase is used to translate a noun phrase."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p17_0f83b4",
+  "consistency_flag": "review_required",
+  "language": "ar",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

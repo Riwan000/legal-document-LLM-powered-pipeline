@@ -1,0 +1,29 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p29_84d7c9",
+  "title": "Paragraph [3.1(9)(b)] provides",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 29,
+      "paragraph": 1,
+      "line_start": 10,
+      "line_end": 44,
+      "raw_text": "       \n           \n \n         \n          \n  \n            \n          \n                \n              \n             \n             \n            \n             \n           \n         \n          \n             \n           \n             \n          \n          \n          \n            \n              \n             \n             \n         \n          \n         \n             \n          \n           \n           \n          127.\t\tThis ",
+      "clean_text": "Paragraph [3.1(9)(b)] provides (emphasis added): \n\"3.1 The claimant may serve a claim form out of the jurisdiction with the permission of the court under rule 6.36 where – \n… \n(9) A claim is made in tort where – \n(a) damage was sustained, or will be sustained, within the jurisdiction; or \n(b) damage which has been or will be sustained results from an act committed, or likely to be committed, within the jurisdiction.\""
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

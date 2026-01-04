@@ -95,9 +95,13 @@ def extract_clauses(document_id: str) -> Optional[Dict]:
     """Extract clauses from contract."""
     try:
         data = {"document_id": document_id}
-        response = requests.post(f"{API_BASE_URL}/api/extract-clauses", data=data, timeout=120)
+        # Increased timeout to 5 minutes (300 seconds) for large documents
+        response = requests.post(f"{API_BASE_URL}/api/extract-clauses", data=data, timeout=300)
         response.raise_for_status()
         return response.json()
+    except requests.exceptions.Timeout:
+        st.error("Clause extraction timed out. The document may be too large. Please try with a smaller document or contact support.")
+        return None
     except Exception as e:
         st.error(f"Error extracting clauses: {str(e)}")
         return None

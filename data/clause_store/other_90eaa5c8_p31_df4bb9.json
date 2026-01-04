@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p31_df4bb9",
+  "title": "The Divisional Court said at p81: ‘For the reasons we have already indicated, the operation of the keyboard by a computer operator produces a virtually instantaneous result on the magnetic disk of the computer even though it may be 10,000 miles away. It seems to us artificial to regard the act as having been done in one rather than the other place. But, in the position of having to choose on the facts of this case whether, after entering the computer in Parsipenny [New Jersey], the act of appropriation by inserting instructions on the disk occurred there or in St. Petersburg, we would opt for Parsipenny. The fact that the applicant was physically in St. Petersbourg is of far less significance than the fact that he was looking at and operating on magnetic disks located in Parsipenny. The essence of what he was doing was done there. Until the instruction is recorded on the disk, there is in fact no appropriation of the rights of Bank Artha Graha …’",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "administrative",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 31,
+      "paragraph": 1,
+      "line_start": 12,
+      "line_end": 52,
+      "raw_text": "\n            \n                 \n     \n                   \n             \n                 \n               \n             \n            \n               \n             \n               \n                      \n           \n           \n              \n             \n              \n          \n          \n            \n           \n             \n          \n             \n            \n         \n \n \n \n           \n            \n            \n           things happen in London, and they did so. Effectively the safe \nwas opened from afar so that its contents could be removed. It \nwould be artificial to say that the acts occurred only in Russia. \nOn the contrary, substantial and effective acts occurred in London. \n131.\t\tTo similar effect are Vidal-Hall v Google Inc [2014] 1 WLR 4155, [78], and Lloyd v \nGoogle LLC [2019] 1 WLR 1265, [47], both of which concerned alleged secret \ntransnational tracking of internet users by Google in breach of data protection legislation. Alt",
+      "clean_text": "The Divisional Court said at p81: ‘For the reasons we have already indicated, the operation of the keyboard by a computer operator produces a virtually instantaneous result on the magnetic disk of the computer even though it may be 10,000 miles away. It seems to us artificial to regard the act as having been done in one rather than the other place. But, in the position of having to choose on the facts of this case whether, after entering the computer in Parsipenny [New Jersey], the act of appropriation by inserting instructions on the disk occurred there or in St. Petersburg, we would opt for Parsipenny. The fact that the applicant was physically in St. Petersbourg is of far less significance than the fact that he was looking at and operating on magnetic disks located in Parsipenny. The essence of what he was doing was done there. Until the instruction is recorded on the disk, there is in fact no appropriation of the rights of Bank Artha Graha …’"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

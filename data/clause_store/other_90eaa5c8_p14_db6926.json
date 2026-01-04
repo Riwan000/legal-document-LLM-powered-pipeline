@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p14_db6926",
+  "title": "Although Lord Bingham pointed out in R (Jackson) v Attorney General [[2005] UKHL 56, [30].] that 'the literal meaning of even a very familiar expression may have to be rejected if it leads to an interpretation or consequence which Parliament could not have intended', this passage indicates that the grammatical meaning is the starting point and may not be rejected without cause.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 14,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 44,
+      "raw_text": " \n           \n          \n \n \n \n         \n       \n \n          \n           \n         \n            \n          \n           \n           \n            \n        \n \n        \n        \n            \n           \n             \n  \n \n            \n        \n         \n    \n \n           \n            \n           \n         \n \n           \n           \n  \n \n          \n           \n              \n       ",
+      "clean_text": "Although Lord Bingham pointed out in R (Jackson) v Attorney General [[2005] UKHL 56, [30].] that 'the literal meaning of even a very familiar expression may have to be rejected if it leads to an interpretation or consequence which Parliament could not have intended', this passage indicates that the grammatical meaning is the starting point and may not be rejected without cause."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

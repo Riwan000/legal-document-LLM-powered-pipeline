@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p50_3d5d0b",
+  "title": "Privilege and immunity",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 50,
+      "paragraph": 1,
+      "line_start": 13,
+      "line_end": 26,
+      "raw_text": "     \n               \n             \n \n                  \n                \n             \n            \n                 \n                 \n              \n                   \n               \n     ",
+      "clean_text": "However, given on its own case the two men were nothing to do with the Defendant, it is hard to see how any privilege could arise in relation to them. They were private citizens acting as such."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

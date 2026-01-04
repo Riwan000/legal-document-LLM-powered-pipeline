@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p43_219abf",
+  "title": "Claimant's online activities",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": "Saudi Arabia",
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 43,
+      "paragraph": 1,
+      "line_start": 5,
+      "line_end": 51,
+      "raw_text": "         \n          \n \n              \n                \n                    \n        \n              \n                  \n       \n          \n          \n       \n           \n         \n \n           \n            \n          \n           \n          \n          \n           \n            \n           \n           \n           \n          \n          \n            \n         \n              \n         \n          \n       \n              \n                 \n                 \n             \n             \n                \n            \n              \n              \n                 undisputed evidence that the Claimant was subject to various \nforms of online targeting not sued on in the claim which are \nattributable, either directly or as a matter of inference, to ",
+      "clean_text": "In consequence of his online activities, the Claimant has also been subject to various other forms of online targeting. This has included a concerted mass “spamming” of the Claimant’s Twitter account; the hacking of his Facebook account (such that his access to the account was reinstated only after Newsweek published an article entitled “Saudi Arabia’s government might be getting help from social media giants to shut down dissent” on 22 December 2017); the hacking of his personal website (as a result of which photographs and messages relating to the Saudi royal family were added to his home page); and the transmission of a large number of threatening messages, comments and videos in Arabic to his YouTube channel and mobile telephone."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p27_040810",
+  "title": "Statutory language",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 27,
+      "paragraph": 1,
+      "line_start": 11,
+      "line_end": 35,
+      "raw_text": "              \n        \n \n                   \n             \n                \n                \n                 \n                  \n              \n              \n               \n  \n                \n             \n               \n                 \n                  \n              \n            \n             \n           \n           \n           \n            ",
+      "clean_text": "For the reasons I have already explained, it is to be presumed that the grammatical meaning of an enactment is the meaning that was intended by the legislator. In my judgment, the grammatical meaning of s 5, and in particular the use of the indefinite article (death or personal injury caused by ‘an act or omission’) (emphasis added) means what it says."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

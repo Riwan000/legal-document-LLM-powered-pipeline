@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p31_acc2ef",
+  "title": "In R v Governor of Brixton Prison, ex p Levin [1997] QB 65, the United States sought Mr Levin’s extradition to face trial on 66 charges concerning his alleged unauthorised access to a bank's computer in the United States in order to transfer funds into various bank accounts controlled by him. He had gained access to the US computer by means of his own computer in Russia.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 31,
+      "paragraph": 1,
+      "line_start": 12,
+      "line_end": 38,
+      "raw_text": "       \n            \n                 \n     \n                   \n             \n                 \n               \n             \n            \n               \n             \n               \n                      \n           \n           \n              \n             \n              \n          \n          \n            \n           \n             \n          \n             \n          ",
+      "clean_text": "In R v Governor of Brixton Prison, ex p Levin [1997] QB 65, the United States sought Mr Levin’s extradition to face trial on 66 charges concerning his alleged unauthorised access to a bank's computer in the United States in order to transfer funds into various bank accounts controlled by him. He had gained access to the US computer by means of his own computer in Russia."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

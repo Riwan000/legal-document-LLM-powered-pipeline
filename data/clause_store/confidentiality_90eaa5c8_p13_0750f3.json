@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p13_0750f3",
+  "title": "An action for damages for torture",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 13,
+      "paragraph": 1,
+      "line_start": 5,
+      "line_end": 36,
+      "raw_text": "       \n                 \n                \n               \n           \n            \n         \n           \n          \n         \n        \n          \n            \n           \n          \n           \n        \n           \n          \n           \n            \n             \n           \n             \n            \n             \n              \n             \n                  \n                 \n            \n     ",
+      "clean_text": "'An action for damages for torture is a form of proceeding in respect of personal injury. It is inconceivable that Parliament legislated for the loss of State immunity when the acts causing that person injury are committed in the United Kingdom without having borne in mind its clearest international obligations to recognize the fundamental freedom from torture which everyone should enjoy everywhere.'"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

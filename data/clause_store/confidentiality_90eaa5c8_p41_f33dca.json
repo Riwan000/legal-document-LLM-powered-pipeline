@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p41_f33dca",
+  "title": "Circumstantial Evidence",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 41,
+      "paragraph": 1,
+      "line_start": 6,
+      "line_end": 28,
+      "raw_text": "        \n   \n \n            \n         \n           \n            \n           \n         \n            \n     \n \n            \n          \n           \n          \n           \n            \n           \n  \n \n            \n    ",
+      "clean_text": "the Defendant submits that the Claimant’s case as to the alleged infiltrations being carried out by the Defendant and / or its employees, officials and / or agents acting on its behalf is entirely circumstantial."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

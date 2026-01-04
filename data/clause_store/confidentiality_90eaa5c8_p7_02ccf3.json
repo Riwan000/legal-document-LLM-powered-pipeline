@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p7_02ccf3",
+  "title": "The Claimant submits that I can be satisfied on a balance of probabilities that the Defendant was responsible for the physical attack on him by several men in Knightsbridge in August 2018. Contrary to the Defendant's case, he says his case goes beyond mere assertion.",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 7,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 24,
+      "raw_text": " \n                  \n              \n               \n               \n    \n               \n               \n            \n      \n                \n       \n                \n             \n                \n               \n           \n                \n               \n                  \n                \n \n              \n ",
+      "clean_text": "The Claimant submits that I can be satisfied on a balance of probabilities that the Defendant was responsible for the physical attack on him by several men in Knightsbridge in August 2018. Contrary to the Defendant's case, he says his case goes beyond mere assertion. He relies on a combination of circumstances, "
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p13_f18cec",
+  "title": "In translating بائن بينونة كبرى as irrevocable in documents 11 and 6, the translators used the adaptation translation procedure, mainly because this concept does not exist in the TL.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 13,
+      "paragraph": 1,
+      "line_start": 10,
+      "line_end": 16,
+      "raw_text": "Number of the Document                  \nالخلوة  \n         Lawful privacy                                     19 \n \nThe term ‘lawful privacy’ was chosen based on the modulation translation procedure; it reflects \ntranslator’s understanding of the term as a state of privacy between couples on the condition of \nbeing lawful and n",
+      "clean_text": "In translating بائن بينونة كبرى as irrevocable in documents 11 and 6, the translators used the adaptation translation procedure, mainly because this concept does not exist in the TL. As a result, the translators adapted a term that conveyed its meaning - ‘irrevocable’ that means ‘cannot be revoked or cancelled’ and retroactive."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p19_5193d4",
+  "consistency_flag": "review_required",
+  "language": "ar",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

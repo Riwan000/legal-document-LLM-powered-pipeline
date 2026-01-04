@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p15_f9fedf",
+  "title": "Translation of Talaq Baen baynona sughra’بائن بينونة صغرى",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 15,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 8,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n190 \n \n  \nIn translating بائن بينونة كبرى  as ‘big baena divorce’ the term بائنة baen’  is translated by using \nborrowing translation procedure where the Arabic term ‘baena’ was borrowed from th",
+      "clean_text": "In documents 3, 7, 8, and 10, بائن بينونة صغرى was translated as ‘small baena divorce’, whereby literal translation procedure is used to translate بائنة as ‘baena’ through borrowing the term from the source language and using it in the target language."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p17_0f83b4",
+  "consistency_flag": "review_required",
+  "language": "ar",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

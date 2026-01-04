@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p16_3e2622",
+  "title": "Determinants behind the choice of a translation strategy",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 16,
+      "paragraph": 1,
+      "line_start": 7,
+      "line_end": 21,
+      "raw_text": "ments (2 -4 & 6), in \nwhich the translators used ‘udda’ and ‘Uddat’ instead of ‘Iddat’ which is t he accurate transcription \nof the word according to Al -Mawrid dictionary.  \n \n6. Transposition  \nHere is the last procedure for translation of divorce terms:  \n \nزوجية/ zawjeya/  \nTable 22: Translation of the termزوجية  /zawjeya/  \n \nArabic terms      English Translation                   Number of the Document  \nسبق قيام الزوجية                                                                      An existing state of matrimony                 \n   1, 9, 12 -14, and 16  \n \nTranslating سبق ",
+      "clean_text": "For the second objective, it is found that the determinants behind the choice of a translation strategy of divorce documents are language norms where dictionaries are consulted and translation process norms between a source text and a target text concerning translator’s decisions, some translators use their interpretation and understanding of the term as a basis for the translation, and language specificity which makes some structures are not translated due to their absence in the target language such as المفعول المطلق absolute object’ in ‘Baena baynona kubra and baena baynona sughra’."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p17_0f83b4",
+  "consistency_flag": "review_required",
+  "language": "ar",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

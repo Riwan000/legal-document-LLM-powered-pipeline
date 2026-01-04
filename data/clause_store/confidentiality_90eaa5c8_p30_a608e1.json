@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p30_a608e1",
+  "title": "The court will also have to consider what damages and other relief it should grant for the substantial injury caused—viz the improper obtaining of confidential and privileged information",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 30,
+      "paragraph": 1,
+      "line_start": 14,
+      "line_end": 49,
+      "raw_text": "   \n       \n               \n              \n               \n             \n           \n         \n            \n           \n         \n        \n           \n           \n              \n             \n            \n        \n         \n           \n         \n           \n            \n           \n          \n         \n         \n            \n          \n       \n \n          \n             \n              \n            would be so. But it would certainly contravene the spirit, and also \nwe thi",
+      "clean_text": "On the contrary, if the claimants make good the pleaded allegations at trial, then I think this is a very serious and substantial case indeed, with considerable potential ramifications. The cost of replacing the computer and the investigation/consultancy costs may not be very great, but the court will also have to consider what damages and other relief it should grant for the substantial injury caused—viz the improper obtaining of confidential and privileged information."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": true
+  }
+}

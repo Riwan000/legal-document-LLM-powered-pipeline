@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p23_1d3b6c",
+  "title": "They owe, and perform, important obligations to the State, but not all such obligations are owed in right of executive government.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 23,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 49,
+      "raw_text": " \n            \n          \n              \n        \n         \n              \n           \n              \n             \n          \n \n                  \n                     \n   \n           \n             \n        \n              \n          \n            \n           \n            \n           \n           \n           \n            \n             \n             \n            \n             \n          \n           \n           \n           \n          \n          \n             \n           \n             \n               \n          \n           \n          \n              \n         \n  \n They owe, and perform, important obligations to the State, but not \nall such obligation",
+      "clean_text": "They owe, and perform, important obligations to the State, but not all such obligations are owed in right of executive government. The issue on this part of the case does not in my judgment depend upon the well-established distinction between acts done jure imperii and acts done jure gestionis . Obviously the police function is not a commercial one; but it does not follow that it is a function of the executive. The divide between acts jure imperii and acts jure gestionis may be critical in a case where it is plain that what has been done has been done by the government, or by a putative separate entity so as potentially to engage section 14(2)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

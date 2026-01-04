@@ -1,0 +1,32 @@
+{
+  "clause_id": "other_90eaa5c8_p23_cc7350",
+  "title": "There is I think no authority on the point, but I incline to the view that the section's rationale may he lie in the fact that an accident causing personal injury, or some event causing damage to property (or its loss), is for the most part likely to involve acts or omissions by a servant of the foreign State in question which are incidental to the State's sovereign status, rather than integral to it.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 23,
+      "paragraph": 1,
+      "line_start": 11,
+      "line_end": 51,
+      "raw_text": "  \n \n                  \n                     \n   \n           \n             \n        \n              \n          \n            \n           \n            \n           \n           \n           \n            \n             \n             \n            \n             \n          \n           \n           \n           \n          \n          \n             \n           \n             \n               \n          \n           \n          \n              \n         \n  \n They owe, and perform, important obligations to the State, but not \nall such obligations are owed in right of executive government. \nThe issue on this part of the case does not in my judgment depend \nupon the well-established distinction betwe",
+      "clean_text": "There is I think no authority on the point, but I incline to the view that the section's rationale may he lie in the fact that an accident causing personal injury, or some event causing damage to property (or its loss), is for the most part likely to involve acts or omissions by a servant of the foreign State in question which are incidental to the State's sovereign status, rather than integral to it. Where, as here, property is seized pursuant to an order of the court, obtained following a direction of the Secretary of State following a request made at the international level, neither the seizure nor the property's later retention can in my judgment fall within Section 5(b)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

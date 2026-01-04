@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p19_f972de",
+  "title": "Exception to Sovereign Immunity",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 19,
+      "paragraph": 1,
+      "line_start": 9,
+      "line_end": 19,
+      "raw_text": "             \n                 \n             \n          \n \n                \n             \n               \n \n \n            ",
+      "clean_text": "'for personal injury or death caused by the tortious act or omission of that foreign state' or its officials or employees."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

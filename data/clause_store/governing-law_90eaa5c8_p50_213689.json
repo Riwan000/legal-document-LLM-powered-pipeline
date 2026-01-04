@@ -1,0 +1,29 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p50_213689",
+  "title": "Inherent jurisdiction",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 50,
+      "paragraph": 1,
+      "line_start": 13,
+      "line_end": 32,
+      "raw_text": "  \n               \n             \n \n                  \n                \n             \n            \n                 \n                 \n              \n                   \n               \n               \n     \n \n                 \n               \n                \n     ",
+      "clean_text": "It says the claim is misconceived, unviable and/or speculative nature that it is one which it would be appropriate for the Court to exercise its inherent jurisdiction to ensure that its process is not used for purposes which are not explicable or do not make sense."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

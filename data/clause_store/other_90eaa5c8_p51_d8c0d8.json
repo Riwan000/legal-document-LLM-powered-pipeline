@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p51_d8c0d8",
+  "title": "Determination of fifth issue in Claimant's favour",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 51,
+      "paragraph": 1,
+      "line_start": 9,
+      "line_end": 10,
+      "raw_text": "edings. It relies on Propend, p662, per Leggatt LJ, which \nI quoted earlier",
+      "clean_text": "it seems to me this fifth issue also must also be determined in his favour."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

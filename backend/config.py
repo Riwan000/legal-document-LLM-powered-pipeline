@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from pydantic_settings import BaseSettings
 from pydantic import ConfigDict
-from typing import Optional
+from typing import Optional, List, Dict
 
 
 class Settings(BaseSettings):
@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     DOCUMENTS_PATH: Path = Path("data/documents")
     TEMPLATES_PATH: Path = Path("data/templates")
     
+    # Clause Store Configuration
+    CLAUSE_STORE_PATH: Path = Path("data/clause_store")
+    
     # Chunking Configuration
     CHUNK_SIZE: int = 512
     CHUNK_OVERLAP: int = 50
@@ -37,9 +40,18 @@ class Settings(BaseSettings):
     OCR_SIMILARITY_THRESHOLD: float = 0.35  # Lower threshold for OCR documents due to text quality issues
     MIN_SIMILARITY_THRESHOLD: float = 0.25  # Absolute minimum threshold for any search (fallback for very low scores)
     
+    # Legal RAG Configuration
+    COVERED_TOPICS: List[str] = ["employment", "termination", "benefits", "compensation", "governing law", "dispute resolution"]
+    LEGAL_HIERARCHY_KEYWORDS: Dict[str, List[str]] = {
+        "law": ["law", "statute", "regulation", "governed by", "pursuant to", "in accordance with", "Saudi Labor Law", "Labor Law"],
+        "supremacy": ["override", "supersede", "prevail", "notwithstanding", "subject to", "in compliance with"],
+        "contract": ["agreement", "contract", "clause", "provision", "term", "stipulation"]
+    }
+    
     # API Configuration
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000
+    API_TIMEOUT: int = 300  # 5 minutes timeout for long operations
     
     model_config = ConfigDict(
         env_file=".env",

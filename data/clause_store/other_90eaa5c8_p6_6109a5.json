@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p6_6109a5",
+  "title": "Adopting the plain and literal approach to s.5",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 6,
+      "paragraph": 1,
+      "line_start": 3,
+      "line_end": 25,
+      "raw_text": "    \n                \n            \n            \n           \n                    \n               \n           \n               \n              \n                \n              \n  \n                \n                 \n             \n               \n                   \n                  \n                  \n   \n \n    ",
+      "clean_text": "31. Adopting the plain and literal approach to s.5, it is apparent in respect of the hacking claim (as well as the assault claim) that numerous acts and omissions causative of personal injury and damage to or loss of tangible property, and in respect of which the proceedings are brought, occurred in the UK."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

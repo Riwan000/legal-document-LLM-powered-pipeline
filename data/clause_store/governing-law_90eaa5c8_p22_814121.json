@@ -1,0 +1,29 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p22_814121",
+  "title": "Undertaking to the Court",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 22,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 26,
+      "raw_text": "   \n              \n               \n              \n            \n              \n    \n               \n              \n              \n               \n             \n                \n             \n        \n              \n              \n             \n ",
+      "clean_text": "The first defendant gave an undertaking to the Court that neither the documents nor copies thereof would be removed from the jurisdiction of the Court or from the High Commission and that copies of the documents would not be transmitted by fax."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

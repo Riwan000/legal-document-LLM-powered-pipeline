@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p42_5f28d9",
+  "title": "Fourth",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": "UAE",
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 42,
+      "paragraph": 1,
+      "line_start": 5,
+      "line_end": 27,
+      "raw_text": "\n \n             \n           \n          \n \n           \n          \n          \n        \n           \n          \n \n                   \n                \n             \n       \n \n                \n               \n             \n              \n        ",
+      "clean_text": "the Claimant has himself alerted this Court to the possibility that one of the Pegasus operators that Citizen Lab has considered to be associated with the Defendant could be linked to an externally focussed security agency of the UAE [3/36]."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

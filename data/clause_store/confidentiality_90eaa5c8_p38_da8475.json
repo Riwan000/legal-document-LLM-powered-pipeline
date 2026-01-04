@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p38_da8475",
+  "title": "Acceptance of expert evidence",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 38,
+      "paragraph": 1,
+      "line_start": 14,
+      "line_end": 25,
+      "raw_text": "    \n             \n             \n              \n          \n \n               \n \n             \n                  \n                      \n ",
+      "clean_text": "In the absence of any countervailing expert evidence on behalf of the Defendant, as I have said, I accept Dr Marczak’s evidence in full."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

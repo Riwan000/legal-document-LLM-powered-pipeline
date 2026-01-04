@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p44_891081",
+  "title": "Dr Marczak first publicly linked a case of spyware installation attributable to NSO",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": "UAE",
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 44,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 37,
+      "raw_text": " \n                \n                \n                \n              \n              \n              \n              \n               \n    \n                 \n              \n             \n               \n     \n                \n         \n              \n                \n             \n              \n             \n            \n              \n             \n              \n              \n               \n             \n             \n               \n             \n            \n        \n                \n                \n     ",
+      "clean_text": "Dr Marczak first publicly linked a case of spyware installation attributable to NSO by examining the behaviour of a device on clicking on a link in a malicious text message which had been sent to Ahmed Mansour, a human rights activist from the UAE. As a result of that examination, Dr Marczak was able to establish that the information received by the device when that malicious link was clicked on had certain ‘fingerprints’ which were also evident in responses communicated from a series of other IP addresses."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

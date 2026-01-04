@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p44_483314",
+  "title": "Furthermore, Dr Marczak is not aware of any additional targets of KINGDOM",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": "Saudi Arabia",
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 44,
+      "paragraph": 1,
+      "line_start": 13,
+      "line_end": 32,
+      "raw_text": "\n               \n     \n                \n         \n              \n                \n             \n              \n             \n            \n              \n             \n              \n              \n               \n             \n             \n               \n          ",
+      "clean_text": "Furthermore, Dr Marczak is not aware of any additional targets of KINGDOM that are not clearly linked to Saudi Arabia, and he is also unaware of any individuals clearly linked to Saudi Arabia who were targeted in 2017 or 2018 by a Pegasus operator other than KINGDOM:"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

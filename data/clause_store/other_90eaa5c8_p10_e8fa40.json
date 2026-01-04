@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p10_e8fa40",
+  "title": "The courts of a country will not implead a foreign sovereign, that is, they will not by their process make him against his will a party to legal proceedings whether the proceedings involve process against his person or seek to recover from him specific property or damages.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 10,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 11,
+      "raw_text": " \n                  \n            \n \n                 \n                   \n                  \n \n \n                  \n            ",
+      "clean_text": "The classic statement was that of Lord Atkin in Cia Naviera Vascongada v Steamship Cristina; (The Cristina) [1938] AC 485, 490: "
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

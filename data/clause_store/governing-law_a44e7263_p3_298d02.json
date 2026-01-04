@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_a44e7263_p3_298d02",
+  "title": "ii. The use of archaic, Latin and French words:",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 7,
+      "line_end": 17,
+      "raw_text": "tions \nin the target language, such as the standardized o r normalized words.  \nMeanwhile, Palestinian translators tend to face lexical and semantic issues, which can \nadversely affect their translation work. For instance, Thawabteh and Najjar (2014) identified errors \nmade by translators pertaining to syntax, structure, and tenor; attributable to inadequate linguistic \nknowledge and insufficient tr aining. In another study, ElHaj Ahmed (2017) discovered that there \nis poor source text comprehension, lack of translation expertise, and inability to generate more \neffective target texts, which may lead to textual issues. Failure to apply the correct procedures \nwhen producing a coherent and cohesive English target text becomes apparent in the errors \nsprawled at the textual level. Notably, omission happens to be a strateg y which is used by many \ntranslators to prevent producing erroneous translations. Accurate translation str",
+      "clean_text": "ii. The use of archaic, Latin and French words: Old and Middle English influenced Modern English through the introduction of Archaic expressions into legal documents and poetry. Words such as 'hereof', 'thereof', and 'w hereof’ are examples of archaic words (Tiersma,1999; & Alcaraz Varó and Hughes,2002). However, a tendency to use simple words in legal documents started with the plain language movement where complex expressions are substituted by familiar words. For example, ‘joint and several’, and ‘instrument’ were replaced with ‘together and separately’, and ‘legal documents’ respectively (Triebel, 2009). Mellinkoff, (1963, p.58) suggests that French words are widely used as legal terms, such as: ‘court’, ‘evidence’, ‘jury’, ‘judge’ and ‘verdict’, ‘attorney general’. Yet, examples of Latin terms used in English law are “Minor which refers to a party in a case, bona fida, interalia, and ipso facto” (El-Farahaty 2015, P.21)"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

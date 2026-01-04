@@ -44,31 +44,91 @@ class FileParser:
                 total_pages = len(pdf_reader.pages)
                 
                 # Extract text from each page
+                pages_needing_ocr = []
                 for page_num in range(total_pages):
                     page = pdf_reader.pages[page_num]
                     text = page.extract_text()
                     
-                    # Only add non-empty pages
-                    if text.strip():
+                    # Always add the page, even if text is minimal
+                    # This ensures we don't lose any content
+                    text = text.strip() if text else ""
+                    
+                    if text:
+                        # Page has text, add it
                         text_pages.append((text, page_num + 1, False))  # 1-indexed pages, not OCR
+                    else:
+                        # Page has no text - might be image-based, mark for OCR
+                        pages_needing_ocr.append(page_num + 1)
                         
         except Exception as e:
             raise ValueError(f"Error parsing PDF {file_path}: {str(e)}")
         
-        # If no text extracted, try OCR (for scanned/image-based PDFs)
-        if not text_pages and OCR_AVAILABLE:
+        # Try OCR for pages that had no text (per-page OCR fallback)
+        if pages_needing_ocr and OCR_AVAILABLE:
             try:
-                ocr_pages = FileParser._parse_pdf_with_ocr(file_path)
-                # Mark all OCR pages as using OCR
-                text_pages = [(text, page_num, True) for text, page_num in ocr_pages]
-                used_ocr = True
+                # Try OCR for specific pages that failed text extraction
+                ocr_results = FileParser._parse_pdf_with_ocr_selective(file_path, pages_needing_ocr)
+                for text, page_num in ocr_results:
+                    if text:  # Only add if OCR found text
+                        text_pages.append((text, page_num, True))  # Mark as OCR
             except Exception as ocr_error:
-                # If OCR fails, log warning but don't fail completely
-                print(f"Warning: OCR extraction failed: {str(ocr_error)}")
-                print("Note: Install Tesseract OCR for scanned PDF support.")
-                print("Windows: Download from https://github.com/UB-Mannheim/tesseract/wiki")
-                print("Linux: sudo apt-get install tesseract-ocr")
-                print("macOS: brew install tesseract")
+                # If selective OCR fails, try full document OCR
+                if not text_pages:  # Only if we have NO text at all
+                    try:
+                        ocr_pages = FileParser._parse_pdf_with_ocr(file_path)
+                        text_pages = [(text, page_num, True) for text, page_num in ocr_pages]
+                    except Exception as full_ocr_error:
+                        print(f"Warning: OCR extraction failed: {str(full_ocr_error)}")
+                        print("Note: Install Tesseract OCR for scanned PDF support.")
+        
+        # Ensure we have at least some pages - if not, it's likely a problem
+        if not text_pages:
+            print(f"Warning: No text extracted from PDF {file_path}")
+            print("This might indicate:")
+            print("  1. PDF is image-based and OCR is not available")
+            print("  2. PDF is corrupted or encrypted")
+            print("  3. PDF has no extractable text content")
+        
+        return text_pages
+    
+    @staticmethod
+    def _parse_pdf_with_ocr_selective(file_path: Path, page_numbers: List[int]) -> List[Tuple[str, int]]:
+        """
+        Parse specific pages of PDF using OCR (for pages that failed text extraction).
+        
+        Args:
+            file_path: Path to PDF file
+            page_numbers: List of page numbers (1-indexed) to process with OCR
+            
+        Returns:
+            List of tuples: (text, page_number)
+        """
+        if not OCR_AVAILABLE:
+            return []
+        
+        text_pages = []
+        
+        try:
+            # Convert PDF pages to images
+            images = convert_from_path(str(file_path), dpi=300, first_page=min(page_numbers), last_page=max(page_numbers))
+            
+            # Map image indices to actual page numbers
+            page_map = {i: page_num for i, page_num in enumerate(range(min(page_numbers), max(page_numbers) + 1), start=0)}
+            
+            # Extract text from specified pages using OCR
+            for img_idx, image in enumerate(images):
+                actual_page = page_map.get(img_idx)
+                if actual_page and actual_page in page_numbers:
+                    try:
+                        text = pytesseract.image_to_string(image, lang='eng')
+                        text = text.strip()
+                        if text:
+                            text_pages.append((text, actual_page))
+                    except Exception as e:
+                        print(f"Warning: OCR failed for page {actual_page}: {str(e)}")
+            
+        except Exception as e:
+            print(f"Warning: Selective OCR failed: {str(e)}")
         
         return text_pages
     
@@ -109,9 +169,9 @@ class FileParser:
                     # Clean up text
                     text = text.strip()
                     
-                    # Only add non-empty pages
-                    if text:
-                        text_pages.append((text, page_num))
+                    # Always add page, even if text is minimal (to ensure coverage)
+                    # Empty text will be handled by chunking
+                    text_pages.append((text, page_num))
                 except pytesseract.TesseractNotFoundError:
                     raise RuntimeError(
                         "Tesseract OCR not found. Please install Tesseract:\n"

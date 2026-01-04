@@ -1,0 +1,29 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p27_ecc05e",
+  "title": "Heiser v Islamic Republic of Iran",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 27,
+      "paragraph": 1,
+      "line_start": 11,
+      "line_end": 48,
+      "raw_text": "             \n        \n \n                   \n             \n                \n                \n                 \n                  \n              \n              \n               \n  \n                \n             \n               \n                 \n                  \n              \n            \n             \n           \n           \n           \n            \n             \n            \n              \n         \n         \n            \n             \n            \n           \n            \n            \n           \n            (b) Does the claim fail ",
+      "clean_text": "'6. The issue which may arise under the State Immunity Act is whether section 5 would apply if this were a case which arose in the United Kingdom. By way of analogy, the question will become whether the death or personal injury had been caused ‘by an act or omission in the United States’. 7. The essential submission for the claimants at this stage is that there is a good arguable case that there would be jurisdiction if a similar action were to arise in the United Kingdom, on the basis of a conspiracy being regarded as a composite act.'"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

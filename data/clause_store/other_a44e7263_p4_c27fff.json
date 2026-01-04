@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p4_c27fff",
+  "title": "Formality and Highly decorative terms",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 4,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 16,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n179 \n \n  \n \niii. Nominalization where a verb or an adjecti ve is changed to a noun by adding suffixes - ‘tion’, \n‘dom’, and ‘ment’. For example, foundation, freedom and payment (Almanna,2017).  In \nnominalization, meaning lacks a tense, therefore, time modality and agent are missing from the \nsentence (Farhaty,2015). Nevertheless, Tiersma (1999) envisages nominalization as useful in cases \nwhere laws and regulations have to be stated as broadly as possible.   \n \niv. Doublets and triplets: doublets  and triplets are defined as the use of two or three words together \nto convey a single legal concept. Examples of doublets are: “null and void, fit and proper, perform \nand discharge” (Van Dijk, 1981, p.2",
+      "clean_text": "ii. Formality and Highly decorative terms: El-Farahaty (2015, P.35) argues Arabic, formality is made through forms of address or honorary titles due to the diverse social and political backgrounds of different Arab countries.  This example is taken from a mutual cooperation between Iraq and Turkey:  “حضرة صاحب الجلالة الملك فيصل الثاني ملك العراق، صاحب الفخامة السيد نوري السعيد رئيس الوزراء، صاحب المعالي البروفسور فؤاد كوبرولو وزير الخارجية” Mansoor, 1965 a, p.55)  From Lataiwish’s (1995, p.256) perspective, expressions that signify a person’s title such as; استاذ، سيادة، سعادة، حضرة، سيدناare commonly used in Arabic. They typically help to distinguish between characters of different social statuses and are often used for courtesy and respect to addressee."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p17_da3e7d",
+  "consistency_flag": "review_required",
+  "language": "ar",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

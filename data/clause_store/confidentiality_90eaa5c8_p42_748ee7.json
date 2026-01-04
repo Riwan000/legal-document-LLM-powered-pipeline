@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p42_748ee7",
+  "title": "The Claimant’s profile and activities",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 42,
+      "paragraph": 1,
+      "line_start": 18,
+      "line_end": 24,
+      "raw_text": "       \n                \n             \n       \n \n                \n          ",
+      "clean_text": "and his targeting by the Defendant by means other than the Pegasus infection"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

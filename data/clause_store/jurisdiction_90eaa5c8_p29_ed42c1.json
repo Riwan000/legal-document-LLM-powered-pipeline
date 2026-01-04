@@ -1,0 +1,29 @@
+{
+  "clause_id": "jurisdiction_90eaa5c8_p29_ed42c1",
+  "title": "The approach of the English courts to the predecessor to [3.9(1)(b)] was that it was sufficient that a ‘substantial and efficacious act’, and not the entire tort, be committed within the jurisdiction",
+  "type": "jurisdiction",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 29,
+      "paragraph": 1,
+      "line_start": 10,
+      "line_end": 37,
+      "raw_text": "      \n           \n \n         \n          \n  \n            \n          \n                \n              \n             \n             \n            \n             \n           \n         \n          \n             \n           \n             \n          \n          \n          \n            \n              \n             \n             \n ",
+      "clean_text": "129. The approach of the English courts to the predecessor to [3.9(1)(b)] was that it was sufficient that a ‘substantial and efficacious act’, and not the entire tort, be committed within the jurisdiction: Metall und Rohstoff AG v Donaldson Lutfin & Jenrette Inc [1990] 1 QB 391, p437A-G, a case under the old RSC r 11:"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

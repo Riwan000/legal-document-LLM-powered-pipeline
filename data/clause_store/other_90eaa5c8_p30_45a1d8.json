@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p30_45a1d8",
+  "title": "The removal took place in London",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 30,
+      "paragraph": 1,
+      "line_start": 14,
+      "line_end": 35,
+      "raw_text": "             \n       \n               \n              \n               \n             \n           \n         \n            \n           \n         \n        \n           \n           \n              \n             \n            \n        \n         \n           \n         \n     ",
+      "clean_text": "It should not make a difference that, in a digital age of almost instantaneous communication, the documents are stored in digital form rather than hard copy and information is transmitted electronically abroad where it is read. The removal took place in London."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

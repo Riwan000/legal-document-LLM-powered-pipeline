@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_a44e7263_p1_2e431e",
+  "title": "Apart from competency, legal translation demands in-depth knowledge of legal and linguistic systems particularly when culture-specific and system-based terms are embedded.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 1,
+      "paragraph": 1,
+      "line_start": 10,
+      "line_end": 16,
+      "raw_text": "Mohamed Abdou Moindjie & Ilangko Subramaniam  \n \nABSTRACT  \n \nThis study is about the translatability of Arabic religious legal terms in Palestinian divorce \ndocuments. It is a qualitative descriptive study which aims at exploring the translator’s choices \nand decisions in dealing with divorce terminologies to dete",
+      "clean_text": "Apart from competency, legal translation demands in -depth knowledge of legal and linguistic systems particularly when culture -specific and system -based terms are embedded. Notably, one should be knowledgeable in the syntax and semantic rules of both the source and the target texts (El-Farahaty, 2016; Ali, 2016)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": "other_a44e7263_p16_f8ceec",
+  "consistency_flag": "review_required",
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

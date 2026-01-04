@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p33_525b08",
+  "title": "Entire Tort Rule",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 33,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 26,
+      "raw_text": " \n         \n          \n          \n            \n             \n            \n        \n            \n           \n            \n             \n          \n            \n            \n       \n         \n          \n          \n            \n  \n                  \n               \n   \n                 \n              ",
+      "clean_text": "[a]lthough [the words of the statute are] cast in terms that may be read to require that only the injury rather than the tortious acts occur in the United States, the Supreme Court has held that this exception ‘covers only torts occurring within the territorial jurisdiction of the United States.’ ”"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

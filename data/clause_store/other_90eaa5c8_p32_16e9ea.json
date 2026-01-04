@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p32_16e9ea",
+  "title": "Entire tort rule",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 32,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 28,
+      "raw_text": "  \n             \n               \n                 \n           \n                  \n               \n                \n              \n           \n                \n                  \n             \n                 \n      \n         \n            \n             \n          \n             \n",
+      "clean_text": "For this exception to apply, however, the ‘entire tort’ must be committed in the United States. This so-called “entire tort” rule was first articulated by the Supreme Court in Argentine Republic v. Amerada Hess Shipping Corp., 488 U.S. 428, 109 S.Ct. 683, 102 L.Ed.2d 818 (1989)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

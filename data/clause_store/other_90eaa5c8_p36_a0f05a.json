@@ -1,0 +1,32 @@
+{
+  "clause_id": "other_90eaa5c8_p36_a0f05a",
+  "title": "Exception in s 5 of the SIA 1978",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 36,
+      "paragraph": 1,
+      "line_start": 11,
+      "line_end": 25,
+      "raw_text": "      \n           \n                  \n            \n \n                 \n              \n                 \n                \n                 \n                \n          \n \n                 \n     ",
+      "clean_text": "whether, on the balance of probabilities, the claim falls within the exception in s 5 of the SIA 1978, in accordance with the approach adopted by the Court of Appeal in Al-Adsani (No 2), p545."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

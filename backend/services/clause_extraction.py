@@ -8,6 +8,8 @@ import ollama
 import json
 from backend.config import settings
 from backend.services.document_ingestion import DocumentIngestionService
+from backend.services.legal_hierarchy_service import LegalHierarchyService
+from backend.services.structured_clause_extraction import StructuredClauseExtractionService
 
 
 class ClauseExtractionService:
@@ -19,11 +21,16 @@ class ClauseExtractionService:
         # Connect to local Ollama server
         self.ingestion_service = DocumentIngestionService()
         # For parsing documents
+        self.hierarchy_service = LegalHierarchyService()
+        # For detecting legal hierarchy and extracting metadata
+        self.structured_extractor = StructuredClauseExtractionService()
+        # For structured clause extraction with authority modeling
     
     def extract_clauses(
         self,
         file_path: str,
-        document_id: str
+        document_id: str,
+        use_structured: bool = True
     ) -> List[Dict[str, Any]]:
         """
         Extract clauses from a contract document.
@@ -31,43 +38,75 @@ class ClauseExtractionService:
         Args:
             file_path: Path to the contract file
             document_id: Unique document identifier
+            use_structured: If True, use structured extraction engine (default: True)
             
         Returns:
             List of clause dictionaries with: type, text, page_number
+            If use_structured=True, returns structured clauses with authority and evidence
         """
         from pathlib import Path
         
         file_path = Path(file_path)
         
-        # Parse document to get pages with text
-        pages = self.ingestion_service.parser.parse_file(file_path)
-        # Get list of (text, page_number) tuples
+        # Use structured extraction if requested (default)
+        if use_structured:
+            try:
+                structured_clauses = self.structured_extractor.extract_structured_clauses(
+                    str(file_path), document_id
+                )
+                # Convert to dict format for backward compatibility
+                return [self._structured_to_dict(clause) for clause in structured_clauses]
+            except Exception as e:
+                print(f"Structured extraction failed, falling back to legacy: {str(e)}")
+                # Fall through to legacy extraction
         
+        # Legacy extraction method
+        pages = self.ingestion_service.parser.parse_file(file_path)
         if not pages:
             return []
         
-        # Extract clauses from each page
         all_clauses = []
-        
         for page_data in pages:
-            # Handle both old format (text, page_number) and new format (text, page_number, is_ocr)
             if len(page_data) == 3:
                 text, page_number, is_ocr = page_data
             else:
-                # Backward compatibility: assume not OCR if not specified
                 text, page_number = page_data
                 is_ocr = False
             
-            # Process each page
             page_clauses = self._extract_clauses_from_page(text, page_number, document_id)
-            # Extract clauses from this page
             all_clauses.extend(page_clauses)
-            # Add to total list
         
-        # Deduplicate clauses (same text might appear on multiple pages)
         unique_clauses = self._deduplicate_clauses(all_clauses)
-        
         return unique_clauses
+    
+    def _structured_to_dict(self, clause) -> Dict[str, Any]:
+        """Convert StructuredClause to dict format for backward compatibility."""
+        evidence = clause.evidence[0] if clause.evidence else None
+        return {
+            'clause_id': clause.clause_id,
+            'type': clause.type.value if hasattr(clause.type, 'value') else str(clause.type),
+            'title': clause.title,
+            'text': evidence.clean_text if evidence else '',
+            'raw_text': evidence.raw_text if evidence else '',
+            'page_number': evidence.page if evidence else 0,
+            'paragraph': evidence.paragraph if evidence else None,
+            'line_start': evidence.line_start if evidence else None,
+            'line_end': evidence.line_end if evidence else None,
+            'document_id': clause.clause_id.split('_')[1] if '_' in clause.clause_id else '',
+            'authority_level': clause.authority_level.value if hasattr(clause.authority_level, 'value') else str(clause.authority_level),
+            'can_override_contract': clause.can_override_contract,
+            'overrides': clause.overrides,
+            'jurisdiction': clause.jurisdiction,
+            'subtype': clause.subtype,
+            'explicitly_provided': clause.explicitly_provided,
+            'linked_clause_id': clause.linked_clause_id,
+            'consistency_flag': clause.consistency_flag,
+            'language': clause.language,
+            'topics': clause.metadata.get('topics', []),
+            'hierarchy_level': 'law' if clause.authority_level.value == 'supreme' else 'contract',
+            'legal_supremacy': clause.can_override_contract,
+            'start_index': 0  # For backward compatibility
+        }
     
     def _extract_clauses_from_page(
         self,
@@ -208,18 +247,45 @@ JSON response:"""
             if isinstance(parsed_clauses, list):
                 for clause in parsed_clauses:
                     if isinstance(clause, dict) and 'text' in clause:
+                        clause_text = clause['text']
+                        
+                        # Detect hierarchy level
+                        hierarchy_level = self.hierarchy_service.detect_hierarchy_level(clause_text)
+                        
+                        # Detect supremacy clause
+                        is_supremacy = self.hierarchy_service.is_supremacy_clause(clause_text)
+                        
+                        # Extract jurisdiction
+                        jurisdiction = self.hierarchy_service.extract_jurisdiction(clause_text)
+                        
+                        # Extract topics
+                        topics = self.hierarchy_service.extract_topics(clause_text)
+                        
+                        # Generate clause ID
+                        clause_id = f"clause_{page_number}_{len(clauses) + 1}"
+                        
                         # Validate clause has required fields
                         clauses.append({
                             'type': clause.get('type', 'Unknown'),
                             # Clause type (Payment Terms, etc.)
-                            'text': clause['text'],
+                            'text': clause_text,
                             # Verbatim clause text
                             'page_number': page_number,
                             # Page where clause appears
                             'document_id': document_id,
                             # Source document
-                            'start_index': clause.get('start_index', 0)
+                            'start_index': clause.get('start_index', 0),
                             # Character position in page (if provided)
+                            'clause_id': clause_id,
+                            # Unique clause identifier
+                            'hierarchy_level': hierarchy_level.value,
+                            # Legal hierarchy level
+                            'legal_supremacy': is_supremacy,
+                            # Supremacy indicator
+                            'jurisdiction': jurisdiction,
+                            # Jurisdiction
+                            'topics': topics
+                            # Topics/keywords
                         })
             
         except json.JSONDecodeError as e:

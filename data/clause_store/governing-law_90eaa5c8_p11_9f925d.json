@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p11_9f925d",
+  "title": "The restrictive theory of immunity",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 11,
+      "paragraph": 1,
+      "line_start": 8,
+      "line_end": 38,
+      "raw_text": "     \n \n               \n             \n             \n             \n              \n         \n         \n         \n           \n           \n           \n           \n           \n          \n        \n          \n          \n            \n          \n            \n          \n          \n             \n           \n          \n           \n         \n          \n     ",
+      "clean_text": "This came to be known as the restrictive theory of immunity, which had by then been adopted by the common law in this country. See Alcom Ltd. v Republic of Colombia [1984] AC 580 at pp. 597-599, Playa Larga and Marble Island (Owners of Cargo Lately Laden on Board) v I Congreso del Partido [1983] 1 AC 244 at pp. 261-262, and Benkharbouche at [8]."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

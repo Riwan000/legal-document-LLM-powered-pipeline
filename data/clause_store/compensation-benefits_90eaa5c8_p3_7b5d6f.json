@@ -1,0 +1,29 @@
+{
+  "clause_id": "compensation-benefits_90eaa5c8_p3_7b5d6f",
+  "title": "Determining whether a case falls within an exception",
+  "type": "compensation_benefits",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 2,
+      "line_end": 31,
+      "raw_text": "         \n                 \n                \n                \n                \n              \n              \n            \n        \n                \n                 \n             \n              \n                  \n           \n        \n            \n          \n      \n             \n                \n                \n              \n                  \n    \n  \n                \n              \n          \n      ",
+      "clean_text": "The question of whether the case falls within one of the exceptions is to be determined on the balance of probabilities as a preliminary issue: JH Rayner (Mincing Lane) Ltd v Department of Trade and Industry [1989] Ch 72, 193-194 (Kerr LJ) and 252 (Ralph Gibson LJ), applied in London Steam Ship Owners’ Mutual Insurance Associated Limited v Kingdom of Spain [2020] 1 WLR 4943, 4956 at [30] per Henshaw J."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

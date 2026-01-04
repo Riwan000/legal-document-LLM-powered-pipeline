@@ -1,0 +1,32 @@
+{
+  "clause_id": "confidentiality_90eaa5c8_p6_1b8302",
+  "title": "The Claimant submits that the text of s 5 draws no apparent distinction between sovereign and private acts.",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 6,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 33,
+      "raw_text": " \n                \n                 \n                \n            \n            \n           \n                    \n               \n           \n               \n              \n                \n              \n  \n                \n                 \n             \n               \n                   \n                  \n                  \n   \n \n                  \n              \n                \n                 \n              \n               \n              \n                 \n          ",
+      "clean_text": "The Claimant submits that the text of s 5 draws no apparent distinction between sovereign and private acts. On its plain terms, s 5 applies to both categories of act. The text simply refers to injury or damage ‘caused by an act or omission in the United Kingdom’. That meaning should be applied without the interpolation advanced by the Defendant, in accordance with the presumption that the grammatical meaning of an enactment is the meaning that was intended by the legislator."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

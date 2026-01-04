@@ -1,0 +1,32 @@
+{
+  "clause_id": "salary-wages_a44e7263_p4_1a6712",
+  "title": "Nominalization",
+  "type": "salary_wages",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 4,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 11,
+      "raw_text": "  \nVol. 19. No. 5 (2022).  176-194. ISSN: 1823 -884x   \n \n179 \n \n  \n \niii. Nominalization where a verb or an adjecti ve is changed to a noun by adding suffixes - ‘tion’, \n‘dom’, and ‘ment’. For example, foundation, freedom and payment (Almanna,2017).  In \nnominalization, meaning lacks a tense, therefore, time modality and agent are missing from the \nsentence (Farhaty,2015). Nevertheless, Tiersma (1999) envisages nominalization as useful in c",
+      "clean_text": "iii. Nominalization where a verb or an adjecti ve is changed to a noun by adding suffixes - ‘tion’, ‘dom’, and ‘ment’. For example, foundation, freedom and payment (Almanna,2017).  In nominalization, meaning lacks a tense, therefore, time modality and agent are missing from the sentence (Farhaty,2015). Nevertheless, Tiersma (1999) envisages nominalization as useful in cases where laws and regulations have to be stated as broadly as possible."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": true
+  }
+}

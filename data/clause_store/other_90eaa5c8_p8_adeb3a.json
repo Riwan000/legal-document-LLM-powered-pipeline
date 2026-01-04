@@ -1,0 +1,32 @@
+{
+  "clause_id": "other_90eaa5c8_p8_adeb3a",
+  "title": "Consider various Hansard materials",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 8,
+      "paragraph": 1,
+      "line_start": 4,
+      "line_end": 24,
+      "raw_text": "      \n            \n \n   \n \n              \n \n               \n                 \n                \n           \n                 \n             \n               \n               \n                   \n            \n                   \n            \n              \n           ",
+      "clean_text": "In the event I were to conclude that s 5 is ambiguous, Mr White invited me, in accordance with Pepper v Hart [1993] AC 593, to consider various Hansard materials in relation to the passage of the Bill which became the SIA 1978 which he said supported his position."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

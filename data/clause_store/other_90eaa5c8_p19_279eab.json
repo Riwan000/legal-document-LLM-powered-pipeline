@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_90eaa5c8_p19_279eab",
+  "title": "Sovereign Immunity",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 19,
+      "paragraph": 1,
+      "line_start": 9,
+      "line_end": 28,
+      "raw_text": "              \n                 \n             \n          \n \n                \n             \n               \n \n \n            \n              \n             \n \n             \n           \n              \n                 \n                \n  ",
+      "clean_text": "The Court therefore considered the question of sovereign immunity and whether the assassination was an act covered by immunity under the Foreign State Immunities Act 1976 (FSIA), contained in Title 28 of the United States Code (USC)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

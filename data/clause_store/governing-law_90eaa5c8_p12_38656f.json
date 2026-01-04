@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_90eaa5c8_p12_38656f",
+  "title": "International law obligations and statutory language",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 12,
+      "paragraph": 1,
+      "line_start": 7,
+      "line_end": 28,
+      "raw_text": "  \n            \n         \n         \n          \n             \n        \n               \n            \n         \n           \n          \n        \n           \n          \n         \n            \n   \n            \n              \n                \n          ",
+      "clean_text": "Paragraph 39 accords with the well-understood rule that international law obligations, while relevant in resolving any ambiguity in the meaning of statutory language, are not capable of overriding the terms of a statute which lack such ambiguity:"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}
