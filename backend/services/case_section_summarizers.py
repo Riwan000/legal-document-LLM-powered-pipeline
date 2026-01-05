@@ -72,7 +72,7 @@ CRITICAL RULES:
 - Maximum 5-7 items
 
 Context:
-{context[:4000]}
+{context[:3000]}  # Limited to prevent memory issues
 
 JSON response:"""
         
@@ -124,6 +124,12 @@ JSON response:"""
             return summary_items
             
         except Exception as e:
+            error_msg = str(e).lower()
+            # Check for memory/process errors
+            if any(pattern in error_msg for pattern in ['mem_buffer', 'ggml_assert', 'process has terminated', 'out of memory', 'cudamalloc']):
+                print(f"Error generating executive summary: LLM memory/process error - {e}")
+                # Re-raise to be caught by summarization service
+                raise RuntimeError(f"LLM memory or process error during executive summary generation: {str(e)}")
             print(f"Error generating executive summary: {e}")
             return []
     
@@ -176,7 +182,7 @@ CRITICAL RULES:
 - Maximum 15-20 events
 
 Context:
-{context[:4000]}
+{context[:3000]}  # Limited to prevent memory issues
 
 JSON response:"""
         
@@ -231,6 +237,10 @@ JSON response:"""
             return timeline_events
             
         except Exception as e:
+            error_msg = str(e).lower()
+            if any(pattern in error_msg for pattern in ['mem_buffer', 'ggml_assert', 'process has terminated', 'out of memory', 'cudamalloc']):
+                print(f"Error generating timeline: LLM memory/process error - {e}")
+                raise RuntimeError(f"LLM memory or process error during timeline generation: {str(e)}")
             print(f"Error generating timeline: {e}")
             return []
     
@@ -281,7 +291,7 @@ CRITICAL RULES:
 - Maximum 10-15 arguments
 
 Context:
-{context[:4000]}
+{context[:3000]}  # Limited to prevent memory issues
 
 JSON response:"""
         
@@ -334,7 +344,7 @@ CRITICAL RULES:
 - Maximum 10-15 arguments
 
 Context:
-{context[:4000]}
+{context[:3000]}  # Limited to prevent memory issues
 
 JSON response:"""
         
@@ -389,7 +399,7 @@ CRITICAL RULES:
 - Each issue MUST cite a source chunk_id
 
 Context:
-{context[:4000]}
+{context[:3000]}  # Limited to prevent memory issues
 
 JSON response:"""
         
@@ -440,6 +450,10 @@ JSON response:"""
             return open_issues
             
         except Exception as e:
+            error_msg = str(e).lower()
+            if any(pattern in error_msg for pattern in ['mem_buffer', 'ggml_assert', 'process has terminated', 'out of memory', 'cudamalloc']):
+                print(f"Error generating open issues: LLM memory/process error - {e}")
+                raise RuntimeError(f"LLM memory or process error during open issues generation: {str(e)}")
             print(f"Error generating open issues: {e}")
             return []
     
@@ -498,6 +512,10 @@ JSON response:"""
             return arguments
             
         except Exception as e:
+            error_msg = str(e).lower()
+            if any(pattern in error_msg for pattern in ['mem_buffer', 'ggml_assert', 'process has terminated', 'out of memory', 'cudamalloc']):
+                print(f"Error generating arguments: LLM memory/process error - {e}")
+                raise RuntimeError(f"LLM memory or process error during arguments generation: {str(e)}")
             print(f"Error generating arguments: {e}")
             return []
     

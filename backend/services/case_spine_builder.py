@@ -47,12 +47,17 @@ class CaseSpineBuilder:
         
         # Generate spine with retry
         spine_data = None
+        last_error = None
         for attempt in range(2):  # Retry once
             try:
                 spine_data = self._generate_spine(context, attempt)
                 if spine_data:
                     break
+            except RuntimeError as e:
+                # Memory errors should be propagated immediately, don't retry
+                raise
             except Exception as e:
+                last_error = e
                 if attempt == 1:  # Last attempt
                     raise ValueError(f"Failed to build case spine after retry: {str(e)}")
                 continue
@@ -110,7 +115,7 @@ CRITICAL RULES:
 - Be precise and factual
 
 Context:
-{context[:4000]}  # Limit context to avoid token limits
+{context[:3000]}  # Limit context to avoid token limits and memory issues
 
 JSON response:"""
         
@@ -147,8 +152,32 @@ JSON response:"""
             return None
             
         except Exception as e:
-            print(f"Error generating case spine (attempt {attempt}): {e}")
-            return None
+            error_msg = str(e).lower()
+            # Check for memory-related errors (various patterns)
+            memory_error_patterns = [
+                'out of memory',
+                'cudamalloc',
+                'memory',
+                'mem_buffer',
+                'ggml_assert',
+                'process has terminated',
+                'allocation failed'
+            ]
+            
+            is_memory_error = any(pattern in error_msg for pattern in memory_error_patterns)
+            
+            if is_memory_error:
+                print(f"Error generating case spine (attempt {attempt}): LLM memory/process error - {e}")
+                # Re-raise with clearer message
+                raise RuntimeError(
+                    f"LLM memory or process error. The Ollama model may have run out of memory or crashed. "
+                    f"Try: (1) Restarting Ollama service, (2) Using a smaller model (e.g., llama3:8b), "
+                    f"(3) Reducing context size, or (4) Freeing system/GPU memory. "
+                    f"Original error: {str(e)}"
+                )
+            else:
+                print(f"Error generating case spine (attempt {attempt}): {e}")
+                return None
     
     def _extract_json(self, text: str) -> Optional[str]:
         """Extract JSON from LLM response."""

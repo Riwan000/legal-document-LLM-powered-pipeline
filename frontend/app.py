@@ -137,6 +137,63 @@ def summarize_case_file(document_id: str, top_k: int = 10) -> Optional[Dict]:
         return None
 
 
+def summarize_case_file_stream(document_id: str) -> Optional[Any]:
+    """
+    Stream case summary via SSE.
+
+    Yields (event_name, payload_dict).
+    Returns None if the request fails.
+    """
+    try:
+        data = {"document_id": document_id}
+        with requests.post(
+            f"{API_BASE_URL}/api/summarize/stream",
+            data=data,
+            stream=True,
+            timeout=180
+        ) as resp:
+            resp.raise_for_status()
+
+            event_name = None
+            data_lines = []
+
+            for raw_line in resp.iter_lines(decode_unicode=True):
+                if raw_line is None:
+                    continue
+
+                line = raw_line.strip()
+                if not line:
+                    # Dispatch event
+                    if data_lines:
+                        data_str = "\n".join(data_lines)
+                        try:
+                            payload = json.loads(data_str) if data_str else {}
+                        except Exception:
+                            payload = {"raw": data_str}
+                        yield (event_name or "message", payload)
+                    event_name = None
+                    data_lines = []
+                    continue
+
+                if line.startswith("event:"):
+                    event_name = line[len("event:"):].strip()
+                elif line.startswith("data:"):
+                    data_lines.append(line[len("data:"):].strip())
+                # Ignore other SSE fields (id:, retry:, etc.)
+
+            # Flush if stream ended without blank line
+            if data_lines:
+                data_str = "\n".join(data_lines)
+                try:
+                    payload = json.loads(data_str) if data_str else {}
+                except Exception:
+                    payload = {"raw": data_str}
+                yield (event_name or "message", payload)
+
+    except Exception as e:
+        st.error(f"Error streaming summary: {str(e)}")
+        return None
+
 def search_bilingual(query: str, response_language: Optional[str] = None, document_id: Optional[str] = None) -> Optional[Dict]:
     """Bilingual search."""
     try:
@@ -492,104 +549,123 @@ elif page == "📄 Case Summary":
         top_k = st.slider("Number of chunks to analyze", 5, 20, 10)
         
         if st.button("Generate Summary", type="primary"):
-            with st.spinner("Generating summary (this may take a few minutes)..."):
-                result = summarize_case_file(selected_doc, top_k)
-                
-                if result:
-                    # Check for errors
-                    if 'error' in result.get('summary', {}):
-                        error = result['summary']['error']
-                        st.error(f"**Error {error.get('code', 'UNKNOWN')}:** {error.get('message', 'Unknown error')}")
-                        if error.get('details'):
-                            st.json(error['details'])
-                    else:
-                        # Extract summary from result
-                        summary = result.get('summary', {})
-                        
-                        # Case Spine
-                        if summary.get('case_spine'):
-                            spine = summary['case_spine']
-                            with st.expander("Case Spine", expanded=True):
-                                st.write(f"**Case:** {spine.get('case_name', 'N/A')}")
-                                st.write(f"**Court:** {spine.get('court', 'N/A')}")
-                                st.write(f"**Date:** {spine.get('date', 'N/A')}")
-                                st.write(f"**Parties:** {', '.join(spine.get('parties', []))}")
-                                st.write(f"**Procedural Posture:** {spine.get('procedural_posture', 'N/A')}")
-                                if spine.get('core_issues'):
-                                    st.write("**Core Issues:**")
-                                    for issue in spine['core_issues']:
-                                        st.write(f"- {issue}")
-                        
-                        # Executive Summary (now an array)
-                        if summary.get('executive_summary'):
+            # Streaming mode via SSE
+            with st.spinner("Streaming summary (this may take a few minutes)..."):
+                spine_box = st.empty()
+                exec_box = st.empty()
+                timeline_box = st.empty()
+                args_box = st.empty()
+                issues_box = st.empty()
+                citations_box = st.empty()
+
+                spine = None
+                executive_summary_items = []
+                timeline_events = []
+                claimant_args = []
+                defendant_args = []
+                open_issues = []
+                citations = []
+
+                stream = summarize_case_file_stream(selected_doc)
+                if stream is None:
+                    st.error("Streaming failed. Try again or use the non-streaming endpoint.")
+                else:
+                    for event_name, payload in stream:
+                        if event_name == "error":
+                            st.error(f"**Error {payload.get('code', 'UNKNOWN')}:** {payload.get('message', '')}")
+                            if payload.get("details"):
+                                st.json(payload["details"])
+                            break
+
+                        if event_name == "case_spine":
+                            spine = payload
+                        elif event_name == "executive_summary_item":
+                            executive_summary_items.append(payload)
+                        elif event_name == "timeline_event":
+                            timeline_events.append(payload)
+                        elif event_name == "claimant_argument_item":
+                            claimant_args.append(payload)
+                        elif event_name == "defendant_argument_item":
+                            defendant_args.append(payload)
+                        elif event_name == "open_issue_item":
+                            open_issues.append(payload)
+                        elif event_name == "citations":
+                            citations = payload.get("citations", [])
+                        elif event_name == "done":
+                            # Final summary is also included in done (if status=ok)
+                            pass
+
+                        # Render progressively
+                        if spine:
+                            with spine_box.container():
+                                with st.expander("Case Spine", expanded=True):
+                                    st.write(f"**Case:** {spine.get('case_name', 'N/A')}")
+                                    st.write(f"**Court:** {spine.get('court', 'N/A')}")
+                                    st.write(f"**Date:** {spine.get('date', 'N/A')}")
+                                    st.write(f"**Parties:** {', '.join(spine.get('parties', []))}")
+                                    st.write(f"**Procedural Posture:** {spine.get('procedural_posture', 'N/A')}")
+                                    if spine.get('core_issues'):
+                                        st.write("**Core Issues:**")
+                                        for issue in spine['core_issues']:
+                                            st.write(f"- {issue}")
+
+                        with exec_box.container():
                             st.subheader("Executive Summary")
-                            for item in summary['executive_summary']:
-                                source = item.get('source', {})
-                                st.write(f"{item.get('text', '')}")
-                                st.caption(f"Source: Document {source.get('document', '')[:8]}..., Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}")
-                        else:
-                            st.subheader("Executive Summary")
-                            st.write("No executive summary available.")
-                        
-                        # Timeline
-                        if summary.get('timeline'):
+                            if executive_summary_items:
+                                for item in executive_summary_items:
+                                    source = item.get("source", {})
+                                    st.write(item.get("text", ""))
+                                    st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}")
+                            else:
+                                st.write("Waiting for executive summary...")
+
+                        with timeline_box.container():
                             st.subheader("Timeline of Events")
-                            timeline_data = []
-                            for event in summary['timeline']:
-                                source = event.get('source', {})
-                                timeline_data.append({
-                                    'Date': event.get('date', 'N/A'),
-                                    'Event': event.get('event', ''),
-                                    'Source': f"P{source.get('page', 0)} ({source.get('chunk_id', '')[:12]}...)"
-                                })
-                            st.table(timeline_data)
-                        else:
-                            st.subheader("Timeline of Events")
-                            st.write("No timeline available.")
-                        
-                        # Key Arguments (now organized by party)
-                        if summary.get('key_arguments'):
-                            args = summary['key_arguments']
+                            if timeline_events:
+                                table = []
+                                for ev in timeline_events:
+                                    source = ev.get("source", {})
+                                    table.append({
+                                        "Date": ev.get("date", "N/A"),
+                                        "Event": ev.get("event", ""),
+                                        "Source": f"P{source.get('page', 0)} ({source.get('chunk_id', '')[:12]}...)"
+                                    })
+                                st.table(table)
+                            else:
+                                st.write("Waiting for timeline...")
+
+                        with args_box.container():
                             st.subheader("Key Arguments")
-                            
-                            if args.get('claimant'):
+                            if claimant_args:
                                 st.write("**Claimant/Plaintiff Arguments:**")
-                                for arg in args['claimant']:
-                                    source = arg.get('source', {})
+                                for arg in claimant_args:
+                                    source = arg.get("source", {})
                                     st.write(f"- {arg.get('text', '')}")
                                     st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')[:12]}...")
-                            
-                            if args.get('defendant'):
+                            if defendant_args:
                                 st.write("**Defendant/Respondent Arguments:**")
-                                for arg in args['defendant']:
-                                    source = arg.get('source', {})
+                                for arg in defendant_args:
+                                    source = arg.get("source", {})
                                     st.write(f"- {arg.get('text', '')}")
                                     st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')[:12]}...")
-                        else:
-                            st.subheader("Key Arguments")
-                            st.write("No arguments available.")
-                        
-                        # Open Issues
-                        if summary.get('open_issues'):
+                            if not claimant_args and not defendant_args:
+                                st.write("Waiting for arguments (may be empty)...")
+
+                        with issues_box.container():
                             st.subheader("Open Issues")
-                            for issue in summary['open_issues']:
-                                source = issue.get('source', {})
-                                st.write(f"- {issue.get('text', '')}")
-                                st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')[:12]}...")
-                        else:
-                            st.subheader("Open Issues")
-                            st.write("No open issues identified.")
-                        
-                        # Citations
-                        if summary.get('citations'):
-                            with st.expander("All Citations"):
-                                for citation in summary['citations']:
-                                    st.write(f"**{citation.get('chunk_id', '')}** (Page {citation.get('page', 0)}, Type: {citation.get('chunk_type', 'unknown')})")
-                        
-                        # Full report (if available)
-                        if result.get('report'):
-                            st.subheader("Full Report")
-                            st.markdown(result.get('report', ''))
+                            if open_issues:
+                                for issue in open_issues:
+                                    source = issue.get("source", {})
+                                    st.write(f"- {issue.get('text', '')}")
+                                    st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')[:12]}...")
+                            else:
+                                st.write("Waiting for open issues (may be empty)...")
+
+                        if citations:
+                            with citations_box.container():
+                                with st.expander("All Citations"):
+                                    for c in citations:
+                                        st.write(f"**{c.get('chunk_id', '')}** (Page {c.get('page', 0)}, Type: {c.get('chunk_type', 'unknown')})")
 
 elif page == "🌐 Bilingual Search":
     st.markdown('<div class="main-header">🌐 Bilingual Search</div>', unsafe_allow_html=True)

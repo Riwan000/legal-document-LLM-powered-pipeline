@@ -4,7 +4,7 @@ Provides REST API endpoints for all system features.
 """
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pathlib import Path
 import uuid
 import shutil
@@ -641,6 +641,32 @@ async def summarize_case_file(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error summarizing case file: {str(e)}")
+
+
+@app.post("/api/summarize/stream")
+async def summarize_case_file_stream(
+    document_id: str = Form(...)
+):
+    """
+    Stream case summary via Server-Sent Events (SSE).
+
+    Events include: case_spine, executive_summary_item, timeline_event, claimant_argument_item,
+    defendant_argument_item, open_issue_item, citations, done, error.
+    """
+    global summarization_service
+
+    if not summarization_service:
+        raise HTTPException(status_code=500, detail="Summarization service not initialized")
+
+    def event_generator():
+        yield from summarization_service.summarize_case_file_stream(document_id=document_id)
+
+    headers = {
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no"
+    }
+    return StreamingResponse(event_generator(), media_type="text/event-stream", headers=headers)
 
 
 @app.post("/api/search-bilingual")

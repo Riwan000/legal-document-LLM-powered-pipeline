@@ -2,14 +2,15 @@
 Case file summarization service.
 PRD-compliant deterministic section-aware case summarization.
 """
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Iterator
+import json
 import ollama
 from backend.services.rag_service import RAGService
 from backend.services.case_chunk_classifier import CaseChunkClassifier
 from backend.services.case_spine_builder import CaseSpineBuilder
 from backend.services.case_section_summarizers import CaseSectionSummarizers
 from backend.models.case_summary import (
-    CaseSummary, CaseSummaryError, CitationMetadata, KeyArguments
+    CaseSummary, CaseSummaryError, CitationMetadata, KeyArguments, CaseSpine
 )
 from backend.config import settings
 
@@ -40,40 +41,45 @@ class SummarizationService:
         top_k: int = 10
     ) -> Dict[str, Any]:
         """
-        Generate comprehensive summary of a case file (PRD-compliant).
+        Generate comprehensive summary of a case file (PRD-compliant multi-pass).
+        
+        Uses section-specific RAG searches to select top-K chunks per section.
+        Never loads all chunks at once.
         
         Args:
             document_id: Document ID of the case file
-            top_k: Number of chunks to retrieve for context (legacy, uses config defaults)
+            top_k: Legacy parameter (ignored, uses config section limits)
             
         Returns:
             CaseSummary model or error dict
         """
         try:
-            # Step 1: Retrieve all chunks for the document
-            all_chunks = self._get_all_document_chunks(document_id)
+            # Pass 0: Build case spine (MANDATORY)
+            # Select ≤10 chunks (background + holding + issue_framing)
+            spine_chunks = self._select_top_k_chunks_for_section(
+                document_id=document_id,
+                chunk_types=['background', 'holding', 'issue_framing'],
+                top_k=settings.CASE_SUMMARY_SPINE_MAX_CHUNKS,
+                query="case name court parties procedural posture core legal issues"
+            )
             
-            if not all_chunks:
+            if not spine_chunks:
                 return {
                     "error": {
-                        "code": "NO_CHUNKS_FOUND",
-                        "message": "No chunks found for document.",
+                        "code": "CASE_SPINE_FAILED",
+                        "message": "Insufficient chunks to build case spine. Need background, holding, or issue_framing chunks.",
                         "details": {"document_id": document_id}
                     }
                 }
             
-            # Step 2: Backfill chunk IDs and classify chunks
-            all_chunks = self._backfill_and_classify_chunks(all_chunks, document_id)
-            
-            # Step 3: Group chunks by type
-            chunks_by_type = self._group_chunks_by_type(all_chunks)
-            
-            # Step 4: Build case spine (MANDATORY)
+            # Build case spine
             try:
+                # Group spine chunks by type for spine builder
+                spine_by_type = self._group_chunks_by_type(spine_chunks)
                 case_spine = self.spine_builder.build_case_spine(
-                    background_chunks=chunks_by_type.get('background', []),
-                    holding_chunks=chunks_by_type.get('holding', []),
-                    issue_chunks=chunks_by_type.get('issue_framing', [])
+                    background_chunks=spine_by_type.get('background', []),
+                    holding_chunks=spine_by_type.get('holding', []),
+                    issue_chunks=spine_by_type.get('issue_framing', [])
                 )
             except ValueError as e:
                 return {
@@ -81,54 +87,140 @@ class SummarizationService:
                         "code": "CASE_SPINE_FAILED",
                         "message": str(e),
                         "details": {
-                            "background_chunks": len(chunks_by_type.get('background', [])),
-                            "holding_chunks": len(chunks_by_type.get('holding', [])),
-                            "issue_chunks": len(chunks_by_type.get('issue_framing', []))
+                            "spine_chunks_found": len(spine_chunks),
+                            "background": len(spine_by_type.get('background', [])),
+                            "holding": len(spine_by_type.get('holding', [])),
+                            "issue_framing": len(spine_by_type.get('issue_framing', []))
                         }
                     }
                 }
+            except RuntimeError as e:
+                # Catch LLM memory errors
+                error_msg = str(e)
+                if 'memory' in error_msg.lower():
+                    return {
+                        "error": {
+                            "code": "LLM_MEMORY_ERROR",
+                            "message": f"LLM ran out of GPU memory while generating case spine. {error_msg}",
+                            "details": {
+                                "suggestion": "Try using a smaller model, reducing chunk sizes, or freeing GPU memory",
+                                "spine_chunks_found": len(spine_chunks)
+                            }
+                        }
+                    }
+                else:
+                    # Re-raise if not memory-related
+                    raise
             
-            # Step 5: Hard-gated chunk selection per section
-            exec_chunks = self._gate_chunks_for_section(
-                chunks_by_type, ['background', 'holding'], 'executive_summary'
-            )
-            timeline_chunks = self._gate_chunks_for_section(
-                chunks_by_type, ['procedural_history'], 'timeline'
-            )
-            claimant_chunks = self._gate_chunks_for_section(
-                chunks_by_type, ['argument_claimant'], 'claimant_arguments'
-            )
-            defendant_chunks = self._gate_chunks_for_section(
-                chunks_by_type, ['argument_defendant'], 'defendant_arguments'
-            )
-            issues_chunks = self._gate_chunks_for_section(
-                chunks_by_type, ['issue_framing'], 'open_issues'
-            )
-            
-            # Step 6: Generate sections independently
-            executive_summary = self.section_summarizers.generate_executive_summary(
-                case_spine, exec_chunks
-            )
-            timeline = self.section_summarizers.generate_timeline(
-                case_spine, timeline_chunks
-            )
-            claimant_args = self.section_summarizers.generate_claimant_arguments(
-                case_spine, claimant_chunks
-            )
-            defendant_args = self.section_summarizers.generate_defendant_arguments(
-                case_spine, defendant_chunks
-            )
-            open_issues = self.section_summarizers.generate_open_issues(
-                case_spine, issues_chunks
+            # Pass 1: Executive Summary - Select ≤8 chunks (background + holding)
+            exec_chunks = self._select_top_k_chunks_for_section(
+                document_id=document_id,
+                chunk_types=['background', 'holding'],
+                top_k=settings.CASE_SUMMARY_EXEC_MAX_CHUNKS,
+                query="case background facts parties dispute court decision holding",
+                case_spine=case_spine
             )
             
-            # Step 7: Collect all citations
+            if not exec_chunks:
+                return {
+                    "error": {
+                        "code": "INSUFFICIENT_CONTEXT",
+                        "message": "Insufficient background or holding chunks found for executive summary generation.",
+                        "details": {"section": "executive_summary", "required_types": ["background", "holding"]}
+                    }
+                }
+            
+            # Pass 2: Timeline - Select ≤10 chunks (procedural_history)
+            timeline_chunks = self._select_top_k_chunks_for_section(
+                document_id=document_id,
+                chunk_types=['procedural_history'],
+                top_k=settings.CASE_SUMMARY_TIMELINE_MAX_CHUNKS,
+                query="procedural history dates events filings orders hearings timeline chronology",
+                case_spine=case_spine
+            )
+            
+            if not timeline_chunks:
+                return {
+                    "error": {
+                        "code": "INSUFFICIENT_CONTEXT",
+                        "message": "No procedural history found for timeline generation.",
+                        "details": {"section": "timeline", "required_types": ["procedural_history"]}
+                    }
+                }
+            
+            # Pass 3: Claimant Arguments - Select ≤10 chunks (argument_claimant)
+            # Optional: can be empty if no arguments found
+            claimant_chunks = self._select_top_k_chunks_for_section(
+                document_id=document_id,
+                chunk_types=['argument_claimant'],
+                top_k=settings.CASE_SUMMARY_ARGUMENTS_MAX_CHUNKS,
+                query="plaintiff claimant appellant arguments contentions claims position",
+                case_spine=case_spine
+            )
+            
+            # Pass 4: Defendant Arguments - Select ≤10 chunks (argument_defendant)
+            # Optional: can be empty if no arguments found
+            defendant_chunks = self._select_top_k_chunks_for_section(
+                document_id=document_id,
+                chunk_types=['argument_defendant'],
+                top_k=settings.CASE_SUMMARY_ARGUMENTS_MAX_CHUNKS,
+                query="defendant respondent appellee arguments contentions defense position",
+                case_spine=case_spine
+            )
+            
+            # Pass 5: Open Issues - Select ≤6 chunks (issue_framing)
+            # Optional: can be empty if no issues found
+            issues_chunks = self._select_top_k_chunks_for_section(
+                document_id=document_id,
+                chunk_types=['issue_framing'],
+                top_k=settings.CASE_SUMMARY_ISSUES_MAX_CHUNKS,
+                query="unresolved issues questions pending adjudication open issues",
+                case_spine=case_spine
+            )
+            
+            # Generate sections independently (multi-pass)
+            # Wrap in try-catch to handle LLM memory errors
+            try:
+                executive_summary = self.section_summarizers.generate_executive_summary(
+                    case_spine, exec_chunks
+                )
+                timeline = self.section_summarizers.generate_timeline(
+                    case_spine, timeline_chunks
+                )
+                claimant_args = self.section_summarizers.generate_claimant_arguments(
+                    case_spine, claimant_chunks
+                )
+                defendant_args = self.section_summarizers.generate_defendant_arguments(
+                    case_spine, defendant_chunks
+                )
+                open_issues = self.section_summarizers.generate_open_issues(
+                    case_spine, issues_chunks
+                )
+            except RuntimeError as e:
+                # Catch LLM memory errors from section generation
+                error_msg = str(e)
+                if 'memory' in error_msg.lower() or 'process' in error_msg.lower():
+                    return {
+                        "error": {
+                            "code": "LLM_MEMORY_ERROR",
+                            "message": f"LLM memory or process error during section generation. {error_msg}",
+                            "details": {
+                                "suggestion": "Try: (1) Restarting Ollama service, (2) Using a smaller model, (3) Reducing chunk sizes, or (4) Freeing system/GPU memory"
+                            }
+                        }
+                    }
+                else:
+                    raise  # Re-raise if not memory-related
+            
+            # Collect all citations from all sections
+            # Build chunk map from all selected chunks
+            all_selected_chunks = exec_chunks + timeline_chunks + claimant_chunks + defendant_chunks + issues_chunks
             all_citations = self._collect_citations(
                 executive_summary + timeline + claimant_args + defendant_args + open_issues,
-                all_chunks
+                all_selected_chunks
             )
             
-            # Step 8: Assemble and validate
+            # Assemble and validate
             case_summary = CaseSummary(
                 case_spine=case_spine,
                 executive_summary=executive_summary,
@@ -153,8 +245,273 @@ class SummarizationService:
                 }
             }
     
+    def summarize_case_file_stream(
+        self,
+        document_id: str
+    ) -> Iterator[str]:
+        """
+        Stream case summarization as Server-Sent Events (SSE).
+
+        Yields SSE frames:
+        - event: progress
+        - event: case_spine
+        - event: executive_summary_item
+        - event: timeline_event
+        - event: claimant_argument_item
+        - event: defendant_argument_item
+        - event: open_issue_item
+        - event: citations
+        - event: done
+        - event: error
+        """
+
+        def sse(event: str, data: Dict[str, Any]) -> str:
+            return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+        try:
+            yield sse("progress", {"stage": "start", "document_id": document_id})
+
+            # Pass 0: Case Spine (mandatory)
+            yield sse("progress", {"stage": "select_spine_chunks"})
+            spine_chunks = self._select_top_k_chunks_for_section(
+                document_id=document_id,
+                chunk_types=["background", "holding", "issue_framing"],
+                top_k=settings.CASE_SUMMARY_SPINE_MAX_CHUNKS,
+                query="case name court parties procedural posture core legal issues"
+            )
+            if not spine_chunks:
+                yield sse("error", {
+                    "code": "CASE_SPINE_FAILED",
+                    "message": "Insufficient chunks to build case spine. Need background, holding, or issue_framing chunks.",
+                    "details": {"document_id": document_id}
+                })
+                yield sse("done", {"status": "error"})
+                return
+
+            yield sse("progress", {"stage": "build_case_spine", "spine_chunks": [c.get("chunk_id") for c in spine_chunks]})
+            spine_by_type = self._group_chunks_by_type(spine_chunks)
+            try:
+                case_spine = self.spine_builder.build_case_spine(
+                    background_chunks=spine_by_type.get("background", []),
+                    holding_chunks=spine_by_type.get("holding", []),
+                    issue_chunks=spine_by_type.get("issue_framing", [])
+                )
+            except RuntimeError as e:
+                yield sse("error", {
+                    "code": "LLM_MEMORY_ERROR",
+                    "message": f"LLM memory/process error while generating case spine. {str(e)}",
+                    "details": {"suggestion": "Restart Ollama or use a smaller model; free system/GPU memory."}
+                })
+                yield sse("done", {"status": "error"})
+                return
+            except ValueError as e:
+                yield sse("error", {
+                    "code": "CASE_SPINE_FAILED",
+                    "message": str(e),
+                    "details": {
+                        "spine_chunks_found": len(spine_chunks),
+                        "background": len(spine_by_type.get("background", [])),
+                        "holding": len(spine_by_type.get("holding", [])),
+                        "issue_framing": len(spine_by_type.get("issue_framing", []))
+                    }
+                })
+                yield sse("done", {"status": "error"})
+                return
+
+            yield sse("case_spine", case_spine.model_dump())
+
+            # Pass 1: Executive Summary (mandatory)
+            yield sse("progress", {"stage": "select_exec_chunks"})
+            exec_chunks = self._select_top_k_chunks_for_section(
+                document_id=document_id,
+                chunk_types=["background", "holding"],
+                top_k=settings.CASE_SUMMARY_EXEC_MAX_CHUNKS,
+                query="case background facts parties dispute court decision holding",
+                case_spine=case_spine
+            )
+            if not exec_chunks:
+                yield sse("error", {
+                    "code": "INSUFFICIENT_CONTEXT",
+                    "message": "Insufficient background or holding chunks found for executive summary generation.",
+                    "details": {"section": "executive_summary", "required_types": ["background", "holding"]}
+                })
+                yield sse("done", {"status": "error"})
+                return
+
+            # Pass 2: Timeline (mandatory)
+            yield sse("progress", {"stage": "select_timeline_chunks"})
+            timeline_chunks = self._select_top_k_chunks_for_section(
+                document_id=document_id,
+                chunk_types=["procedural_history"],
+                top_k=settings.CASE_SUMMARY_TIMELINE_MAX_CHUNKS,
+                query="procedural history dates events filings orders hearings timeline chronology",
+                case_spine=case_spine
+            )
+            if not timeline_chunks:
+                yield sse("error", {
+                    "code": "INSUFFICIENT_CONTEXT",
+                    "message": "No procedural history found for timeline generation.",
+                    "details": {"section": "timeline", "required_types": ["procedural_history"]}
+                })
+                yield sse("done", {"status": "error"})
+                return
+
+            # Optional sections
+            yield sse("progress", {"stage": "select_argument_chunks"})
+            claimant_chunks = self._select_top_k_chunks_for_section(
+                document_id=document_id,
+                chunk_types=["argument_claimant"],
+                top_k=settings.CASE_SUMMARY_ARGUMENTS_MAX_CHUNKS,
+                query="plaintiff claimant appellant arguments contentions claims position",
+                case_spine=case_spine
+            )
+            defendant_chunks = self._select_top_k_chunks_for_section(
+                document_id=document_id,
+                chunk_types=["argument_defendant"],
+                top_k=settings.CASE_SUMMARY_ARGUMENTS_MAX_CHUNKS,
+                query="defendant respondent appellee arguments contentions defense position",
+                case_spine=case_spine
+            )
+            yield sse("progress", {"stage": "select_issue_chunks"})
+            issues_chunks = self._select_top_k_chunks_for_section(
+                document_id=document_id,
+                chunk_types=["issue_framing"],
+                top_k=settings.CASE_SUMMARY_ISSUES_MAX_CHUNKS,
+                query="unresolved issues questions pending adjudication open issues",
+                case_spine=case_spine
+            )
+
+            # Generate sections (multi-pass)
+            try:
+                yield sse("progress", {"stage": "generate_executive_summary"})
+                executive_summary = self.section_summarizers.generate_executive_summary(case_spine, exec_chunks)
+                for item in executive_summary:
+                    yield sse("executive_summary_item", item.model_dump())
+
+                yield sse("progress", {"stage": "generate_timeline"})
+                timeline = self.section_summarizers.generate_timeline(case_spine, timeline_chunks)
+                for ev in timeline:
+                    yield sse("timeline_event", ev.model_dump())
+
+                yield sse("progress", {"stage": "generate_arguments"})
+                claimant_args = self.section_summarizers.generate_claimant_arguments(case_spine, claimant_chunks)
+                for arg in claimant_args:
+                    yield sse("claimant_argument_item", arg.model_dump())
+
+                defendant_args = self.section_summarizers.generate_defendant_arguments(case_spine, defendant_chunks)
+                for arg in defendant_args:
+                    yield sse("defendant_argument_item", arg.model_dump())
+
+                yield sse("progress", {"stage": "generate_open_issues"})
+                open_issues = self.section_summarizers.generate_open_issues(case_spine, issues_chunks)
+                for issue in open_issues:
+                    yield sse("open_issue_item", issue.model_dump())
+
+            except RuntimeError as e:
+                yield sse("error", {
+                    "code": "LLM_MEMORY_ERROR",
+                    "message": f"LLM memory/process error during section generation. {str(e)}",
+                    "details": {"suggestion": "Restart Ollama or use a smaller model; free system/GPU memory."}
+                })
+                yield sse("done", {"status": "error"})
+                return
+
+            # Citations + final assembly
+            all_selected_chunks = exec_chunks + timeline_chunks + claimant_chunks + defendant_chunks + issues_chunks
+            citations = self._collect_citations(
+                executive_summary + timeline + claimant_args + defendant_args + open_issues,
+                all_selected_chunks
+            )
+            citations_payload = [c.model_dump() for c in citations]
+            yield sse("citations", {"citations": citations_payload})
+
+            case_summary = CaseSummary(
+                case_spine=case_spine,
+                executive_summary=executive_summary,
+                timeline=timeline,
+                key_arguments=KeyArguments(claimant=claimant_args, defendant=defendant_args),
+                open_issues=open_issues,
+                citations=citations
+            )
+            yield sse("done", {"status": "ok", "summary": case_summary.model_dump()})
+
+        except Exception as e:
+            yield sse("error", {
+                "code": "SUMMARIZATION_ERROR",
+                "message": f"Error generating summary: {str(e)}",
+                "details": {}
+            })
+            yield sse("done", {"status": "error"})
+
+    def _select_top_k_chunks_for_section(
+        self,
+        document_id: str,
+        chunk_types: List[str],
+        top_k: int,
+        query: str,
+        case_spine: Optional[CaseSpine] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Select top-K chunks for a section using RAG search.
+        
+        Multi-pass approach: Uses semantic search to find relevant chunks,
+        then classifies and filters by required chunk types.
+        
+        Args:
+            document_id: Document ID
+            chunk_types: Required chunk types (e.g., ['background', 'holding'])
+            top_k: Maximum chunks to return (section limit)
+            query: Section-specific search query
+            case_spine: Optional case spine for context-aware queries
+            
+        Returns:
+            List of chunks (classified, filtered by type, limited to top_k)
+            Never exceeds CASE_SUMMARY_MAX_CHUNKS_PER_CALL (20)
+        """
+        # Enhance query with case spine context if available
+        if case_spine:
+            enhanced_query = f"{query} {case_spine.case_name} {', '.join(case_spine.parties)}"
+        else:
+            enhanced_query = query
+        
+        # Step 1: RAG search with section-specific query
+        # Search for more chunks than needed to account for filtering
+        search_top_k = min(top_k * 2, settings.CASE_SUMMARY_MAX_CHUNKS_PER_CALL * 2)
+        search_results = self.rag_service.search(
+            query=enhanced_query,
+            top_k=search_top_k,
+            document_id_filter=document_id
+        )
+        
+        if not search_results:
+            return []
+        
+        # Step 2: Classify retrieved chunks
+        classified_chunks = self._backfill_and_classify_chunks(search_results, document_id)
+        
+        # Step 3: Filter by required chunk_types
+        filtered_chunks = [
+            chunk for chunk in classified_chunks
+            if chunk.get('chunk_type') in chunk_types
+        ]
+        
+        # Step 4: Limit to top_k and enforce hard limit
+        # Sort by score (highest first) for deterministic selection
+        filtered_chunks.sort(key=lambda c: c.get('score', 0.0), reverse=True)
+        
+        # Take top_k, but never exceed hard limit
+        max_chunks = min(top_k, settings.CASE_SUMMARY_MAX_CHUNKS_PER_CALL)
+        selected_chunks = filtered_chunks[:max_chunks]
+        
+        return selected_chunks
+    
     def _get_all_document_chunks(self, document_id: str) -> List[Dict[str, Any]]:
-        """Get all chunks for a document from vector store."""
+        """
+        Get all chunks for a document from vector store.
+        
+        NOTE: This method is kept for backward compatibility but should NOT
+        be used in the main summarization flow. Use _select_top_k_chunks_for_section instead.
+        """
         # Use RAG service's vector store to get all chunks
         if hasattr(self.rag_service, 'vector_store'):
             return self.rag_service.vector_store.get_chunks_by_document(document_id)

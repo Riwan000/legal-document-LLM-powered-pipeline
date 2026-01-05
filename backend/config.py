@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     
     # Ollama Configuration
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "llama3"
+    OLLAMA_MODEL: str = "llama3.2:latest"
     
     # Embedding Model Configuration
     EMBEDDING_MODEL: str = "paraphrase-multilingual-MiniLM-L12-v2"
@@ -56,10 +56,14 @@ class Settings(BaseSettings):
     # Case Summarization Configuration
     CASE_SUMMARY_SEED: int = 42  # Fixed seed for deterministic LLM outputs
     CASE_SUMMARY_TEMPERATURE: float = 0.0  # Zero temperature for determinism
-    CASE_SUMMARY_TOP_K_BACKGROUND: int = 10  # Chunks for background/executive summary
-    CASE_SUMMARY_TOP_K_PROCEDURAL: int = 15  # Chunks for timeline
-    CASE_SUMMARY_TOP_K_ARGUMENTS: int = 20  # Chunks for arguments
-    CASE_SUMMARY_TOP_K_ISSUES: int = 10  # Chunks for open issues
+    
+    # Section-specific top-K limits (PRD requirements)
+    CASE_SUMMARY_EXEC_MAX_CHUNKS: int = 8  # Executive summary max chunks
+    CASE_SUMMARY_TIMELINE_MAX_CHUNKS: int = 10  # Timeline max chunks
+    CASE_SUMMARY_ARGUMENTS_MAX_CHUNKS: int = 10  # Arguments max chunks (per party)
+    CASE_SUMMARY_ISSUES_MAX_CHUNKS: int = 6  # Open issues max chunks
+    CASE_SUMMARY_SPINE_MAX_CHUNKS: int = 10  # Case spine max chunks
+    CASE_SUMMARY_MAX_CHUNKS_PER_CALL: int = 20  # Hard limit per LLM call
     
     model_config = ConfigDict(
         env_file=".env",
