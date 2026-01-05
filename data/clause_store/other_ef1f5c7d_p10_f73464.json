@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_ef1f5c7d_p10_f73464",
+  "title": "Security ID policy",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 10,
+      "paragraph": 1,
+      "line_start": 2,
+      "line_end": 4,
+      "raw_text": "or applications environments, introduce risk, or \nrequire application downtime.    \nPhysical Security Program   S&P Global’s  Global Security & Cri",
+      "clean_text": "S&P Global’s physical security and security ID policy requires the issuance to, and use of identification badges by, all employees and contractors."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

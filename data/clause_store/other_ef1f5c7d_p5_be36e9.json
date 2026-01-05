@@ -1,0 +1,32 @@
+{
+  "clause_id": "other_ef1f5c7d_p5_be36e9",
+  "title": "Assigning Processors",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 3,
+      "line_end": 4,
+      "raw_text": "ll implement the security measures specified in  Appendix (3) and apply those measures to all Personal Data transferred to ensure the security and protection of Personal Data against any violation that may result in damage to the Personal Data Subject, unlawful action, loss, alteration, disclosure of Personal Data or unauthorized access.   \nB. The Personal Data Importer must periodically review the security measures stipulated in  Appendix (3) to ensure tha",
+      "clean_text": "The Personal Data Importer shall be obliged to select a Processor that provides sufficient guarantees for the protection of the transferred Personal Data, and the agreement with the Processor shall include all the requirements set out in Article (17) of the Implementing Regulation, and the processing shall be based solely on the instructions of the Data Importer, provided that these instructions are consistent with the requirements set out in these Clauses."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

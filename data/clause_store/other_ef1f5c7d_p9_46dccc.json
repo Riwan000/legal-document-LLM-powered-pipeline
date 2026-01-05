@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_ef1f5c7d_p9_46dccc",
+  "title": "The company classifies information into categories to determine how S&P Global protects, stores, and distributes the information, including client data.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 9,
+      "paragraph": 1,
+      "line_start": 2,
+      "line_end": 7,
+      "raw_text": "ing access \nto the company’s global systems.   \nInformation Security Pillars: \nCyber Defense, Threat \nIntelligence & Monitoring   S&P Global’s cyber incident response program is managed \nby the Information Secu",
+      "clean_text": "Information Security Controls: Information Classification The company classifies information into categories to determine how S&P Global protects, stores, and distributes the information, including client data."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "clause_id": "conduct-discipline_ef1f5c7d_p6_59919e",
+  "title": "Accountability",
+  "type": "conduct_discipline",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 6,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 7,
+      "raw_text": "B. The Personal Data Importer shall provide these documents to the Competent Authority upon \nrequest.   \n 10.Accountability    A. Each party shall be accountable to the other party for any damages caused to the other party as a result of  a breach of any of these Standard Contractual Clauses.  \nB. Each party shall be accountable to the Personal Data Subject, without prejudice to the accountability of the Personal Data Exporter under the Law and Regulations, and the Personal Data Subject shall be entitled to compensation for any material and moral damages caused by \nthe negligent party that harms the Personal Data Subject. If more than one party is responsible for causing damage to the Personal Data Subject as a result of the violation of these Standard Contractual Clauses, the responsible parties s hall be held jointly or individually accountable, \nand the Personal Data Subject shall have the right to take legal action before a court against any of these parties.   \nC. The parties agree that if any party assumes accountability (b), it shall be entitled to claim from the other party(ies) that portion of the compensation corresponding to his/her/their accountability for th",
+      "clean_text": "A. Each party shall be accountable to the other party for any damages caused to the other party as a result of  a breach of any of these Standard Contractual Clauses.\nB. Each party shall be accountable to the Personal Data Subject, without prejudice to the accountability of the Personal Data Exporter under the Law and Regulations, and the Personal Data Subject shall be entitled to compensation for any material and moral damages caused by \nthe negligent party that harms the Personal Data Subject. If more than one party is responsible for causing damage to the Personal Data Subject as a result of the violation of these Standard Contractual Clauses, the responsible parties s hall be held jointly or individually accountable,\nand the Personal Data Subject shall have the right to take legal action before a court against any of these parties.\nC. The parties agree that if any party assumes accountability (b), it shall be entitled to claim from the other party(ies) that portion of the compensation corresponding to his/her/their accountability for the damage.\nD. The Personal Data Importer may not rely on the behavior of the data Processor or Sub-\nProcessor to avoid accountability."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

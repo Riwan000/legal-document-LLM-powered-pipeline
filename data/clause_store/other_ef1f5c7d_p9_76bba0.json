@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_ef1f5c7d_p9_76bba0",
+  "title": "S&P Global’s cyber incident response program is managed by the Information Security Monitoring & Cyber Incident Response Team (“CIRT”) in conjunction with the Security Operations Center (SOC) where security analysts monitor security events and escalate validated or suspicious security incidents for further probing and invoke Incident Management Procedure as necessary.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "administrative",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 9,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 8,
+      "raw_text": "for non -employees is available and \nlimited to those who have been identified as having access \nto the company’s global systems.   \nInformation Security Pillars: \nCyber Defense, Threat \nIntelligence & Monitoring   S&P Global’s cyber incident response program is managed \nby the Information Security Monitoring & Cyber Incident \nResponse Team (“CIRT”) in conjunction wit",
+      "clean_text": "S&P Global’s cyber incident response program is managed by the Information Security Monitoring & Cyber Incident Response Team (“CIRT”) in conjunction with the Security Operations Center (SOC) where security analysts monitor security events and escalate validated or suspicious security incidents for further probing and invoke Incident Management Procedure as necessary."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

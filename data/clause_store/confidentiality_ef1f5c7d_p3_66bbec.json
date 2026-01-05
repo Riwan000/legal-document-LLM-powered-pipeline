@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_ef1f5c7d_p3_66bbec",
+  "title": "Clause (12) Duration and Termination A. If, for any reason, the personal Data Importer is unable to fulfill its obligations",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 4,
+      "raw_text": "ourt for \ncompensation for material or moral damage in proportion to the magnitude of the damage arising from the application of these Standard Contractual Clauses.  \n Clause (11) Personal Data Security   \n A. All parties sha",
+      "clean_text": "If, for any reason, the personal Data Importer is unable to fulfill its obligations under these Standard Contractual Clauses, it must inform the Personal Data Exporter within (24) hours from the time it becomes aware of this."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

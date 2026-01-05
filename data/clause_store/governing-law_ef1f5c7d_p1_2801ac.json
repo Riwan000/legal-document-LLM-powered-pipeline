@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_ef1f5c7d_p1_2801ac",
+  "title": "Clause (3) Rights of Personal Data Subjects",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": "Saudi Arabia",
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 1,
+      "paragraph": 1,
+      "line_start": 7,
+      "line_end": 7,
+      "raw_text": "ppropriate level of Personal Data protection equivalent to the level of protection applicable under the Personal Data Protection Law and its Implementing Regulations is applied in the absence of an appropriate level of Personal Data protection outside the Kingdom by specifying the obligations of the parties involved in the transfer of Personal Data to a country or international organization tha",
+      "clean_text": "A. These Standard Contractual Clauses are without prejudice to the rights of Personal Data Subjects under the Law and Regulations.   B. Personal Data Subjects whose Personal Data is transferred from the parties based on these Standard Contractual Clauses may notify the Competent Authority ('Saudi Data & AI Authority') if they become aware of any violation of these Standard Contractual C lauses."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

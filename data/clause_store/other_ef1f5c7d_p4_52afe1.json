@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_ef1f5c7d_p4_52afe1",
+  "title": "Personal Data Security and Personal Data Breach Incident Notifications",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "administrative",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 4,
+      "paragraph": 1,
+      "line_start": 2,
+      "line_end": 7,
+      "raw_text": "e.  \n   \nTemplate: Controller to Controller  \n 1. Processing Restrictions    \n The personal Data Importer is obliged to process the transferred Personal Data in accordance \nwith the purpose",
+      "clean_text": "The Parties shall ensure that the organizational, administrative, and technical measures specified in Appendix (3) provide a sufficient level of protection for the transferred Personal Data"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

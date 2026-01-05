@@ -1,0 +1,32 @@
+{
+  "clause_id": "other_ef1f5c7d_p4_2610a0",
+  "title": "Processing Restrictions",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 4,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 2,
+      "raw_text": "The Personal Data Exporter and the Personal Data Importer shall process the transferred \nPersonal Data according to the nature and purp",
+      "clean_text": "The personal Data Importer is obliged to process the transferred Personal Data in accordance with the purposes set out in Appendix (2)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

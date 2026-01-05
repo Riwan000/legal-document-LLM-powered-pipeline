@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_ef1f5c7d_p8_e94fd5",
+  "title": "Information Security Organization and Governance",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 8,
+      "paragraph": 1,
+      "line_start": 4,
+      "line_end": 8,
+      "raw_text": "/privacy/privacy -policy- english#data -retention  \n  \nAppendix 3 - Security Measures   \n \n 1. All parties are o",
+      "clean_text": "The Chief Information Security Officer (CISO) manages and coordinates S&P Global’s Information Security Program."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

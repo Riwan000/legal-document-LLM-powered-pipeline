@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_ef1f5c7d_p2_b483cf",
+  "title": "Clause (7) Addition of New Parties",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "administrative",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 2,
+      "paragraph": 1,
+      "line_start": 2,
+      "line_end": 10,
+      "raw_text": "onflict between these Clauses and any provision in any other agreement \nbetween the parties, these Clauses shall prevail.   \n Clause (6) Details of Transfers    \n The transfer(s), as well as the categories of Personal Data and the purposes of the transfers, are described in the Appendix (2).   \n Clause (7) Addition of New Parties    \n A. Any Personal Data Importer or Personal Data Exporter who is not a party to these Standard Clauses may join these Standard Contractual Clauses by completing and signing Appendix (1), \nwith the consent of the existing parties. The Joining Entity shall be either the Personal Data Importer or the Personal Data Exporter.  \nB. Once  Appendix (1)  has been completed and signed, the Joining Entity shall be a party to \nthese Cla",
+      "clean_text": "A. Any Personal Data Importer or Personal Data Exporter who is not a party to these Standard Clauses may join these Standard Contractual Clauses by completing and signing Appendix (1), with the consent of the existing parties. The Joining Entity shall be either the Personal Data Importer or the Personal Data Exporter.\nB. Once  Appendix (1) has been completed and signed, the Joining Entity shall be a party to these Clauses, and the newly Joined Entity shall, as of the date of joining, and assume the responsibilities depending on the nature of the Personal Data processing and transfer operations that occurred on or after the date of joining, and shall be entitled to exercise the rights and obligations corresponding to its role as defined in these Clauses."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

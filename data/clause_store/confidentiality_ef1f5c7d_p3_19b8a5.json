@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_ef1f5c7d_p3_19b8a5",
+  "title": "Clause (12) Duration and Termination E. The Personal Data Importer must continue to ensure - until the data is destroyed",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 2,
+      "line_end": 4,
+      "raw_text": "the application of these Standard Contractual Clauses.  \n Clause (11) Personal Data Security   \n A. All parties shall take the necessary org",
+      "clean_text": "The Personal Data Importer must continue to ensure - until the data is destroyed - that it complies with these Standard Contractual Clauses."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

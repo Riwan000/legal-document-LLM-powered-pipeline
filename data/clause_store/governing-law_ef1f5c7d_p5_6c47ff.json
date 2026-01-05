@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_ef1f5c7d_p5_6c47ff",
+  "title": "Subsequent Transfer",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 3,
+      "line_end": 5,
+      "raw_text": " Personal Data Importer shall implement the security measures specified in  Appendix (3) and apply those measures to all Personal Data transferred to ensure the security and protection of Personal Data against any violation that may result in damage to the Personal Data Subject, unlawful action, loss, alteration, disclosure of Personal Data or unauthorized access.   \nB. The Personal Data Importer must periodically review the security measures stipulated in  Appendix (3) to ensure that they are being implemented as required, and update them as \nneeded to ensure ",
+      "clean_text": "A. The Personal Data Importer shall not transfer or disclose the transferred Personal Data to a third party outside the Kingdom unless that party has acceded to these Clauses and in accordance with the appropriate template and the provisions of Clause (7) above.\nB. Without prejudice to the provisions of Articles (8) and (15) of the Law and (17) of the Implementing Regulation of the Law, the provisions of the Law and Regulations shall apply to subsequent transfer of Personal Data that has been previously transferred or disclosed to an entity outside the Kingdom."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

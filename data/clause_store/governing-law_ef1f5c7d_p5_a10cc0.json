@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_ef1f5c7d_p5_a10cc0",
+  "title": "Sensitive Data",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 2,
+      "line_end": 4,
+      "raw_text": "nting Regulations.   \nA. The Personal Data Importer shall implement the security measures specified in  Appendix (3) and apply those measures to all Personal Data transferred to ensure the security and protection of Personal Data against any violation that may result in damage to the Personal Data Subject, unlawful action, loss, alteration, disclosure of Personal Data or unauthorized access.   \nB. The Personal Data Importer must periodically rev",
+      "clean_text": "Without prejudice to any restrictions relating to sensitive data stipulated in the Law and the Implementing Regulations of the Law, the Personal Data Exporter shall ensure that the Personal Data Importer adopts additional safeguards appropriate to the nature of the sensitive data and ensures that it is protected from any risks when processing it while ensuring that the restrictions and additional safeguards described in Appendix (2) are applied."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

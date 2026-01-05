@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 import uuid
 import shutil
+import hashlib
 from typing import Optional, List
 import os
 
@@ -118,8 +119,20 @@ async def shutdown_event():
     global vector_store
     if vector_store:
         try:
-            vector_store.save()
+            # Run synchronous save in executor to avoid blocking and handle cancellation
+            import asyncio
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, vector_store.save)
             print("Vector store saved successfully.")
+        except asyncio.CancelledError:
+            # Gracefully handle cancellation during shutdown
+            print("Shutdown cancelled, attempting quick save...")
+            try:
+                # Try synchronous save as fallback
+                vector_store.save()
+                print("Vector store saved successfully (fallback).")
+            except Exception as e:
+                print(f"Error saving vector store during cancellation: {e}")
         except Exception as e:
             print(f"Error saving vector store: {e}")
 
@@ -366,14 +379,17 @@ async def health_check():
 @app.post("/api/upload", response_model=DocumentUploadResponse)
 async def upload_document(
     file: UploadFile = File(...),
-    document_type: str = Form("document")
+    document_type: str = Form("document"),
+    force_reingest: bool = Form(False)
 ):
     """
     Upload and ingest a document.
+    Uses content-hash document IDs for determinism.
     
     Args:
         file: Uploaded file (PDF or DOCX)
         document_type: Type of document ("document" or "template")
+        force_reingest: If True, re-index even if document already exists
         
     Returns:
         DocumentUploadResponse with ingestion results
@@ -388,32 +404,62 @@ async def upload_document(
             detail=f"Unsupported file type: {file_ext}. Supported: .pdf, .docx"
         )
     
+    # Read file content to compute hash
+    file_content = await file.read()
+    file.file.seek(0)  # Reset file pointer for later use
+    
+    # Compute content hash as document ID
+    document_id = hashlib.sha256(file_content).hexdigest()
+    
     # Determine storage directory
     if document_type == "template":
         storage_dir = settings.TEMPLATES_PATH
     else:
         storage_dir = settings.DOCUMENTS_PATH
     
-    # Generate unique document ID
-    document_id = str(uuid.uuid4())
-    
-    # Save uploaded file
+    # Check if document already exists
     file_path = storage_dir / f"{document_id}{file_ext}"
-    try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error saving file: {str(e)}")
+    already_exists = file_path.exists()
+    
+    # Check if already indexed in vector store
+    already_indexed = False
+    if vector_store and not force_reingest:
+        existing_chunks = vector_store.get_chunks_by_document(document_id)
+        already_indexed = len(existing_chunks) > 0
+    
+    # If already indexed and not forcing reingest, return early
+    if already_indexed and not force_reingest:
+        return DocumentUploadResponse(
+            document_id=document_id,
+            filename=file.filename,
+            status="success",
+            message=f"Document already ingested. {len(existing_chunks)} chunks found in index.",
+            chunks_created=len(existing_chunks),
+            pages_processed=len(set(c.get('page_number', 0) for c in existing_chunks)),
+            uses_ocr=any(c.get('is_ocr', False) for c in existing_chunks)
+        )
+    
+    # Save uploaded file (only if not already exists or forcing)
+    if not already_exists or force_reingest:
+        try:
+            with open(file_path, "wb") as buffer:
+                buffer.write(file_content)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error saving file: {str(e)}")
     
     # Ingest document
     try:
-        result = ingestion_service.ingest_document(file_path, document_type)
-        result.document_id = document_id  # Use our generated ID
+        result = ingestion_service.ingest_document(file_path, document_type, document_id=document_id)
+        result.document_id = document_id  # Use our computed hash ID
         
         # Get chunks for embedding
         chunks = ingestion_service.get_chunks_from_document(file_path, document_id)
         
         if chunks:
+            # If forcing reingest, remove old chunks first
+            if force_reingest and already_indexed:
+                vector_store.delete_document(document_id)
+            
             # Generate embeddings
             texts = [chunk.text for chunk in chunks]
             embeddings = embedding_service.embed_batch(texts)
@@ -440,8 +486,8 @@ async def upload_document(
         return result
         
     except Exception as e:
-        # Clean up file on error
-        if file_path.exists():
+        # Clean up file on error (only if we created it)
+        if not already_exists and file_path.exists():
             file_path.unlink()
         raise HTTPException(status_code=500, detail=f"Error ingesting document: {str(e)}")
 
@@ -546,17 +592,19 @@ async def compare_contracts(
 @app.post("/api/summarize")
 async def summarize_case_file(
     document_id: str = Form(...),
-    top_k: int = Form(10)
+    top_k: int = Form(10),
+    include_report: bool = Form(False)
 ):
     """
-    Generate summary of a case file.
+    Generate summary of a case file (PRD-compliant).
     
     Args:
         document_id: Document ID
-        top_k: Number of chunks to retrieve
+        top_k: Number of chunks to retrieve (legacy, uses config defaults)
+        include_report: If True, include markdown report (for backward compatibility)
         
     Returns:
-        Case file summary
+        Case file summary with strict JSON schema
     """
     global summarization_service
     
@@ -564,18 +612,33 @@ async def summarize_case_file(
         raise HTTPException(status_code=500, detail="Summarization service not initialized")
     
     try:
-        summary = summarization_service.summarize_case_file(
+        result = summarization_service.summarize_case_file(
             document_id=document_id,
             top_k=top_k
         )
         
-        # Generate report
-        report = summarization_service.generate_summary_report(summary, format='markdown')
+        # Check for errors
+        if "error" in result:
+            error = result["error"]
+            status_code = 422 if error.get("code") in ["CASE_SPINE_FAILED", "INSUFFICIENT_CONTEXT"] else 400
+            raise HTTPException(
+                status_code=status_code,
+                detail=error
+            )
         
-        return {
-            "summary": summary,
-            "report": report
-        }
+        # Generate report if requested
+        report = None
+        if include_report:
+            report = summarization_service.generate_summary_report(result, format='markdown')
+        
+        response = {"summary": result}
+        if report:
+            response["report"] = report
+        
+        return response
+        
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error summarizing case file: {str(e)}")
 

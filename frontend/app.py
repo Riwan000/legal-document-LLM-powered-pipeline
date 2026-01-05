@@ -321,21 +321,66 @@ elif page == "📋 Clause Extraction":
                 result = extract_clauses(selected_doc)
                 
                 if result and result.get('clauses'):
-                    st.success(f"✅ Extracted {result['total_clauses']} clauses")
+                    # Get total clauses count - handle different response formats
+                    total_clauses = result.get('total_clauses') or result.get('count') or len(result.get('clauses', []))
+                    if total_clauses:
+                        st.success(f"✅ Extracted {total_clauses} clause(s)")
+                    else:
+                        st.success(f"✅ Extracted {len(result.get('clauses', []))} clause(s)")
                     
                     # Group by clause type
                     clauses_by_type = {}
                     for clause in result['clauses']:
-                        clause_type = clause.get('type', 'Unknown')
-                        if clause_type not in clauses_by_type:
-                            clauses_by_type[clause_type] = []
-                        clauses_by_type[clause_type].append(clause)
+                        # Handle both dict format and structured clause format
+                        if isinstance(clause, dict):
+                            clause_type = clause.get('type', 'Unknown')
+                            # Handle structured clauses with type enum
+                            if isinstance(clause_type, dict):
+                                clause_type = clause_type.get('value', 'Unknown')
+                            elif hasattr(clause_type, 'value'):
+                                clause_type = clause_type.value
+                            
+                            page_num = clause.get('page_number')
+                            # Handle evidence blocks in structured clauses
+                            if not page_num and clause.get('evidence'):
+                                evidence = clause['evidence'][0] if isinstance(clause['evidence'], list) else clause['evidence']
+                                page_num = evidence.get('page', 0) if isinstance(evidence, dict) else 0
+                            
+                            clause_text = clause.get('text', '')
+                            # Handle structured clauses with evidence blocks
+                            if not clause_text and clause.get('evidence'):
+                                evidence = clause['evidence'][0] if isinstance(clause['evidence'], list) else clause['evidence']
+                                if isinstance(evidence, dict):
+                                    clause_text = evidence.get('clean_text', '') or evidence.get('raw_text', '')
+                            
+                            if clause_type not in clauses_by_type:
+                                clauses_by_type[clause_type] = []
+                            clauses_by_type[clause_type].append({
+                                'type': clause_type,
+                                'text': clause_text,
+                                'page_number': page_num or 0,
+                                'clause_id': clause.get('clause_id'),
+                                'title': clause.get('title')
+                            })
                     
                     for clause_type, clauses in clauses_by_type.items():
-                        st.subheader(f"📌 {clause_type} ({len(clauses)} clauses)")
+                        st.subheader(f"📌 {clause_type} ({len(clauses)} clause(s))")
                         for clause in clauses:
-                            with st.expander(f"Page {clause['page_number']}"):
-                                st.write(clause['text'])
+                            expander_label = f"Page {clause['page_number']}"
+                            if clause.get('title'):
+                                expander_label = f"{clause['title']} - Page {clause['page_number']}"
+                            elif clause.get('clause_id'):
+                                expander_label = f"{clause['clause_id']} - Page {clause['page_number']}"
+                            
+                            with st.expander(expander_label):
+                                if clause.get('text'):
+                                    st.write(clause['text'])
+                                else:
+                                    st.info("No text available for this clause")
+                elif result:
+                    # Result exists but no clauses - show message
+                    error_msg = result.get('error') or result.get('message', 'No clauses found')
+                    st.warning(f"⚠️ {error_msg}")
                 else:
                     st.info("No clauses found or extraction failed")
 
@@ -451,29 +496,100 @@ elif page == "📄 Case Summary":
                 result = summarize_case_file(selected_doc, top_k)
                 
                 if result:
-                    summary = result.get('summary', {})
-                    
-                    st.subheader("Executive Summary")
-                    st.write(summary.get('executive_summary', 'No summary available'))
-                    
-                    if summary.get('timeline'):
-                        st.subheader("Timeline of Events")
-                        for event in summary['timeline']:
-                            st.write(f"**{event.get('date', 'N/A')}:** {event.get('event', '')} {event.get('source', '')}")
-                    
-                    if summary.get('key_arguments'):
-                        st.subheader("Key Arguments")
-                        for arg in summary['key_arguments']:
-                            st.write(f"- {arg.get('argument', '')} {arg.get('source', '')}")
-                    
-                    if summary.get('open_issues'):
-                        st.subheader("Open Issues")
-                        for issue in summary['open_issues']:
-                            st.write(f"- {issue.get('issue', '')} {issue.get('source', '')}")
-                    
-                    # Full report
-                    st.subheader("Full Report")
-                    st.markdown(result.get('report', ''))
+                    # Check for errors
+                    if 'error' in result.get('summary', {}):
+                        error = result['summary']['error']
+                        st.error(f"**Error {error.get('code', 'UNKNOWN')}:** {error.get('message', 'Unknown error')}")
+                        if error.get('details'):
+                            st.json(error['details'])
+                    else:
+                        # Extract summary from result
+                        summary = result.get('summary', {})
+                        
+                        # Case Spine
+                        if summary.get('case_spine'):
+                            spine = summary['case_spine']
+                            with st.expander("Case Spine", expanded=True):
+                                st.write(f"**Case:** {spine.get('case_name', 'N/A')}")
+                                st.write(f"**Court:** {spine.get('court', 'N/A')}")
+                                st.write(f"**Date:** {spine.get('date', 'N/A')}")
+                                st.write(f"**Parties:** {', '.join(spine.get('parties', []))}")
+                                st.write(f"**Procedural Posture:** {spine.get('procedural_posture', 'N/A')}")
+                                if spine.get('core_issues'):
+                                    st.write("**Core Issues:**")
+                                    for issue in spine['core_issues']:
+                                        st.write(f"- {issue}")
+                        
+                        # Executive Summary (now an array)
+                        if summary.get('executive_summary'):
+                            st.subheader("Executive Summary")
+                            for item in summary['executive_summary']:
+                                source = item.get('source', {})
+                                st.write(f"{item.get('text', '')}")
+                                st.caption(f"Source: Document {source.get('document', '')[:8]}..., Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}")
+                        else:
+                            st.subheader("Executive Summary")
+                            st.write("No executive summary available.")
+                        
+                        # Timeline
+                        if summary.get('timeline'):
+                            st.subheader("Timeline of Events")
+                            timeline_data = []
+                            for event in summary['timeline']:
+                                source = event.get('source', {})
+                                timeline_data.append({
+                                    'Date': event.get('date', 'N/A'),
+                                    'Event': event.get('event', ''),
+                                    'Source': f"P{source.get('page', 0)} ({source.get('chunk_id', '')[:12]}...)"
+                                })
+                            st.table(timeline_data)
+                        else:
+                            st.subheader("Timeline of Events")
+                            st.write("No timeline available.")
+                        
+                        # Key Arguments (now organized by party)
+                        if summary.get('key_arguments'):
+                            args = summary['key_arguments']
+                            st.subheader("Key Arguments")
+                            
+                            if args.get('claimant'):
+                                st.write("**Claimant/Plaintiff Arguments:**")
+                                for arg in args['claimant']:
+                                    source = arg.get('source', {})
+                                    st.write(f"- {arg.get('text', '')}")
+                                    st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')[:12]}...")
+                            
+                            if args.get('defendant'):
+                                st.write("**Defendant/Respondent Arguments:**")
+                                for arg in args['defendant']:
+                                    source = arg.get('source', {})
+                                    st.write(f"- {arg.get('text', '')}")
+                                    st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')[:12]}...")
+                        else:
+                            st.subheader("Key Arguments")
+                            st.write("No arguments available.")
+                        
+                        # Open Issues
+                        if summary.get('open_issues'):
+                            st.subheader("Open Issues")
+                            for issue in summary['open_issues']:
+                                source = issue.get('source', {})
+                                st.write(f"- {issue.get('text', '')}")
+                                st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')[:12]}...")
+                        else:
+                            st.subheader("Open Issues")
+                            st.write("No open issues identified.")
+                        
+                        # Citations
+                        if summary.get('citations'):
+                            with st.expander("All Citations"):
+                                for citation in summary['citations']:
+                                    st.write(f"**{citation.get('chunk_id', '')}** (Page {citation.get('page', 0)}, Type: {citation.get('chunk_type', 'unknown')})")
+                        
+                        # Full report (if available)
+                        if result.get('report'):
+                            st.subheader("Full Report")
+                            st.markdown(result.get('report', ''))
 
 elif page == "🌐 Bilingual Search":
     st.markdown('<div class="main-header">🌐 Bilingual Search</div>', unsafe_allow_html=True)

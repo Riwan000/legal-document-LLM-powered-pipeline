@@ -373,10 +373,14 @@ JSON response:"""
         json_text = re.sub(r':\s*""([^"]+)""', r': "\1"', json_text)  # Fix double-double quotes
         json_text = re.sub(r':\s*"([^"]*)"([^,}\]]*)"', lambda m: f': "{m.group(1)}{m.group(2)}"', json_text)
         
-        # Fix control characters (newlines, tabs) - escape them properly
-        json_text = re.sub(r'[\x00-\x1f]', lambda m: '\\u{:04x}'.format(ord(m.group(0))), json_text)
-        # But preserve intentional \n and \t
-        json_text = json_text.replace('\\u000a', '\\n').replace('\\u0009', '\\t').replace('\\u000d', '\\r')
+        # Remove illegal ASCII control characters, but KEEP JSON-whitespace controls:
+        # - \t (0x09), \n (0x0a), \r (0x0d) are valid whitespace in JSON outside strings.
+        # Escaping them globally into literal "\n" sequences breaks JSON parsing (e.g. "[\n{...").
+        json_text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', json_text)
+
+        # Remove common invisible Unicode format characters that sometimes appear in LLM output
+        # (BOM, zero-width spaces, directional marks). These can break json.loads.
+        json_text = re.sub(r'[\ufeff\u200b\u200c\u200d\u2060\u200e\u200f\u202a-\u202e]', '', json_text)
         
         return json_text
     

@@ -1,0 +1,29 @@
+{
+  "clause_id": "regulatory-compliance_ef1f5c7d_p7_570534",
+  "title": "Description of Transferred Personal Data",
+  "type": "regulatory_compliance",
+  "subtype": null,
+  "authority_level": "regulatory",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 7,
+      "paragraph": 1,
+      "line_start": 4,
+      "line_end": 28,
+      "raw_text": "mation of Personal Data Importer (s)   \nName:  Client name as set forth in signature \nblock of A greement . Name:  S&P as defined in the Agreement  \nAddress:  As set out in the  signature block of \nthe Agreement  Address:  55 Water Street, New York, NY \n10041 USA   \nContact Information:  As set forth in the \nsignature block of Agreement  Contact Information:  Mobility _Legal _Team  \n@spglobal.com .  \nSignature:  As set forth in the signature block of \nAgreement  Signature:  As set forth in signature block of \nAgreement   \nDate:  As set forth in the signature block of \nAgreement  Date:  As set forth in the signature block of \nAgreement  \nRole : Controller  Role : Controller  \n  \nAppendix 2 - Description of Transferred Personal Data   \n  \n• Categories of Personal Data Subjects whose Personal Data is transferred    \n Data subjects who pay or receive invoices, manage contract renewals, or otherwise manage the relationship between S&P and Customer on behalf of Customer; and data subjects who are Authorized Users of the Services or Customers who are natural persons.  \n \n• Categories of transferred Personal Data:  \n \nServices Management Data (as defined in the Addendum), including name, job title, name of emp",
+      "clean_text": "Appendix 2 - Description of Transferred Personal Data\n• Categories of Personal Data Subjects whose Personal Data is transferred\nData subjects who pay or receive invoices, manage contract renewals, or otherwise manage the relationship between S&P and Customer on behalf of Customer; and data subjects who are Authorized Users of the Services or Customers who are natural persons.\n• Categories of transferred Personal Data:\nServices Management Data (as defined in the Addendum), including name, job title, name of employer, office e -mail address, office physical address, internet protocol address, office telephone number, mobile telephone number, support and training interactions, usage tracking information including online identifiers and tracking.\n• Categories of transferred sensitive data  - if any -  and applicable restrictions and safeguards that take full account of the nature of the Personal Data and the risks involved, e.g., purpose limitation, access restrictions, record keeping of access to Personal Data, restrictions on subsequent transfers, or additional organizational, technical, and regulatory measures : Not applicable.\n• Purpose of Transfer:\nFor the Permitted Purposes as defined in the Addendum"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_ef1f5c7d_p2_dacdda",
+  "title": "Clause (8) Governing Law and Jurisdiction",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": "Saudi Arabia",
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 2,
+      "paragraph": 1,
+      "line_start": 2,
+      "line_end": 7,
+      "raw_text": "any other agreement \nbetween the parties, these Clauses shall prevail.   \n Clause (6) Details of Transfers    \n The transfer(s), as well as the categories of Personal Data and the purposes of the transfers, are described in the Appendix (2).   \n Clause (7) Addition of New Parties    \n A. Any Personal Data Importer or Personal Data Exporter who is not a party to these Standard Clauses may join thes",
+      "clean_text": "These Standard Contractual Clauses shall be governed by the applicable laws of the Kingdom of Saudi Arabia. Any dispute arising from the application of the provisions of these Clauses shall fall under the jurisdiction of the Kingdom and be vested in its courts. The Personal Data Importer, under these Standard Contractual Clauses, agrees to submit to the jurisdiction of the Kingdom of Saudi Arabia."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

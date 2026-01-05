@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_ef1f5c7d_p1_80eb13",
+  "title": "Clause (4) Interpretation",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 1,
+      "paragraph": 1,
+      "line_start": 7,
+      "line_end": 14,
+      "raw_text": "e level of protection applicable under the Personal Data Protection Law and its Implementing Regulations is applied in the absence of an appropriate level of Personal Data protection outside the Kingdom by specifying the obligations of the parties involved in the transfer of Personal Data to a country or international organization that does not have an appropriate level of Personal Data protection.   \nAppendix (1) shows the data for both Data Exporters and Data Importers.  \nB. These Clauses apply to the transfer of Personal Data as specified in  Appendix (2) (\"Personal \nData to be Transferred or Disclosed\").    \n \nClause (2) Impact and Modification   \n \nA. These Clauses set out appropriate safeguards, includ",
+      "clean_text": "A. Unless the context requires otherwise, the words and phrases used in these Clauses shall have the meanings assigned to them in Article (1) of the Personal Data Protection Law issued by Royal Decree No. (M/19) dated 9/2/1443 AH and amended by Royal Decree N o. (M/148) dated 5/9/1444 AH, Article (1) of the Implementing Regulation of the PDPL and Article (1) of the Regulation on the Transfer of Personal Data Outside the Kingdom.   B. These Clauses must be read and interpreted in light of and in accordance with the provisions of the Law and Regulations referred to in paragraph (a) of this Article, and may not be interpreted in any other way that is inconsistent with the provisions of  the Law and Regulations."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

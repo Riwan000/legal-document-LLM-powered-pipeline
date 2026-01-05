@@ -1,0 +1,29 @@
+{
+  "clause_id": "regulatory-compliance_ef1f5c7d_p2_3c3ce9",
+  "title": "Clause (9) Compliance with the Requests of the Competent Authority",
+  "type": "regulatory_compliance",
+  "subtype": null,
+  "authority_level": "regulatory",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 2,
+      "paragraph": 1,
+      "line_start": 3,
+      "line_end": 9,
+      "raw_text": ", these Clauses shall prevail.   \n Clause (6) Details of Transfers    \n The transfer(s), as well as the categories of Personal Data and the purposes of the transfers, are described in the Appendix (2).   \n Clause (7) Addition of New Parties    \n A. Any Personal Data Importer or Personal Data Exporter who is not a party to these Standard Clauses may join these Standard Contractual Clauses by completing and signing Appendix (1), \nwith the consent of the existing parties. The Joining Entity shall be either the Personal Data Importer or the Personal Data Exporter.  \nB.",
+      "clean_text": "A. Each party agrees to comply with any requests from the Competent Authority in relation to these Standard Contractual Clauses or the processing of transferred Personal Data.\nB. The Personal Data Importer agrees and commits to cooperate with the Competent Authority and comply with all its requests and inquiries and provide the necessary documents and information to ensure compliance with the Standard Contractual Clauses.\nC. The Personal Data Importer agrees to abide by the measures adopted by the Competent Authority, including corrective measures and compensation."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

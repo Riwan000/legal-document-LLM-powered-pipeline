@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_ef1f5c7d_p5_e9097f",
+  "title": "Data Compliance",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 2,
+      "raw_text": "Data to comply with the requirements of Article (19) of the Law and Article (23) of the \nImplementing Regulations",
+      "clean_text": "Data to comply with the requirements of Article (19) of the Law and Article (23) of the Implementing Regulations."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

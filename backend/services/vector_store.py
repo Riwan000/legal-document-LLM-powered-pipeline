@@ -275,6 +275,32 @@ class VectorStore:
         ]
         # Filter metadata by document_id
     
+    def update_chunk_metadata(
+        self,
+        document_id: str,
+        chunk_updates: Dict[str, Dict[str, Any]]
+    ) -> int:
+        """
+        Update metadata for chunks (e.g., backfill chunk_id, chunk_type).
+        
+        Args:
+            document_id: Document ID to filter by
+            chunk_updates: Dict mapping chunk_id to dict of metadata updates
+            
+        Returns:
+            Number of chunks updated
+        """
+        updated_count = 0
+        for metadata in self.metadata:
+            if metadata['document_id'] == document_id:
+                chunk_id = metadata.get('chunk_id')
+                if chunk_id and chunk_id in chunk_updates:
+                    updates = chunk_updates[chunk_id]
+                    metadata.update(updates)
+                    updated_count += 1
+        
+        return updated_count
+    
     def delete_document(self, document_id: str) -> int:
         """
         Delete all chunks for a document (for demo - in production, use more efficient method).

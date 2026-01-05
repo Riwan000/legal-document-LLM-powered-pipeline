@@ -57,12 +57,18 @@ class TextChunker:
             if current_length + sentence_length > char_chunk_size and current_chunk:
                 chunk_text = current_chunk.strip()
                 if chunk_text:  # Only add non-empty chunks
+                    # Generate stable chunk ID
+                    chunk_id = f"c_p{page_number:04d}_i{chunk_index:04d}"
                     chunks.append(DocumentChunk(
                         text=chunk_text,
                         page_number=page_number,
                         chunk_index=chunk_index,
                         document_id=document_id,
-                        metadata={"char_length": len(chunk_text), "is_ocr": is_ocr}
+                        metadata={
+                            "char_length": len(chunk_text),
+                            "is_ocr": is_ocr,
+                            "chunk_id": chunk_id
+                        }
                     ))
                     chunk_index += 1
                 
@@ -81,12 +87,17 @@ class TextChunker:
         
         # Add final chunk if it exists (ensure we don't lose any text)
         if current_chunk.strip():
+            chunk_id = f"c_p{page_number:04d}_i{chunk_index:04d}"
             chunks.append(DocumentChunk(
                 text=current_chunk.strip(),
                 page_number=page_number,
                 chunk_index=chunk_index,
                 document_id=document_id,
-                metadata={"char_length": len(current_chunk), "is_ocr": is_ocr}
+                metadata={
+                    "char_length": len(current_chunk),
+                    "is_ocr": is_ocr,
+                    "chunk_id": chunk_id
+                }
             ))
         elif current_chunk:  # Even if only whitespace, preserve minimal content
             # This handles edge cases where text might be mostly whitespace but still valuable
@@ -273,6 +284,8 @@ class TextChunker:
                 elif chunk_hierarchy_levels:
                     hierarchy_level = chunk_hierarchy_levels[0]
                 
+                # Generate stable chunk ID
+                chunk_id = f"c_p{page_number:04d}_i{chunk_index:04d}"
                 metadata = {
                     "char_length": len(chunk_text),
                     "clause_types": list(set(chunk_clauses)) if chunk_clauses else [],
@@ -284,7 +297,8 @@ class TextChunker:
                     "clause_id": clause_id,
                     "hierarchy_level": hierarchy_level,
                     "legal_supremacy": has_supremacy,
-                    "topics": list(set(chunk_topics)) if chunk_topics else []
+                    "topics": list(set(chunk_topics)) if chunk_topics else [],
+                    "chunk_id": chunk_id
                 }
                 
                 chunks.append(DocumentChunk(

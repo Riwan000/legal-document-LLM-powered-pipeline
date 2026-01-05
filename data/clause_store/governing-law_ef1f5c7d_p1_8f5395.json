@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_ef1f5c7d_p1_8f5395",
+  "title": "Clause (1) Purpose and Scope",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 1,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 8,
+      "raw_text": "Standard Contractual Clauses    \nSaudi Arabia   \n \n  \nClause (1) Purpose and Scope    \n \nA. The purpose of these Clauses is to ensure that an appropriate level of Personal Data protection equivalent to the level of protection applicable under the Personal Data Protection Law and its Implementing Regulations is applied in the absence of an appropriate level of Personal Data protection outside the Kingdom by specifying the obligations of the parties involved in the transfer of Personal Data to a country or international organization that does not have an appropriate level of Personal Data protection.   \nAppendix (1) shows the data for both Data Exp",
+      "clean_text": "A. The purpose of these Clauses is to ensure that an appropriate level of Personal Data protection equivalent to the level of protection applicable under the Personal Data Protection Law and its Implementing Regulations is applied in the absence of an appropriate level of Personal Data protection outside the Kingdom by specifying the obligations of the parties involved in the transfer of Personal Data to a country or international organization that does not have an appropriate level of Personal Data protection.   B. These Clauses apply to the transfer of Personal Data as specified in  Appendix (2) ('Personal Data to be Transferred or Disclosed')."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

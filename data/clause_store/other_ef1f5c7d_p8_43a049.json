@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_ef1f5c7d_p8_43a049",
+  "title": "Security Measure Summary",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 8,
+      "paragraph": 1,
+      "line_start": 4,
+      "line_end": 8,
+      "raw_text": "bal.com/en/privacy/privacy -policy- english#data -retention  \n  \nAppendix 3 - Security Measures   \n \n 1. All part",
+      "clean_text": "S&P Global’s Risk Management program includes Information Security to manage risk through three lines of defense."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -4,7 +4,7 @@ Orchestrates file parsing, chunking, and prepares documents for embedding.
 """
 import uuid
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 
 from backend.utils.file_parser import FileParser
@@ -28,7 +28,8 @@ class DocumentIngestionService:
     def ingest_document(
         self,
         file_path: Path,
-        document_type: str = "document"
+        document_type: str = "document",
+        document_id: Optional[str] = None
     ) -> DocumentUploadResponse:
         """
         Ingest a document: parse, chunk, and prepare for embedding.
@@ -36,13 +37,15 @@ class DocumentIngestionService:
         Args:
             file_path: Path to uploaded file
             document_type: Type of document ("document" or "template")
+            document_id: Optional document ID (if not provided, generates UUID for backward compatibility)
             
         Returns:
             DocumentUploadResponse with ingestion results
         """
         try:
-            # Generate unique document ID
-            document_id = str(uuid.uuid4())
+            # Use provided document ID or generate UUID for backward compatibility
+            if document_id is None:
+                document_id = str(uuid.uuid4())
             
             # Determine storage path based on type
             if document_type == "template":

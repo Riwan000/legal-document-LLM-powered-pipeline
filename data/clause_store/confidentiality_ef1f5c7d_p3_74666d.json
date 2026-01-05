@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_ef1f5c7d_p3_74666d",
+  "title": "Clause (12) Duration and Termination C. The Personal Data Exporter or Controller",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 2,
+      "line_end": 4,
+      "raw_text": "he magnitude of the damage arising from the application of these Standard Contractual Clauses.  \n Clause (11) Personal Data Security   \n A. All parties shall take the necessary organizational, administrative, and technical measures that ensure to m",
+      "clean_text": "The Personal Data Exporter or Controller, as the case may be, shall ensure that all Personal Data previously transferred to the Personal Data Importer is fully destroyed before terminating the Standard Contractual Clauses under paragraph (b) above."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

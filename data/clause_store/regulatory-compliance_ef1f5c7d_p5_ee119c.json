@@ -1,0 +1,32 @@
+{
+  "clause_id": "regulatory-compliance_ef1f5c7d_p5_ee119c",
+  "title": "Compliance with these Clauses",
+  "type": "regulatory_compliance",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 3,
+      "line_end": 4,
+      "raw_text": "es specified in  Appendix (3) and apply those measures to all Personal Data transferred to ensure the security and protection of Personal Data against any violation that may result in damage to the Personal Data Subject, unlawful action, loss, alteration, disclosure of Personal Data or unauthorized access.   \nB. The Personal Data Importer must periodically revi",
+      "clean_text": "A. All parties shall demonstrate full compliance with these Clauses to the Competent Authority upon request, and the Personal Data Importer shall maintain documents related to the Personal Data processing activities conducted under its supervision, in addition to the records of Personal Data processing activities as stipulated in Article (33) of the Regulation."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

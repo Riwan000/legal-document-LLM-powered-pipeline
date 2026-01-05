@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_ef1f5c7d_p9_be8411",
+  "title": "S&P Global’s Information Security Program Security Architecture provides an oversight and review of new platforms/applications to ensure they conform to Information Security policies, standards, procedures, and guidelines.",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 9,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 7,
+      "raw_text": "and \nlimited to those who have been identified as having access \nto the company’s global systems.   \nInformation Security Pillars: \nCyber Defense, Threat \nIntelligence & Monitoring   S&P Global’s cyber incident response program is managed \nby the Information Security Monitor",
+      "clean_text": "Information Security Pillars: Security Architecture S&P Global’s  Information Security Program Security Architecture provides an oversight and review of new platforms/applications to ensure they conform to Information Security policies, standards, procedures, and guidelines."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

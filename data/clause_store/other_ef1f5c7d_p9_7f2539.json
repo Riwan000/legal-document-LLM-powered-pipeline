@@ -1,0 +1,32 @@
+{
+  "clause_id": "other_ef1f5c7d_p9_7f2539",
+  "title": "Key routing and switching components are located in physically secured data centers or locations that provide physical security and monitoring of events. Authentication and access to these key components are governed by the company’s authentication policies.",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 9,
+      "paragraph": 1,
+      "line_start": 2,
+      "line_end": 8,
+      "raw_text": "ho have been identified as having access \nto the company’s global systems.   \nInformation Security Pillars: \nCyber Defense, Threat \nIntelligence & Monitoring   S&P Global’s cyber incident response program is managed \nby the Information Security Monitoring & Cyber Incident \nResponse Team (“CIRT”) in conjunction wi",
+      "clean_text": "Information Security Controls: Infrastructure Security Key routing and switching components are located in physically secured data centers or locations that provide physical security and monitoring of events. Authentication and access to these key components are governed by the company’s authentication policie s."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

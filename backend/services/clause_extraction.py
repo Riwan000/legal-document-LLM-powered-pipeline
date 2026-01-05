@@ -305,29 +305,73 @@ JSON response:"""
         Returns:
             JSON string or None
         """
+        import re
+
         # Remove markdown code blocks if present
         if '```json' in response_text:
             # Extract content between ```json and ```
             start = response_text.find('```json') + 7
             end = response_text.find('```', start)
             if end != -1:
-                return response_text[start:end].strip()
+                json_text = response_text[start:end].strip()
+            else:
+                json_text = response_text[start:].strip()
         elif '```' in response_text:
             # Generic code block
             start = response_text.find('```') + 3
             end = response_text.find('```', start)
             if end != -1:
-                return response_text[start:end].strip()
+                json_text = response_text[start:end].strip()
+            else:
+                json_text = response_text[start:].strip()
+        else:
+            json_text = response_text.strip()
         
-        # Try to find JSON array
-        start_brace = response_text.find('[')
-        end_brace = response_text.rfind(']')
+        # Try to find JSON array within extracted text
+        start_brace = json_text.find('[')
+        end_brace = json_text.rfind(']')
         
         if start_brace != -1 and end_brace != -1 and end_brace > start_brace:
-            return response_text[start_brace:end_brace + 1]
-        
-        # Return as-is if no markers found
-        return response_text.strip()
+            json_text = json_text[start_brace:end_brace + 1]
+
+        # Remove invisible Unicode format characters (BOM, zero-width spaces, directional marks)
+        json_text = re.sub(r'[\ufeff\u200b\u200c\u200d\u2060\u200e\u200f\u202a-\u202e]', '', json_text)
+
+        # If the model returned literal "\n" / "\t" / "\r" tokens as STRUCTURAL whitespace,
+        # convert them to real whitespace OUTSIDE string literals so json.loads works.
+        if '\\n' in json_text or '\\t' in json_text or '\\r' in json_text:
+            result = []
+            in_string = False
+            escape_next = False
+            i = 0
+            while i < len(json_text):
+                ch = json_text[i]
+                if escape_next:
+                    if ch in ('n', 't', 'r'):
+                        if in_string:
+                            # Preserve escapes inside JSON strings
+                            result.append('\\' + ch)
+                        else:
+                            # Convert structural escapes to real whitespace
+                            result.append({'n': '\n', 't': '\t', 'r': '\r'}[ch])
+                    else:
+                        # Keep unknown escapes as-is
+                        result.append('\\' + ch)
+                    escape_next = False
+                elif ch == '\\':
+                    escape_next = True
+                elif ch == '"':
+                    # Toggle string state unless the quote itself is escaped
+                    in_string = not in_string
+                    result.append(ch)
+                else:
+                    result.append(ch)
+                i += 1
+            if escape_next:
+                result.append('\\')
+            json_text = ''.join(result)
+
+        return json_text.strip()
     
     def _deduplicate_clauses(self, clauses: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """

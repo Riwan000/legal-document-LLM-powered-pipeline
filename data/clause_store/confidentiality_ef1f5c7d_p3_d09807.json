@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_ef1f5c7d_p3_d09807",
+  "title": "Clause (11) Personal Data Security C. The Data Exporter ensures that persons authorized to process the transferred Personal Data are bound by confidentiality",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 3,
+      "raw_text": "fore the competent court for \ncompensation for material or moral damage in proportion to the magnitude of the damage arising from the application of these Standard Contractual Clauses.  \n Clause (11) Personal Data ",
+      "clean_text": "The Data Exporter ensures that persons authorized to process the transferred Personal Data are bound by confidentiality and nondisclosure under an appropriate legal obligation of confidentiality and non-disclosure."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_ef1f5c7d_p6_c599b7",
+  "title": "Right of Personal Data Subjects",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 6,
+      "paragraph": 1,
+      "line_start": 3,
+      "line_end": 7,
+      "raw_text": "accountable to the other party for any damages caused to the other party as a result of  a breach of any of these Standard Contractual Clauses.  \nB. Each party shall be accountable to the Personal Data Subject, without prejudice to the accountability of the Personal Data Exporter under the Law and Regulations, and the Personal Data Subject shall be entitled to compensation for any material and moral damages caused by \nthe negligent party that harms the Personal Data Subject. If more than one party is responsible for causing damage to the Personal Data Subject as a result of the violation of these Standard Contractual Clauses, the responsible parties s hall be held jointly or individually accountable, \nand the Personal Data Subject shall have the right to take legal action before a court against any of these parties.   \nC. The part",
+      "clean_text": "A. The Personal Data Importer (with the support of the Personal Data Exporter) shall deal, as appropriate, with any queries or requests received from the Data Subject regarding the \nprocessing of Personal Data and the exercise of the rights provided for in accordance with the Law and applicable regulations without any delay within a period of no more than thirty (30) days from the date of receipt of such request. This period may be extended for a similar period up to a maximum of thirty (30) days if the exec ution of the request requires extraordinary effort \nor if the Personal Data Importer receives many requests from the Personal Data Subject. The Data Subject is notified in advance of this extension and its reasons.\nB. All statements made to the Personal Data Subject must be presented in a clear, legible, and accessible format."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

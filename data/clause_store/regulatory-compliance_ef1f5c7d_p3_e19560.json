@@ -1,0 +1,29 @@
+{
+  "clause_id": "regulatory-compliance_ef1f5c7d_p3_e19560",
+  "title": "Clause (12) Duration and Termination B. In the event that the personal Data Importer violates these Standard Contractual Clauses",
+  "type": "regulatory_compliance",
+  "subtype": null,
+  "authority_level": "regulatory",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 2,
+      "line_end": 7,
+      "raw_text": "erial or moral damage in proportion to the magnitude of the damage arising from the application of these Standard Contractual Clauses.  \n Clause (11) Personal Data Security   \n A. All parties shall take the necessary organizational, administrative, and technical measures that ensure to maintain the privacy of personal Data against any breach at all stages of processing, including personal data security during the transfer process . In assessing the \nappropriate level of   security, the Parties shall take into account the current state of   technology, \nimplementation costs, and the nature of the Personal Data   transferred, as well as the nature, \nscope, context",
+      "clean_text": "In the event that the personal Data Importer violates these Standard Contractual Clauses or is unable to comply with them, the personal Data Exporter shall immediately cease the transfer of Personal Data to the Personal Data Importer until the Personal Data Importer ensures its return to compliance again, provided that the Personal Data Importer shall be given a period of (30) days, extendable for a similar maximum period, to prove its ability to comply with these Clauses, and if the period expires without achieving this, the two parties shall agree to terminate the contract, without any liability for the Personal Data Exporter or Controller, as the case may be."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

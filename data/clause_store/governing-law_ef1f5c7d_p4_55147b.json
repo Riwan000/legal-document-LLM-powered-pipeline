@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_ef1f5c7d_p4_55147b",
+  "title": "Compliance with the Requests of the Competent Authority",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 4,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 13,
+      "raw_text": " Personal Data Importer shall process the transferred \nPersonal Data according to the nature and purposes of the transfer  and the appropriate template.  \n   \nTemplate: Controller to Controller  \n 1. Processing Restrictions    \n The personal Data Importer is obliged to process the transferred Personal Data in accordance \nwith the purposes set out in Appendix (2).  \n \n2. Compliance with the Requests of the Competent Authority    \n A. The parties shall provide a copy of these Clauses to the Competent Authority upon request \nand without undue delay in order for the Competent Authority to exercise its powers under the \nLaw and Regulations. The Competent Authority may request any additional information \nregarding the transfe",
+      "clean_text": "A. The parties shall provide a copy of these Clauses to the Competent Authority upon request and without undue delay in order for the Competent Authority to exercise its powers under the Law and Regulations. The Competent Authority may request any additional information regarding the transfers of Personal Data.\nB. Each party agrees to comply with any requests made by the Competent Authority in relation to these Clauses or the processing of the transferred data.\nC. Upon request, the Personal Data Importer (either directly or through the Personal Data Exporter) shall disclose its identity and contact details and the categories of Personal Data being processed to the Personal Data Subject and provide a copy of these items."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

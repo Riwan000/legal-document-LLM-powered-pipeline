@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_ef1f5c7d_p5_e5af5b",
+  "title": "Notification of Data Breach",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 3,
+      "raw_text": "e (23) of the \nImplementing Regulations.   \nA. The Personal Data Importer shall implement the security measures specified in  Appendix (3) and apply those measures to all Personal Data transferred to ensure the security and protection of Personal Data against any violation that may result in damage to the Personal Data Subject, unlawful action, loss, alteration, disclosure of Personal Data or unau",
+      "clean_text": "If the Personal Data Importer becomes aware of a data breach incident that could harm the transferred personal data or the data subjects, or conflict with their rights or interests, the Personal Data Importer must notify the competent authority within (72) hours of becoming aware of the incident, in accordance with the requirements stated in Article (24) of the Implementing Regulations of the Law."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

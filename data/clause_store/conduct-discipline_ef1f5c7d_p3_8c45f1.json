@@ -1,0 +1,29 @@
+{
+  "clause_id": "conduct-discipline_ef1f5c7d_p3_8c45f1",
+  "title": "Clause (11) Personal Data Security B. The Personal Data Exporter shall assist the Personal Data Importer in fulfilling the necessary data security requirements",
+  "type": "conduct_discipline",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 4,
+      "raw_text": "he right to claim before the competent court for \ncompensation for material or moral damage in proportion to the magnitude of the damage arising from the application of these Standard Contractual Clauses.  \n Clause (11) Personal Data Security   \n A. All parties shall take the necessary organizational, administrative, and technical measures that ensure to maintain the privacy of personal Data against any breach at all stages of processing, including personal data security during",
+      "clean_text": "The Personal Data Exporter shall assist the Personal Data Importer in fulfilling the necessary data security requirements, and in the event of any Personal Data breach in relation to the transferred Personal Data processed by The Personal Data Exporter under these Standard Contractual Clauses, The Personal Data Exporter shall notify the Personal Data Importer without delay after becoming aware of such breach and shall assist the Personal Data Importer in containing such breach."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

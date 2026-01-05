@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_ef1f5c7d_p7_d51225",
+  "title": "Parties of List",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "administrative",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 7,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 19,
+      "raw_text": "Appendix 1 - Parties of List    \nNote: The data in this appendix is updated for all templates.   \n  \nInformation of Personal Data Exporter (s)   Information of Personal Data Importer (s)   \nName:  Client name as set forth in signature \nblock of A greement . Name:  S&P as defined in the Agreement  \nAddress:  As set out in the  signature block of \nthe Agreement  Address:  55 Water Street, New York, NY \n10041 USA   \nContact Information:  As set forth in the \nsignature block of Agreement  Contact Information:  Mobility _Legal _Team  \n@spglobal.com .  \nSignature:  As set forth in the signature block of \nAgreement  Signature:  As set forth in signature block of \nAgreement   \nDate:  As set forth in the signature block of \nAgreement  Date:  As set forth in the signature block of \nAgreement  \nRole : ",
+      "clean_text": "Appendix 1 - Parties of List\nNote: The data in this appendix is updated for all templates.\nInformation of Personal Data Exporter (s)   Information of Personal Data Importer (s)\nName:  Client name as set forth in signature block of A greement . Name:  S&P as defined in the Agreement \nAddress:  As set out in the  signature block of the Agreement  Address:  55 Water Street, New York, NY 10041 USA \nContact Information:  As set forth in the signature block of Agreement  Contact Information:  Mobility _Legal _Team  @spglobal.com . \nSignature:  As set forth in the signature block of Agreement  Signature:  As set forth in signature block of Agreement \nDate:  As set forth in the signature block of Agreement  Date:  As set forth in the signature block of Agreement \nRole : Controller  Role : Controller"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

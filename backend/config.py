@@ -53,6 +53,14 @@ class Settings(BaseSettings):
     API_PORT: int = 8000
     API_TIMEOUT: int = 300  # 5 minutes timeout for long operations
     
+    # Case Summarization Configuration
+    CASE_SUMMARY_SEED: int = 42  # Fixed seed for deterministic LLM outputs
+    CASE_SUMMARY_TEMPERATURE: float = 0.0  # Zero temperature for determinism
+    CASE_SUMMARY_TOP_K_BACKGROUND: int = 10  # Chunks for background/executive summary
+    CASE_SUMMARY_TOP_K_PROCEDURAL: int = 15  # Chunks for timeline
+    CASE_SUMMARY_TOP_K_ARGUMENTS: int = 20  # Chunks for arguments
+    CASE_SUMMARY_TOP_K_ISSUES: int = 10  # Chunks for open issues
+    
     model_config = ConfigDict(
         env_file=".env",
         case_sensitive=True

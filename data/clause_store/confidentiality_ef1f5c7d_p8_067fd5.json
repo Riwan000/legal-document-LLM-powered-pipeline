@@ -1,0 +1,29 @@
+{
+  "clause_id": "confidentiality_ef1f5c7d_p8_067fd5",
+  "title": "Information Security Policy",
+  "type": "confidentiality",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 8,
+      "paragraph": 1,
+      "line_start": 4,
+      "line_end": 9,
+      "raw_text": "rivacy -policy- english#data -retention  \n  \nAppendix 3 - Security Measures   \n \n 1. All parties are obliged to clarify the organizational, administrative, technical, and security measures that will be applied to the transferred Personal Data to fulfill the provisions of Article (19) of the Law and Article (23) of the Implementing Regul ation of the Law.  \n2. The mea",
+      "clean_text": "S&P Global’s Information Security policies and standards are based on the best practices recommendations for information security management as published in ISO/IEC - 27002 and NIST 800 Standards. The governance team uses the NIST Cybersecurity Framework to assess, measure and monitor the maturity of the organization’s Information Security practices and target state."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

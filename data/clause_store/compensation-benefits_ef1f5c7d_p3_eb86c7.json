@@ -1,0 +1,29 @@
+{
+  "clause_id": "compensation-benefits_ef1f5c7d_p3_eb86c7",
+  "title": "C. The Personal Data Subject has the right to claim before the competent court for compensation for material or moral damage",
+  "type": "compensation_benefits",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 2,
+      "raw_text": "C. The Personal Data Subject has the right to claim before the competent court for \ncompensation for material or moral damage in proportion to the magnitude of the damage arising from the application of these Standard Contractual Clau",
+      "clean_text": "The Personal Data Subject has the right to claim before the competent court for compensation for material or moral damage in proportion to the magnitude of the damage arising from the application of these Standard Contractual Clauses."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}
