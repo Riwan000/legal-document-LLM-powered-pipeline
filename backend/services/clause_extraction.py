@@ -18,13 +18,13 @@ class ClauseExtractionService:
     def __init__(self):
         """Initialize the clause extraction service."""
         self.ollama_client = ollama.Client(host=settings.OLLAMA_BASE_URL)
-        # Connect to local Ollama server
         self.ingestion_service = DocumentIngestionService()
-        # For parsing documents
         self.hierarchy_service = LegalHierarchyService()
-        # For detecting legal hierarchy and extracting metadata
         self.structured_extractor = StructuredClauseExtractionService()
-        # For structured clause extraction with authority modeling
+        # Dependencies:
+        # - Document parsing/chunking: `DocumentIngestionService`
+        # - Legal metadata heuristics: `LegalHierarchyService`
+        # - Preferred extraction path: `StructuredClauseExtractionService` (LLM → structured schema)
     
     def extract_clauses(
         self,
@@ -48,7 +48,7 @@ class ClauseExtractionService:
         
         file_path = Path(file_path)
         
-        # Use structured extraction if requested (default)
+        # Prefer the structured extraction engine: it produces richer metadata + evidence blocks.
         if use_structured:
             try:
                 structured_clauses = self.structured_extractor.extract_structured_clauses(
@@ -60,7 +60,7 @@ class ClauseExtractionService:
                 print(f"Structured extraction failed, falling back to legacy: {str(e)}")
                 # Fall through to legacy extraction
         
-        # Legacy extraction method
+        # Legacy extraction path: page-by-page LLM JSON extraction without structured schema.
         pages = self.ingestion_service.parser.parse_file(file_path)
         if not pages:
             return []

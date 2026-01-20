@@ -32,23 +32,22 @@ class RAGService:
             clause_store: Optional clause store for structured clause retrieval
         """
         self.embedding_service = embedding_service
-        # Embedding service for query encoding
         self.vector_store = vector_store
-        # Vector store for retrieving relevant chunks
         self.clause_store = clause_store
-        # Clause store for structured clause retrieval
+        # Core dependencies:
+        # - Embeddings: convert query text into a dense vector representation.
+        # - Vector store: similarity search over document chunks.
+        # - Clause store (optional): structured clause retrieval for contract analysis.
         
-        # Initialize services for rule-guided RAG
+        # Rule-guided / policy-layer services:
+        # - Classify query intent and required safety constraints.
+        # - Apply lightweight “legal hierarchy” heuristics (law > contract > policy).
         self.query_classifier = QueryClassifier()
-        # Query classification service
         self.legal_reasoning = LegalReasoningService()
-        # Legal reasoning service
         self.hierarchy_service = LegalHierarchyService()
-        # Legal hierarchy service
         
-        # Initialize Ollama client
+        # Ollama client used for local LLM generation (no external API calls).
         self.ollama_client = ollama.Client(host=settings.OLLAMA_BASE_URL)
-        # Create Ollama client pointing to local server
     
     def search(
         self,
@@ -69,17 +68,15 @@ class RAGService:
         Returns:
             List of relevant chunks with metadata, ranked by authority
         """
-        # Classify query to determine priority clause types
+        # 1) Classify the query and choose “priority” clause types (boosting).
         if priority_clause_types is None:
             classification = self.query_classifier.classify_query(query)
             priority_clause_types = self._get_priority_clause_types(classification)
         
-        # Generate query embedding
+        # 2) Encode query into an embedding vector (multilingual model supports Arabic/English).
         query_embedding = self.embedding_service.embed_text(query)
-        # Convert query text to embedding vector
-        # Multilingual model handles Arabic and English queries
         
-        # Use priority search if priority clause types specified
+        # 3) Retrieve top-k chunks. If we have priority clause types, do a “boosted” re-ranking.
         if priority_clause_types:
             results = self.vector_store.search_with_priority(
                 query_embedding=query_embedding,
@@ -88,16 +85,15 @@ class RAGService:
                 document_id_filter=document_id_filter
             )
         else:
-            # Standard search
             results = self.vector_store.search(
                 query_embedding=query_embedding,
                 top_k=top_k,
                 document_id_filter=document_id_filter
             )
         
-        # If no results found, try with lower threshold (for OCR documents or difficult queries)
+        # 4) If semantic results are empty, lower the similarity threshold to be more permissive.
+        # This mainly helps OCR-derived text, where embeddings can be noisier.
         if not results and top_k:
-            # Try with minimum threshold to catch OCR documents or semantically related content
             if priority_clause_types:
                 results = self.vector_store.search_with_priority(
                     query_embedding=query_embedding,
@@ -114,8 +110,8 @@ class RAGService:
                     similarity_threshold=settings.MIN_SIMILARITY_THRESHOLD
                 )
         
-        # If still no results, try keyword-based fallback search
-        # This helps when semantic similarity fails but keywords match
+        # 5) Final fallback: keyword match inside stored chunk text for a given document.
+        # We only do this if a document filter is provided (avoid scanning entire corpus).
         if not results and document_id_filter:
             results = self._keyword_fallback_search(
                 query=query,
@@ -123,7 +119,7 @@ class RAGService:
                 top_k=top_k
             )
         
-        # Rank by legal authority (LAW > CONTRACT > POLICY)
+        # 6) Rank results by legal authority (law > contract > policy) to prefer governing rules.
         if results:
             results = self.hierarchy_service.rank_by_authority(results)
         
@@ -149,9 +145,9 @@ class RAGService:
         """
         top_k = top_k or settings.TOP_K_RESULTS
         
-        # Extract keywords from query (remove common stop words)
+        # Extract “keywords” from query by removing stop-words and short tokens.
+        # This is intentionally simple: it’s a last-resort fallback when embeddings yield nothing.
         import re
-        # Comprehensive stop word list for better keyword extraction
         stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should', 'could', 'may', 'might', 'must', 'can', 'who', 'what', 'when', 'where', 'why', 'how', 'which', 'this', 'that', 'these', 'those'}
         words = re.findall(r'\b\w+\b', query.lower())
         keywords = [w for w in words if w not in stop_words and len(w) > 2]
@@ -159,7 +155,8 @@ class RAGService:
         if not keywords:
             return []
         
-        # Search in vector store metadata for matching chunks
+        # Search in vector store metadata for matching chunks within this document.
+        # Note: we search stored chunk text; we do not hit FAISS here.
         matching_chunks = []
         for metadata in self.vector_store.metadata:
             if metadata.get('document_id') != document_id:
@@ -167,26 +164,26 @@ class RAGService:
             
             chunk_text = metadata.get('text', '').lower()
             
-            # Count keyword matches
+            # Count keyword matches (simple containment check).
             matches = sum(1 for keyword in keywords if keyword in chunk_text)
             
             if matches > 0:
-                # Calculate a simple relevance score based on keyword matches
+                # Relevance is normalized by the number of keywords so results across queries are comparable.
                 relevance = matches / len(keywords)
                 matching_chunks.append({
                     'text': metadata.get('text', ''),
                     'page_number': metadata.get('page_number', 0),
                     'document_id': metadata.get('document_id', ''),
                     'chunk_index': metadata.get('chunk_index', 0),
-                    'score': relevance,  # Keyword-based score
-                    'distance': 1.0 - relevance,  # Inverse for compatibility
+                    'score': relevance,  # Keyword-based relevance score (not a true embedding similarity).
+                    'distance': 1.0 - relevance,  # Inverse for compatibility with “distance”-expecting callers.
                     'is_ocr': metadata.get('is_ocr', False),
                     'keyword_match': True,  # Flag to indicate keyword-based match
                     **{k: v for k, v in metadata.items() 
                        if k not in ['text', 'page_number', 'document_id', 'chunk_index', 'is_ocr']}
                 })
         
-        # Sort by relevance (number of keyword matches)
+        # Sort by keyword relevance (highest first).
         matching_chunks.sort(key=lambda x: x['score'], reverse=True)
         
         return matching_chunks[:top_k]
@@ -415,8 +412,34 @@ class RAGService:
             # Call Ollama API to generate response
             # Uses local LLM (no data sent externally)
             
-            answer = response['response'] if isinstance(response, dict) else str(response)
-            # Extract generated text from response
+            # Extract generated text from response - handle both dict and object formats
+            if isinstance(response, dict):
+                # Old format: {'response': '...'}
+                answer = response.get('response', '')
+            elif hasattr(response, 'response'):
+                # New format: response object with .response attribute
+                answer = response.response
+            else:
+                # Fallback: try to get text directly
+                answer = str(response)
+            
+            # If still empty, try alternative keys (for dict format)
+            if not answer and isinstance(response, dict):
+                answer = response.get('text', response.get('content', ''))
+            
+            # Post-process: Remove "not specified" phrase if answer contains citations
+            # This handles cases where LLM incorrectly adds the phrase despite finding relevant information
+            if answer and '[Source' in answer and 'not specified' in answer.lower():
+                # Check if "not specified" appears at the end (common pattern)
+                answer_clean = answer.strip()
+                not_specified_phrase = "This is not specified in the provided contract."
+                if answer_clean.endswith(not_specified_phrase):
+                    answer = answer_clean[:-len(not_specified_phrase)].strip()
+                # Also remove if it appears as a separate sentence at the end
+                elif answer_clean.endswith('.' + not_specified_phrase):
+                    answer = answer_clean[:-len('.' + not_specified_phrase)].strip()
+                elif answer_clean.endswith('\n' + not_specified_phrase):
+                    answer = answer_clean[:-len('\n' + not_specified_phrase)].strip()
             
         except Exception as e:
             # Handle Ollama errors (server not running, model not found, etc.)
@@ -454,13 +477,15 @@ class RAGService:
         context_parts = []
         
         for i, chunk in enumerate(chunks, 1):
-            # Format each chunk with citation info
+            # Use display_name if available, otherwise fall back to document_id
+            doc_name = chunk.get('display_name', chunk.get('document_id', 'Unknown'))
+            # Format each chunk with citation info (never expose document_hash)
             context_parts.append(
-                f"[Source {i} - Document: {chunk['document_id']}, Page: {chunk['page_number']}]\n"
+                f"[Source {i} - Document: {doc_name}, Page: {chunk['page_number']}]\n"
                 f"{chunk['text']}\n"
             )
             # Include source metadata and text
-            # Format: [Source N - Document: ID, Page: X]\nText\n
+            # Format: [Source N - Document: DisplayName, Page: X]\nText\n
         
         return "\n".join(context_parts)
         # Join all chunks with newlines
@@ -514,8 +539,9 @@ class RAGService:
 
 STRICT RULES:
 - Only use information from the provided context
-- If the answer is not in the context, state: "This is not specified in the provided contract."
 - ALWAYS cite sources using [Source N] format when referencing information
+- If you find relevant information in the context that answers the question, provide that answer with citations. DO NOT say "not specified" if you have found and cited relevant information.
+- ONLY state "This is not specified in the provided contract." if you truly cannot find ANY relevant information in the context that addresses the question
 - Do not use phrases like "it seems", "probably", "might be" - be direct and factual
 - Do not provide legal advice or interpretation beyond what is explicitly stated
 - Present information exactly as it appears in the documents{hierarchy_context}{citation_instruction}
@@ -544,6 +570,7 @@ Answer (be direct, factual, and always cite sources):"""
     def _format_sources_enhanced(self, chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         Format sources with enhanced citation information including hierarchy.
+        Never exposes document_hash or internal chunk IDs.
         
         Args:
             chunks: List of chunk dictionaries
@@ -554,14 +581,19 @@ Answer (be direct, factual, and always cite sources):"""
         sources = []
         
         for chunk in chunks:
-            # Format citation using legal reasoning service
+            # Use display_name for citation (never expose document_hash)
+            display_name = chunk.get('display_name', chunk.get('document_id', 'Unknown'))
+            
+            # Format citation using legal reasoning service (will use display_name)
             citation = self.legal_reasoning.format_citation(chunk)
             
             sources.append({
                 'text': chunk.get('text', ''),
                 # Original chunk text
                 'document_id': chunk.get('document_id', ''),
-                # Source document ID
+                # Source document ID (DOC-####)
+                'display_name': display_name,
+                # User-friendly display name for citations
                 'page_number': chunk.get('page_number', 0),
                 # Page number for citation
                 'chunk_index': chunk.get('chunk_index', 0),
@@ -569,9 +601,7 @@ Answer (be direct, factual, and always cite sources):"""
                 'score': chunk.get('score', 0.0),
                 # Similarity score
                 'citation': citation,
-                # Enhanced citation format
-                'clause_id': chunk.get('clause_id'),
-                # Clause identifier (metadata is already spread)
+                # Enhanced citation format (uses display_name)
                 'hierarchy_level': chunk.get('hierarchy_level', 'contract'),
                 # Legal hierarchy level
                 'legal_supremacy': chunk.get('legal_supremacy', False),
@@ -580,6 +610,7 @@ Answer (be direct, factual, and always cite sources):"""
                 # Clause types
                 'topics': chunk.get('topics', [])
                 # Topics/keywords
+                # Note: clause_id and document_hash are intentionally excluded
             })
         
         return sources

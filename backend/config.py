@@ -31,14 +31,14 @@ class Settings(BaseSettings):
     CLAUSE_STORE_PATH: Path = Path("data/clause_store")
     
     # Chunking Configuration
-    CHUNK_SIZE: int = 512
-    CHUNK_OVERLAP: int = 50
+    CHUNK_SIZE: int = 700
+    CHUNK_OVERLAP: int = 100
     
     # RAG Configuration
     TOP_K_RESULTS: int = 5
-    SIMILARITY_THRESHOLD: float = 0.7
-    OCR_SIMILARITY_THRESHOLD: float = 0.35  # Lower threshold for OCR documents due to text quality issues
-    MIN_SIMILARITY_THRESHOLD: float = 0.25  # Absolute minimum threshold for any search (fallback for very low scores)
+    SIMILARITY_THRESHOLD: float = 0.65
+    OCR_SIMILARITY_THRESHOLD: float = 0.4  # Lower threshold for OCR documents due to text quality issues
+    MIN_SIMILARITY_THRESHOLD: float = 0.3  # Absolute minimum threshold for any search (fallback for very low scores)
     
     # Legal RAG Configuration
     COVERED_TOPICS: List[str] = ["employment", "termination", "benefits", "compensation", "governing law", "dispute resolution"]

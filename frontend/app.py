@@ -7,6 +7,9 @@ import requests
 from typing import Dict, Any, Optional
 import json
 
+# -----------------------------------------------------------------------------
+# App configuration
+# -----------------------------------------------------------------------------
 # Page configuration
 st.set_page_config(
     page_title="Legal Document Intelligence",
@@ -15,10 +18,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Backend API URL
+# Backend API base URL (FastAPI). If you change backend port/host, update this.
 API_BASE_URL = "http://localhost:8000"
 
-# Custom CSS
+# -----------------------------------------------------------------------------
+# UI styling
+# -----------------------------------------------------------------------------
+# Custom CSS for consistent headings/citations.
 st.markdown("""
 <style>
     .main-header {
@@ -44,6 +50,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# -----------------------------------------------------------------------------
+# Backend API helpers
+# -----------------------------------------------------------------------------
+# These functions wrap HTTP calls to the FastAPI backend and centralize timeouts
+# and error handling so the page code stays readable.
 
 def check_backend_health() -> bool:
     """Check if backend is running."""
@@ -54,11 +65,13 @@ def check_backend_health() -> bool:
         return False
 
 
-def upload_document(file, document_type: str = "document") -> Optional[Dict]:
+def upload_document(file, document_type: str = "document", display_name: Optional[str] = None) -> Optional[Dict]:
     """Upload document to backend."""
     try:
         files = {"file": (file.name, file.getvalue(), file.type)}
         data = {"document_type": document_type}
+        if display_name:
+            data["display_name"] = display_name
         response = requests.post(
             f"{API_BASE_URL}/api/upload",
             files=files,
@@ -222,11 +235,29 @@ def get_documents() -> list:
         return []
 
 
-# Sidebar navigation
+def rename_document(document_id: str, new_display_name: str) -> Optional[Dict]:
+    """Rename a document (update display_name)."""
+    try:
+        response = requests.put(
+            f"{API_BASE_URL}/api/documents/{document_id}/rename",
+            json={"display_name": new_display_name},
+            timeout=10
+        )
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        st.error(f"Error renaming document: {str(e)}")
+        return None
+
+
+# -----------------------------------------------------------------------------
+# Navigation + routing
+# -----------------------------------------------------------------------------
+# We use a sidebar selectbox to route between "pages" inside a single Streamlit app.
 st.sidebar.title("⚖️ Legal Document Intelligence")
 st.sidebar.markdown("---")
 
-# Check backend health
+# Health gate: stop early if the backend isn't reachable so the UI doesn't spam errors.
 if not check_backend_health():
     st.sidebar.error("⚠️ Backend not available. Please start the FastAPI server.")
     st.error("**Backend Connection Error**\n\nPlease ensure the FastAPI backend is running:\n```bash\ncd backend\nuvicorn main:app --reload\n```")
@@ -234,14 +265,16 @@ if not check_backend_health():
 else:
     st.sidebar.success("✅ Backend connected")
 
-# Navigation
+# Page selection (acts like a router).
 page = st.sidebar.selectbox(
     "Navigate",
     ["📤 Upload Document", "🔍 RAG Search", "📋 Clause Extraction", "⚖️ Contract Comparison", 
      "📄 Case Summary", "🌐 Bilingual Search", "ℹ️ About"]
 )
 
-# Main content based on selected page
+# -----------------------------------------------------------------------------
+# Page: Upload Document
+# -----------------------------------------------------------------------------
 if page == "📤 Upload Document":
     st.markdown('<div class="main-header">📤 Document Upload</div>', unsafe_allow_html=True)
     
@@ -268,10 +301,21 @@ if page == "📤 Upload Document":
             help="Regular document or firm template"
         )
         
+        # Optional display name input
+        display_name_input = st.text_input(
+            "Display Name (optional)",
+            help="User-friendly name for this document. If not provided, filename will be used.",
+            placeholder="e.g., Employment Contract (2023)"
+        )
+        
         if st.button("Upload & Ingest", type="primary"):
             if uploaded_file:
                 with st.spinner("Uploading and processing document..."):
-                    result = upload_document(uploaded_file, document_type)
+                    result = upload_document(
+                        uploaded_file, 
+                        document_type,
+                        display_name=display_name_input.strip() if display_name_input else None
+                    )
                     
                     if result:
                         st.success("✅ Document uploaded successfully!")
@@ -287,13 +331,43 @@ if page == "📤 Upload Document":
         
         if documents:
             for doc in documents:
-                with st.expander(f"📄 {doc['document_id'][:8]}..."):
-                    st.write(f"**Document ID:** {doc['document_id']}")
-                    st.write(f"**Chunks:** {doc['total_chunks']}")
-                    st.write(f"**Pages:** {len(doc['pages'])}")
+                # Use display_name for expander title, show version if not latest
+                version_label = f" (v{doc.get('version', 1)})" if not doc.get('is_latest', True) else ""
+                expander_title = f"📄 {doc.get('display_name', doc.get('document_id', 'Unknown'))}{version_label}"
+                
+                with st.expander(expander_title):
+                    st.write(f"**Display Name:** {doc.get('display_name', 'N/A')}")
+                    st.write(f"**Document ID:** {doc.get('document_id', 'N/A')}")
+                    st.write(f"**Version:** {doc.get('version', 1)}")
+                    if not doc.get('is_latest', True):
+                        st.info("⚠️ This is not the latest version")
+                    st.write(f"**Original Filename:** {doc.get('original_filename', 'N/A')}")
+                    st.write(f"**Chunks:** {doc.get('total_chunks', 0)}")
+                    st.write(f"**Pages:** {doc.get('total_pages', 0)}")
+                    st.write(f"**Uploaded:** {doc.get('created_at', 'N/A')}")
+                    
+                    # Rename functionality
+                    st.markdown("---")
+                    with st.form(key=f"rename_{doc.get('document_id')}"):
+                        new_name = st.text_input(
+                            "Rename Document",
+                            value=doc.get('display_name', ''),
+                            key=f"rename_input_{doc.get('document_id')}"
+                        )
+                        if st.form_submit_button("Rename"):
+                            if new_name and new_name.strip() != doc.get('display_name'):
+                                rename_result = rename_document(doc.get('document_id'), new_name.strip())
+                                if rename_result:
+                                    st.success("✅ Document renamed successfully!")
+                                    st.rerun()
+                            else:
+                                st.warning("Please enter a different name")
         else:
             st.info("No documents uploaded yet")
 
+# -----------------------------------------------------------------------------
+# Page: RAG Search
+# -----------------------------------------------------------------------------
 elif page == "🔍 RAG Search":
     st.markdown('<div class="main-header">🔍 RAG Semantic Search</div>', unsafe_allow_html=True)
     
@@ -306,7 +380,11 @@ elif page == "🔍 RAG Search":
     documents = get_documents()
     document_options = {None: "All Documents"}
     for doc in documents:
-        document_options[doc['document_id']] = f"{doc['document_id'][:8]}... ({doc['total_chunks']} chunks)"
+        # Use display_name, show version if not latest
+        display_name = doc.get('display_name', doc.get('document_id', 'Unknown'))
+        version_label = f" (v{doc.get('version', 1)})" if not doc.get('is_latest', True) else ""
+        label = f"{display_name}{version_label} ({doc.get('total_chunks', 0)} chunks)"
+        document_options[doc['document_id']] = label
     
     selected_doc = st.selectbox(
         "Filter by Document (optional)",
@@ -344,14 +422,20 @@ elif page == "🔍 RAG Search":
                     if result.get('sources'):
                         st.subheader("Sources")
                         for i, source in enumerate(result['sources'], 1):
-                            with st.expander(f"Source {i} - Page {source['page_number']} (Score: {source['score']:.2f})"):
-                                st.write(f"**Document:** {source['document_id']}")
+                            # Use display_name in citation (never show document_hash)
+                            doc_name = source.get('display_name', source.get('document_id', 'Unknown'))
+                            with st.expander(f"Source {i} - {doc_name}, Page {source['page_number']} (Score: {source['score']:.2f})"):
+                                st.write(f"**Document:** {doc_name}")
+                                st.write(f"**Document ID:** {source.get('document_id', 'N/A')}")
                                 st.write(f"**Page:** {source['page_number']}")
                                 st.write(f"**Text:**")
                                 st.write(source['text'])
         else:
             st.warning("Please enter a query")
 
+# -----------------------------------------------------------------------------
+# Page: Clause Extraction
+# -----------------------------------------------------------------------------
 elif page == "📋 Clause Extraction":
     st.markdown('<div class="main-header">📋 Clause Extraction</div>', unsafe_allow_html=True)
     
@@ -364,8 +448,13 @@ elif page == "📋 Clause Extraction":
     if not documents:
         st.warning("No documents available. Please upload a document first.")
     else:
-        document_options = {doc['document_id']: f"{doc['document_id'][:8]}... ({doc['total_chunks']} chunks)" 
-                           for doc in documents}
+        # Use display_name in selector
+        document_options = {}
+        for doc in documents:
+            display_name = doc.get('display_name', doc.get('document_id', 'Unknown'))
+            version_label = f" (v{doc.get('version', 1)})" if not doc.get('is_latest', True) else ""
+            label = f"{display_name}{version_label} ({doc.get('total_chunks', 0)} chunks)"
+            document_options[doc['document_id']] = label
         
         selected_doc = st.selectbox(
             "Select Document",
@@ -441,6 +530,9 @@ elif page == "📋 Clause Extraction":
                 else:
                     st.info("No clauses found or extraction failed")
 
+# -----------------------------------------------------------------------------
+# Page: Contract Comparison
+# -----------------------------------------------------------------------------
 elif page == "⚖️ Contract Comparison":
     st.markdown('<div class="main-header">⚖️ Contract Comparison</div>', unsafe_allow_html=True)
     
@@ -456,8 +548,13 @@ elif page == "⚖️ Contract Comparison":
     if len(documents) < 2:
         st.warning("Need at least 2 documents for comparison. Please upload documents first.")
     else:
-        document_options = {doc['document_id']: f"{doc['document_id'][:8]}... ({doc['total_chunks']} chunks)" 
-                           for doc in documents}
+        # Use display_name in selector
+        document_options = {}
+        for doc in documents:
+            display_name = doc.get('display_name', doc.get('document_id', 'Unknown'))
+            version_label = f" (v{doc.get('version', 1)})" if not doc.get('is_latest', True) else ""
+            label = f"{display_name}{version_label} ({doc.get('total_chunks', 0)} chunks)"
+            document_options[doc['document_id']] = label
         
         col1, col2 = st.columns(2)
         with col1:
@@ -521,6 +618,9 @@ elif page == "⚖️ Contract Comparison":
                         st.subheader("Full Report")
                         st.markdown(result.get('report', ''))
 
+# -----------------------------------------------------------------------------
+# Page: Case Summary
+# -----------------------------------------------------------------------------
 elif page == "📄 Case Summary":
     st.markdown('<div class="main-header">📄 Case File Summary</div>', unsafe_allow_html=True)
     
@@ -537,8 +637,13 @@ elif page == "📄 Case Summary":
     if not documents:
         st.warning("No documents available. Please upload a document first.")
     else:
-        document_options = {doc['document_id']: f"{doc['document_id'][:8]}... ({doc['total_chunks']} chunks)" 
-                           for doc in documents}
+        # Use display_name in selector
+        document_options = {}
+        for doc in documents:
+            display_name = doc.get('display_name', doc.get('document_id', 'Unknown'))
+            version_label = f" (v{doc.get('version', 1)})" if not doc.get('is_latest', True) else ""
+            label = f"{display_name}{version_label} ({doc.get('total_chunks', 0)} chunks)"
+            document_options[doc['document_id']] = label
         
         selected_doc = st.selectbox(
             "Select Case File",
@@ -667,6 +772,9 @@ elif page == "📄 Case Summary":
                                     for c in citations:
                                         st.write(f"**{c.get('chunk_id', '')}** (Page {c.get('page', 0)}, Type: {c.get('chunk_type', 'unknown')})")
 
+# -----------------------------------------------------------------------------
+# Page: Bilingual Search
+# -----------------------------------------------------------------------------
 elif page == "🌐 Bilingual Search":
     st.markdown('<div class="main-header">🌐 Bilingual Search</div>', unsafe_allow_html=True)
     
@@ -678,7 +786,11 @@ elif page == "🌐 Bilingual Search":
     documents = get_documents()
     document_options = {None: "All Documents"}
     for doc in documents:
-        document_options[doc['document_id']] = f"{doc['document_id'][:8]}... ({doc['total_chunks']} chunks)"
+        # Use display_name, show version if not latest
+        display_name = doc.get('display_name', doc.get('document_id', 'Unknown'))
+        version_label = f" (v{doc.get('version', 1)})" if not doc.get('is_latest', True) else ""
+        label = f"{display_name}{version_label} ({doc.get('total_chunks', 0)} chunks)"
+        document_options[doc['document_id']] = label
     
     selected_doc = st.selectbox(
         "Filter by Document (optional)",
@@ -714,13 +826,19 @@ elif page == "🌐 Bilingual Search":
                     if result.get('sources'):
                         st.subheader("Sources")
                         for i, source in enumerate(result['sources'], 1):
-                            with st.expander(f"Source {i} - Page {source['page_number']}"):
-                                st.write(f"**Document:** {source['document_id']}")
+                            # Use display_name in citation (never show document_hash)
+                            doc_name = source.get('display_name', source.get('document_id', 'Unknown'))
+                            with st.expander(f"Source {i} - {doc_name}, Page {source['page_number']}"):
+                                st.write(f"**Document:** {doc_name}")
+                                st.write(f"**Document ID:** {source.get('document_id', 'N/A')}")
                                 st.write(f"**Text:**")
                                 st.write(source['text'])
         else:
             st.warning("Please enter a query")
 
+# -----------------------------------------------------------------------------
+# Page: About
+# -----------------------------------------------------------------------------
 elif page == "ℹ️ About":
     st.markdown('<div class="main-header">ℹ️ About Legal Document Intelligence</div>', unsafe_allow_html=True)
     

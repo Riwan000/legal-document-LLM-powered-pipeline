@@ -23,25 +23,23 @@ class VectorStore:
             embedding_dim: Dimension of embedding vectors
         """
         self.embedding_dim = embedding_dim
-        # Store embedding dimension
         
-        # Create FAISS index (L2 distance - Euclidean)
-        # L2 is good for cosine similarity when vectors are normalized
+        # We use an exact FAISS index with L2 distance.
+        # Important: we normalize vectors to unit length, so L2 distance can be converted to cosine similarity.
         self.index = faiss.IndexFlatL2(embedding_dim)
-        # IndexFlatL2: simple exact search using L2 (Euclidean) distance
-        # For cosine similarity, we'll normalize vectors before adding
         
-        # Metadata storage: list of dicts, one per vector
+        # Per-vector metadata aligned by index position (self.metadata[i] describes vector i).
         self.metadata: List[Dict[str, Any]] = []
-        # Each dict contains: document_id, page_number, chunk_index, text, etc.
         
-        # Ensure vector store directory exists
+        # Ensure vector store directory exists for persistence.
         settings.VECTOR_STORE_PATH.mkdir(parents=True, exist_ok=True)
     
     def add_chunks(
         self,
         embeddings: np.ndarray,
-        chunks: List[DocumentChunk]
+        chunks: List[DocumentChunk],
+        display_name: Optional[str] = None,
+        document_hash: Optional[str] = None
     ) -> None:
         """
         Add document chunks with their embeddings to the vector store.
@@ -49,34 +47,41 @@ class VectorStore:
         Args:
             embeddings: numpy array of shape (n_chunks, embedding_dim)
             chunks: List of DocumentChunk objects corresponding to embeddings
+            display_name: User-friendly display name for citations (internal)
+            document_hash: SHA-256 hash of document content (internal, never exposed)
         """
         if len(embeddings) != len(chunks):
             raise ValueError(f"Mismatch: {len(embeddings)} embeddings but {len(chunks)} chunks")
         
-        # Normalize embeddings for cosine similarity
-        # FAISS L2 distance on normalized vectors = cosine similarity
+        # Normalize embeddings in-place: cosine similarity becomes derivable from L2 distance.
         faiss.normalize_L2(embeddings)
-        # Normalize in-place: each vector becomes unit length
         
-        # Add embeddings to FAISS index
+        # FAISS expects float32 arrays.
         self.index.add(embeddings.astype('float32'))
-        # FAISS requires float32, embeddings might be float64
         
-        # Store metadata for each chunk
+        # Persist the fields we need to display citations and support filtering/reranking.
         for chunk in chunks:
-            # Ensure clause_id is included if present
             chunk_metadata = chunk.metadata.copy() if chunk.metadata else {}
             if chunk.clause_id:
                 chunk_metadata['clause_id'] = chunk.clause_id
             
-            self.metadata.append({
+            # Store internal metadata (document_hash, display_name) for versioning and citations
+            # These are used internally but never exposed in API responses
+            metadata_entry = {
                 'document_id': chunk.document_id,
                 'page_number': chunk.page_number,
                 'chunk_index': chunk.chunk_index,
                 'text': chunk.text,
                 **chunk_metadata  # Include any additional metadata (hierarchy_level, clause_types, etc.)
-            })
-            # Store all chunk information for retrieval
+            }
+            
+            # Add internal-only fields (never exposed to clients)
+            if display_name:
+                metadata_entry['display_name'] = display_name
+            if document_hash:
+                metadata_entry['document_hash'] = document_hash
+            
+            self.metadata.append(metadata_entry)
     
     def search(
         self,
@@ -98,16 +103,14 @@ class VectorStore:
             List of dicts with keys: text, page_number, document_id, chunk_index, score
         """
         if self.index.ntotal == 0:
-            # Check if index is empty
             return []
         
         top_k = top_k or settings.TOP_K_RESULTS
-        # Use config default if not provided
         
-        # Use provided threshold or default from config
-        # -1.0 means use default from config
-        # None means bypass threshold
-        # Otherwise use the provided value
+        # Threshold behavior:
+        # - similarity_threshold == -1.0  => use config default
+        # - similarity_threshold is None  => bypass threshold entirely
+        # - otherwise                    => use provided value
         if similarity_threshold == -1.0:
             threshold = settings.SIMILARITY_THRESHOLD  # Use default
         elif similarity_threshold is None:
@@ -115,44 +118,28 @@ class VectorStore:
         else:
             threshold = similarity_threshold  # Use provided value
         
-        # Normalize query embedding for cosine similarity
         query_embedding = query_embedding.reshape(1, -1)
-        # Reshape to (1, embedding_dim) for FAISS
         faiss.normalize_L2(query_embedding)
-        # Normalize query vector
         
-        # Search in FAISS
+        # Exact search in FAISS (IndexFlatL2).
         distances, indices = self.index.search(query_embedding.astype('float32'), top_k)
-        # Returns: distances (L2 distances), indices (positions in index)
-        # distances shape: (1, top_k), indices shape: (1, top_k)
         
-        # Convert distances to similarity scores (1 - normalized distance)
-        # For normalized vectors, L2 distance relates to cosine similarity
-        # Cosine similarity = 1 - (L2_distance^2 / 2) for normalized vectors
+        # For unit-normalized vectors: cosine_similarity = 1 - (L2_distance^2 / 2)
         similarities = 1 - (distances[0] ** 2 / 2)
-        # Convert L2 distance to cosine similarity
         
-        # Build results with metadata
         results = []
         for idx, (distance, similarity) in enumerate(zip(distances[0], similarities)):
-            # Iterate through results
             metadata = self.metadata[indices[0][idx]]
-            # Get metadata for this result
             
-            # Apply document filter if specified
             if document_id_filter and metadata['document_id'] != document_id_filter:
                 continue
-                # Skip if doesn't match filter
             
-            # Determine threshold to use: OCR documents get lower threshold
-            # is_ocr is stored directly in metadata (from chunk.metadata spread)
+            # OCR text is often noisier, so we optionally allow a lower similarity threshold.
             is_ocr = metadata.get('is_ocr', False)
             
-            # Fallback: Detect OCR by checking for common OCR error patterns in text
-            # This helps with documents ingested before OCR tracking was added
+            # Backward-compat fallback: old indices may not have `is_ocr`; detect via common OCR artifacts.
             if not is_ocr:
                 text = metadata.get('text', '')
-                # Common OCR error patterns: mixed case errors, character substitutions
                 ocr_indicators = [
                     'Oy ether', 'l€rms', 'agreemeni', 'authort.es',  # Common OCR errors
                     'Nolce', 'terminateg', 'jne', 'Dy a',  # Notice period OCR errors
@@ -160,26 +147,23 @@ class VectorStore:
                 if any(indicator in text for indicator in ocr_indicators):
                     is_ocr = True
             
-            # Use OCR threshold if chunk is OCR and threshold wasn't explicitly set
+            # Choose an effective threshold:
+            # - default threshold can be lowered for OCR chunks
+            # - the explicit MIN_SIMILARITY_THRESHOLD is already permissive and should not be lowered further
             if threshold is not None:
                 effective_threshold = threshold
-                # If using default threshold and chunk is OCR, use OCR threshold
                 if threshold == settings.SIMILARITY_THRESHOLD and is_ocr:
                     effective_threshold = settings.OCR_SIMILARITY_THRESHOLD
-                # If using minimum threshold (fallback), don't apply OCR threshold
-                # The minimum threshold is already low enough for difficult queries
                 elif threshold == settings.MIN_SIMILARITY_THRESHOLD:
-                    # Keep the minimum threshold as-is (don't apply OCR threshold)
                     effective_threshold = settings.MIN_SIMILARITY_THRESHOLD
             else:
                 effective_threshold = None  # Bypass threshold
             
-            # Apply similarity threshold (if threshold is not None)
             if effective_threshold is not None and similarity < effective_threshold:
                 continue
-                # Skip if below threshold
             
-            results.append({
+            # Build result dict - explicitly exclude internal-only fields
+            result_entry = {
                 'text': metadata['text'],
                 'page_number': metadata['page_number'],
                 'document_id': metadata['document_id'],
@@ -187,10 +171,22 @@ class VectorStore:
                 'score': float(similarity),
                 'distance': float(distance),
                 'is_ocr': is_ocr,  # Include detected OCR flag
-                **{k: v for k, v in metadata.items() 
-                   if k not in ['text', 'page_number', 'document_id', 'chunk_index']}
-                # Include any additional metadata
-            })
+            }
+            
+            # Include display_name for citations (user-facing)
+            if 'display_name' in metadata:
+                result_entry['display_name'] = metadata['display_name']
+            
+            # Include other metadata except internal-only fields
+            excluded_fields = {
+                'text', 'page_number', 'document_id', 'chunk_index',
+                'document_hash', 'chunk_id'  # Never expose hashes or internal chunk IDs
+            }
+            for k, v in metadata.items():
+                if k not in excluded_fields:
+                    result_entry[k] = v
+            
+            results.append(result_entry)
         
         return results
     
