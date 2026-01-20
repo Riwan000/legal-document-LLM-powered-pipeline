@@ -15,9 +15,11 @@ class ComparisonService:
     def __init__(self):
         """Initialize the comparison service."""
         self.clause_extractor = ClauseExtractionService()
-        # For extracting clauses from contracts
         self.embedding_service = EmbeddingService()
-        # For semantic similarity comparison
+        # Comparison approach:
+        # 1) Extract clauses from both documents.
+        # 2) Embed each clause text.
+        # 3) Match by cosine similarity; then compute a text diff for “modified” cases.
     
     def compare_contracts(
         self,
@@ -42,15 +44,13 @@ class ComparisonService:
                 - missing_clauses: Clauses in template but not in contract
                 - extra_clauses: Clauses in contract but not in template
         """
-        # Extract clauses from both documents
+        # Extract clauses from both documents.
+        # Note: this uses the clause extraction pipeline, which may call Ollama.
         contract_clauses = self.clause_extractor.extract_clauses(contract_path, contract_id)
-        # Get all clauses from uploaded contract
         template_clauses = self.clause_extractor.extract_clauses(template_path, template_id)
-        # Get all clauses from firm template
         
-        # Compare clauses
+        # Compare clauses via embeddings + text diff.
         comparison = self._compare_clauses(contract_clauses, template_clauses)
-        # Perform semantic and text-based comparison
         
         return comparison
     
@@ -69,32 +69,27 @@ class ComparisonService:
         Returns:
             Comparison results dictionary
         """
-        # Generate embeddings for all clauses
+        # Embed all clauses once up-front to avoid repeated model calls.
         contract_embeddings = self._embed_clauses(contract_clauses)
-        # Embed contract clauses for semantic comparison
         template_embeddings = self._embed_clauses(template_clauses)
-        # Embed template clauses
         
-        # Find matches and differences
+        # Buckets:
+        # - matched: semantically similar AND text-identical
+        # - modified: semantically similar BUT text differs (diff is included)
+        # - missing: in template, not found in contract
+        # - extra: in contract, no close match in template
         matched = []
-        # Clauses that match (semantically similar)
         modified = []
-        # Clauses with differences
         missing = []
-        # Clauses in template but not in contract
         extra = []
-        # Clauses in contract but not in template
         
-        # Compare each template clause against contract clauses
+        # First pass: for each template clause, find the best matching contract clause.
+        # Note: this is a greedy matching strategy; it’s simple for an MVP but not globally optimal.
         template_matched = set()
-        # Track which template clauses have been matched
         
         for i, template_clause in enumerate(template_clauses):
-            # For each template clause
             template_emb = template_embeddings[i]
-            # Get its embedding
             
-            # Find best matching contract clause
             best_match_idx = None
             best_similarity = 0.0
             
@@ -103,40 +98,33 @@ class ComparisonService:
                 contract_emb = contract_embeddings[j]
                 # Get contract clause embedding
                 
-                # Calculate cosine similarity
+                # Cosine similarity is used as a semantic match score between clauses.
                 similarity = self._cosine_similarity(template_emb, contract_emb)
-                # Semantic similarity score
                 
                 if similarity > best_similarity:
                     # Found better match
                     best_similarity = similarity
                     best_match_idx = j
             
-            # Determine if match is good enough
+            # Determine if match is strong enough to be considered “the same clause”.
             similarity_threshold = 0.85
-            # High threshold for "match" (85% similarity)
             
             if best_similarity >= similarity_threshold and best_match_idx is not None:
-                # Good semantic match - check text differences
+                # Good semantic match → now check if the clause is text-identical or “modified”.
                 contract_clause = contract_clauses[best_match_idx]
-                # Get the matched contract clause
                 
-                # Compare text for exact differences
                 text_diff = self._compare_text(
                     template_clause['text'],
                     contract_clause['text']
                 )
-                # Get detailed text differences
                 
                 if text_diff['is_identical']:
-                    # Texts are identical
                     matched.append({
                         'template_clause': template_clause,
                         'contract_clause': contract_clause,
                         'similarity': best_similarity
                     })
                 else:
-                    # Texts differ (semantically similar but textually different)
                     modified.append({
                         'template_clause': template_clause,
                         'contract_clause': contract_clause,
@@ -145,20 +133,16 @@ class ComparisonService:
                     })
                 
                 template_matched.add(i)
-                # Mark template clause as matched
             else:
-                # No good match found - clause is missing from contract
                 missing.append({
                     'template_clause': template_clause,
                     'similarity': best_similarity if best_match_idx is not None else 0.0
                 })
         
-        # Find extra clauses (in contract but not in template)
-        contract_matched = set()
-        # Track which contract clauses have been matched
+        # Second pass: find “extra” clauses in the contract (no close template match).
+        # (We recompute similarities here for simplicity; could be optimized if needed.)
         
         for i, contract_clause in enumerate(contract_clauses):
-            # Check if this contract clause matches any template clause
             contract_emb = contract_embeddings[i]
             
             best_similarity = 0.0
@@ -170,7 +154,6 @@ class ComparisonService:
                     best_similarity = similarity
             
             if best_similarity < 0.85:
-                # No good match in template - this is an extra clause
                 extra.append({
                     'contract_clause': contract_clause,
                     'best_similarity': best_similarity

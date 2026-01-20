@@ -75,12 +75,22 @@ class DocumentMetadata(BaseModel):
 class DocumentUploadResponse(BaseModel):
     """Response model for document upload."""
     
-    document_id: str = Field(..., description="Unique document identifier")
-    filename: str = Field(..., description="Uploaded filename")
+    document_id: str = Field(..., description="Unique document identifier (DOC-####)")
+    display_name: str = Field(..., description="User-friendly display name")
+    original_filename: str = Field(..., description="Original filename from upload")
+    version: int = Field(..., description="Document version number")
     status: str = Field(..., description="Upload status (success, error)")
     message: str = Field(..., description="Status message")
     chunks_created: int = Field(..., description="Number of chunks created")
     pages_processed: int = Field(..., description="Number of pages processed")
     uses_ocr: Optional[bool] = Field(None, description="Whether OCR was used for text extraction")
     ocr_chunks: Optional[int] = Field(None, description="Number of chunks extracted using OCR")
+    created_at: Optional[datetime] = Field(None, description="Document creation timestamp")
+    updated_at: Optional[datetime] = Field(None, description="Document update timestamp")
+    
+    # Backward compatibility: alias filename to original_filename
+    @property
+    def filename(self) -> str:
+        """Backward compatibility property."""
+        return self.original_filename
 

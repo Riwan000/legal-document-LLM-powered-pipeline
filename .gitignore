@@ -28,6 +28,9 @@ data/vector_store/*.index
 data/vector_store/*.pkl
 data/vector_store/*.faiss
 
+# Local databases (generated/runtime state)
+data/*.db
+
 # IDE
 .vscode/
 .idea/

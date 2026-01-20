@@ -19,17 +19,14 @@ class EmbeddingService:
             model_name: Name of the embedding model (defaults to config)
         """
         self.model_name = model_name or settings.EMBEDDING_MODEL
-        # Use provided model or default from config
+        # The embedding model is multilingual so queries in Arabic and English map into the same vector space.
         
-        # Load the embedding model
-        # This downloads the model on first use (cached after)
+        # Load the embedding model (downloads on first use; cached by SentenceTransformers afterwards).
         print(f"Loading embedding model: {self.model_name}")
         self.model = SentenceTransformer(self.model_name)
-        # SentenceTransformer handles model loading and caching
         
-        # Get embedding dimension
+        # Cache embedding dimension (needed to initialize FAISS and validate vector shapes).
         self.embedding_dim = self.model.get_sentence_embedding_dimension()
-        # Dimension of the embedding vectors (e.g., 384 for MiniLM, 768 for multilingual)
         print(f"Embedding dimension: {self.embedding_dim}")
     
     def embed_text(self, text: str) -> np.ndarray:
@@ -42,10 +39,8 @@ class EmbeddingService:
         Returns:
             numpy array of embedding vector
         """
-        embedding = self.model.encode(text, convert_to_numpy=True)
-        # Encode text to embedding vector
-        # convert_to_numpy=True returns numpy array (required for FAISS)
-        return embedding
+        # `convert_to_numpy=True` is important because FAISS expects numpy float arrays.
+        return self.model.encode(text, convert_to_numpy=True)
     
     def embed_batch(self, texts: List[str], batch_size: int = 32) -> np.ndarray:
         """
@@ -62,10 +57,8 @@ class EmbeddingService:
             texts,
             batch_size=batch_size,
             convert_to_numpy=True,
-            show_progress_bar=len(texts) > 100
-            # Show progress bar for large batches
+            show_progress_bar=len(texts) > 100  # Avoid noisy progress for small batches.
         )
-        # Batch encoding is more efficient than individual calls
         return embeddings
     
     def get_embedding_dimension(self) -> int:

@@ -221,21 +221,28 @@ class LegalReasoningService:
     def format_citation(self, chunk: Dict[str, Any]) -> str:
         """
         Format citation for a chunk.
+        Uses display_name (never document_hash or internal IDs).
         
         Args:
             chunk: Chunk dictionary with metadata
             
         Returns:
-            Formatted citation string (e.g., "Clause 11, Page 4 (Governing Law)")
+            Formatted citation string (e.g., "Employment Contract (2023), Page 4 (Governing Law)")
         """
         metadata = chunk.get('metadata', {}) if isinstance(chunk.get('metadata'), dict) else {}
-        clause_id = metadata.get('clause_id') or chunk.get('clause_id')
+        # Use display_name for citation (never expose document_hash)
+        display_name = chunk.get('display_name', chunk.get('document_id', 'Document'))
         page_number = chunk.get('page_number', 'N/A')
+        # Preserve original clause_id logic
+        clause_id = metadata.get('clause_id') or chunk.get('clause_id')
         clause_type = metadata.get('type') or (metadata.get('clause_types', [])[0] if metadata.get('clause_types') else None)
         hierarchy_level = metadata.get('hierarchy_level', 'contract')
         
-        # Build citation
+        # Build citation with display_name (never document_hash)
         citation_parts = []
+        
+        # Start with document display name
+        citation_parts.append(display_name)
         
         if clause_id:
             citation_parts.append(f"Clause {clause_id}")

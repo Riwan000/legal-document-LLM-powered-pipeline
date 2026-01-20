@@ -10,6 +10,7 @@ import uuid
 import shutil
 import hashlib
 from typing import Optional, List
+from datetime import datetime
 import os
 
 from backend.config import settings
@@ -21,7 +22,9 @@ from backend.services.clause_extraction import ClauseExtractionService
 from backend.services.comparison_service import ComparisonService
 from backend.services.summarization_service import SummarizationService
 from backend.services.translation_service import TranslationService
+from backend.services.document_registry import DocumentRegistry
 from backend.models.document import DocumentUploadResponse, AnswerResponse
+from backend.models.document_list import DocumentListResponse, DocumentListItem, DocumentRenameRequest, DocumentRenameResponse
 from backend.models.clause import StructuredClause
 from backend.services.clause_store import ClauseStore
 from backend.services.clause_validator import ClauseValidator
@@ -44,6 +47,7 @@ app.add_middleware(
 )
 
 # Global service instances (initialized on startup)
+document_registry: Optional[DocumentRegistry] = None
 ingestion_service: Optional[DocumentIngestionService] = None
 embedding_service: Optional[EmbeddingService] = None
 vector_store: Optional[VectorStore] = None
@@ -59,11 +63,15 @@ translation_service: Optional[TranslationService] = None
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on application startup."""
-    global ingestion_service, embedding_service, vector_store
+    global document_registry, ingestion_service, embedding_service, vector_store
     global rag_service, clause_extractor, clause_store, clause_validator
     global comparison_service, summarization_service, translation_service
     
     print("Initializing services...")
+    
+    # Initialize document registry (must be first)
+    document_registry = DocumentRegistry()
+    print("Document registry initialized")
     
     # Initialize embedding service
     embedding_service = EmbeddingService()
@@ -380,21 +388,26 @@ async def health_check():
 async def upload_document(
     file: UploadFile = File(...),
     document_type: str = Form("document"),
-    force_reingest: bool = Form(False)
+    force_reingest: bool = Form(False),
+    display_name: Optional[str] = Form(default=None)
 ):
     """
     Upload and ingest a document.
-    Uses content-hash document IDs for determinism.
+    Uses document registry for identity management with proper versioning.
     
     Args:
         file: Uploaded file (PDF or DOCX)
         document_type: Type of document ("document" or "template")
         force_reingest: If True, re-index even if document already exists
+        display_name: Optional user-friendly display name (defaults to filename)
         
     Returns:
-        DocumentUploadResponse with ingestion results
+        DocumentUploadResponse with ingestion results (never includes document_hash)
     """
-    global ingestion_service, embedding_service, vector_store
+    global document_registry, ingestion_service, embedding_service, vector_store
+    
+    if not document_registry:
+        raise HTTPException(status_code=500, detail="Document registry not initialized")
     
     # Validate file type
     file_ext = Path(file.filename).suffix.lower()
@@ -408,8 +421,32 @@ async def upload_document(
     file_content = await file.read()
     file.file.seek(0)  # Reset file pointer for later use
     
-    # Compute content hash as document ID
-    document_id = hashlib.sha256(file_content).hexdigest()
+    # Compute content hash (internal only, never exposed)
+    document_hash = document_registry.compute_hash(file_content)
+    
+    # Check if document with this hash already exists
+    existing_doc = document_registry.find_by_hash(document_hash, is_latest=True)
+    
+    # If same content exists and not forcing reingest, return existing document
+    if existing_doc and not force_reingest:
+        # Check if already indexed in vector store
+        existing_chunks = vector_store.get_chunks_by_document(existing_doc['document_id']) if vector_store else []
+        already_indexed = len(existing_chunks) > 0
+        
+        if already_indexed:
+            return DocumentUploadResponse(
+                document_id=existing_doc['document_id'],
+                display_name=existing_doc['display_name'],
+                original_filename=existing_doc['original_filename'],
+                version=existing_doc['version'],
+                status="success",
+                message=f"Document already ingested. {len(existing_chunks)} chunks found in index.",
+                chunks_created=len(existing_chunks),
+                pages_processed=existing_doc.get('total_pages', len(set(c.get('page_number', 0) for c in existing_chunks))),
+                uses_ocr=any(c.get('is_ocr', False) for c in existing_chunks),
+                created_at=datetime.fromisoformat(existing_doc['created_at']) if isinstance(existing_doc['created_at'], str) else existing_doc['created_at'],
+                updated_at=datetime.fromisoformat(existing_doc['updated_at']) if isinstance(existing_doc['updated_at'], str) else existing_doc['updated_at']
+            )
     
     # Determine storage directory
     if document_type == "template":
@@ -417,78 +454,100 @@ async def upload_document(
     else:
         storage_dir = settings.DOCUMENTS_PATH
     
-    # Check if document already exists
-    file_path = storage_dir / f"{document_id}{file_ext}"
-    already_exists = file_path.exists()
+    # Register document in registry (creates new version if hash differs)
+    doc_record = document_registry.register_document(
+        document_hash=document_hash,
+        original_filename=file.filename,
+        document_type=document_type,
+        display_name=display_name
+    )
     
-    # Check if already indexed in vector store
-    already_indexed = False
-    if vector_store and not force_reingest:
-        existing_chunks = vector_store.get_chunks_by_document(document_id)
-        already_indexed = len(existing_chunks) > 0
+    document_id = doc_record['document_id']
+    version = doc_record['version']
     
-    # If already indexed and not forcing reingest, return early
-    if already_indexed and not force_reingest:
-        return DocumentUploadResponse(
-            document_id=document_id,
-            filename=file.filename,
-            status="success",
-            message=f"Document already ingested. {len(existing_chunks)} chunks found in index.",
-            chunks_created=len(existing_chunks),
-            pages_processed=len(set(c.get('page_number', 0) for c in existing_chunks)),
-            uses_ocr=any(c.get('is_ocr', False) for c in existing_chunks)
+    # Save uploaded file
+    file_path = storage_dir / f"{document_id}_v{version}{file_ext}"
+    try:
+        with open(file_path, "wb") as buffer:
+            buffer.write(file_content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving file: {str(e)}")
+    
+    # Update registry with file path
+    with document_registry._get_connection() as conn:
+        conn.execute(
+            "UPDATE documents SET file_path = ? WHERE document_id = ? AND version = ?",
+            [str(file_path), document_id, version]
         )
-    
-    # Save uploaded file (only if not already exists or forcing)
-    if not already_exists or force_reingest:
-        try:
-            with open(file_path, "wb") as buffer:
-                buffer.write(file_content)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error saving file: {str(e)}")
     
     # Ingest document
     try:
-        result = ingestion_service.ingest_document(file_path, document_type, document_id=document_id)
-        result.document_id = document_id  # Use our computed hash ID
-        
         # Get chunks for embedding
         chunks = ingestion_service.get_chunks_from_document(file_path, document_id)
         
-        if chunks:
-            # If forcing reingest, remove old chunks first
-            if force_reingest and already_indexed:
-                vector_store.delete_document(document_id)
-            
-            # Generate embeddings
-            texts = [chunk.text for chunk in chunks]
-            embeddings = embedding_service.embed_batch(texts)
-            
-            # Add to vector store
-            vector_store.add_chunks(embeddings, chunks)
-            
-            # Save vector store
-            vector_store.save()
-            
-            # Count OCR chunks
-            ocr_chunks = sum(1 for chunk in chunks if chunk.metadata.get('is_ocr', False))
-            uses_ocr = ocr_chunks > 0
-            
-            result.chunks_created = len(chunks)
-            result.uses_ocr = uses_ocr
-            result.ocr_chunks = ocr_chunks if uses_ocr else 0
-            
-            if uses_ocr:
-                result.message = f"Document ingested and indexed successfully. {len(chunks)} chunks created ({ocr_chunks} from OCR)."
-            else:
-                result.message = f"Document ingested and indexed successfully. {len(chunks)} chunks created."
+        if not chunks:
+            raise ValueError("No chunks created from document")
         
-        return result
+        # If this is a new version, remove old chunks for this document_id
+        if version > 1 and vector_store:
+            old_chunks = vector_store.get_chunks_by_document(document_id)
+            if old_chunks:
+                # Delete old version chunks (by document_hash if available, otherwise by document_id)
+                # For now, we'll delete all chunks for this document_id and re-add
+                vector_store.delete_document(document_id)
+        
+        # Generate embeddings
+        texts = [chunk.text for chunk in chunks]
+        embeddings = embedding_service.embed_batch(texts)
+        
+        # Add to vector store with display_name and document_hash (internal)
+        vector_store.add_chunks(
+            embeddings, 
+            chunks,
+            display_name=doc_record['display_name'],
+            document_hash=document_hash
+        )
+        
+        # Save vector store
+        vector_store.save()
+        
+        # Count OCR chunks
+        ocr_chunks = sum(1 for chunk in chunks if chunk.metadata.get('is_ocr', False))
+        uses_ocr = ocr_chunks > 0
+        
+        # Update registry with page/chunk counts
+        pages = ingestion_service.parser.parse_file(file_path)
+        total_pages = len(pages) if pages else 0
+        
+        with document_registry._get_connection() as conn:
+            conn.execute("""
+                UPDATE documents 
+                SET total_pages = ?, total_chunks = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE document_id = ? AND version = ?
+            """, [total_pages, len(chunks), document_id, version])
+        
+        # Build response (never include document_hash)
+        return DocumentUploadResponse(
+            document_id=document_id,
+            display_name=doc_record['display_name'],
+            original_filename=doc_record['original_filename'],
+            version=version,
+            status="success",
+            message=f"Document ingested and indexed successfully. {len(chunks)} chunks created." + 
+                   (f" ({ocr_chunks} from OCR)." if uses_ocr else "."),
+            chunks_created=len(chunks),
+            pages_processed=total_pages,
+            uses_ocr=uses_ocr,
+            ocr_chunks=ocr_chunks if uses_ocr else 0,
+            created_at=datetime.fromisoformat(doc_record['created_at']) if isinstance(doc_record['created_at'], str) else doc_record['created_at'],
+            updated_at=datetime.now()
+        )
         
     except Exception as e:
-        # Clean up file on error (only if we created it)
-        if not already_exists and file_path.exists():
+        # Clean up file and registry entry on error
+        if file_path.exists():
             file_path.unlink()
+        document_registry.delete_document(document_id, version)
         raise HTTPException(status_code=500, detail=f"Error ingesting document: {str(e)}")
 
 
@@ -705,34 +764,98 @@ async def search_bilingual(
         raise HTTPException(status_code=500, detail=f"Error in bilingual search: {str(e)}")
 
 
-@app.get("/api/documents")
-async def list_documents():
-    """List all ingested documents."""
-    global vector_store
+@app.get("/api/documents", response_model=DocumentListResponse)
+async def list_documents(include_versions: bool = True):
+    """
+    List all ingested documents.
     
-    if not vector_store:
-        return {"documents": []}
+    Args:
+        include_versions: If True, include all versions; if False, only latest
+        
+    Returns:
+        DocumentListResponse with list of documents (never includes document_hash)
+    """
+    global document_registry, vector_store
     
-    # Get unique document IDs from vector store
-    stats = vector_store.get_stats()
-    unique_docs = set()
+    if not document_registry:
+        return DocumentListResponse(documents=[])
     
-    for metadata in vector_store.metadata:
-        unique_docs.add(metadata['document_id'])
+    # Get documents from registry
+    doc_records = document_registry.list_documents(include_versions=include_versions)
     
+    # Build document list items
     documents = []
-    for doc_id in unique_docs:
-        chunks = vector_store.get_chunks_by_document(doc_id)
-        if chunks:
-            # Get first chunk to extract document info
-            first_chunk = chunks[0]
-            documents.append({
-                "document_id": doc_id,
-                "total_chunks": len(chunks),
-                "pages": list(set(c.get('page_number', 0) for c in chunks))
-            })
+    for doc_record in doc_records:
+        # Get chunk count from vector store if available
+        total_chunks = doc_record.get('total_chunks')
+        if not total_chunks and vector_store:
+            chunks = vector_store.get_chunks_by_document(doc_record['document_id'])
+            total_chunks = len(chunks)
+        
+        # Parse datetime strings if needed
+        created_at = doc_record['created_at']
+        updated_at = doc_record['updated_at']
+        if isinstance(created_at, str):
+            created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+        if isinstance(updated_at, str):
+            updated_at = datetime.fromisoformat(updated_at.replace('Z', '+00:00'))
+        
+        documents.append(DocumentListItem(
+            document_id=doc_record['document_id'],
+            display_name=doc_record['display_name'],
+            original_filename=doc_record['original_filename'],
+            version=doc_record['version'],
+            is_latest=bool(doc_record['is_latest']),
+            document_type=doc_record['document_type'],
+            created_at=created_at,
+            updated_at=updated_at,
+            total_chunks=total_chunks,
+            total_pages=doc_record.get('total_pages')
+        ))
     
-    return {"documents": documents}
+    return DocumentListResponse(documents=documents)
+
+
+@app.put("/api/documents/{document_id}/rename", response_model=DocumentRenameResponse)
+async def rename_document(
+    document_id: str,
+    request: DocumentRenameRequest
+):
+    """
+    Rename a document (update display_name).
+    
+    Args:
+        document_id: Document ID (DOC-####)
+        request: Rename request with new display_name
+        
+    Returns:
+        DocumentRenameResponse with updated display_name
+    """
+    global document_registry
+    
+    if not document_registry:
+        raise HTTPException(status_code=500, detail="Document registry not initialized")
+    
+    # Validate display_name
+    if not request.display_name or not request.display_name.strip():
+        raise HTTPException(status_code=400, detail="Display name cannot be empty")
+    
+    # Update display name
+    success = document_registry.update_display_name(document_id, request.display_name.strip())
+    
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Document {document_id} not found")
+    
+    # Get updated document
+    doc = document_registry.get_document(document_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail=f"Document {document_id} not found")
+    
+    return DocumentRenameResponse(
+        document_id=document_id,
+        display_name=doc['display_name'],
+        success=True
+    )
 
 
 @app.get("/api/stats")

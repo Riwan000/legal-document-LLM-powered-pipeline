@@ -495,9 +495,97 @@ class SummarizationService:
             if chunk.get('chunk_type') in chunk_types
         ]
         
+        # Step 3.5: Fallback to position-based retrieval if no chunks match required types
+        if not filtered_chunks and search_results:
+            # Get all chunks for this document
+            all_doc_chunks = self._get_all_document_chunks(document_id)
+            if all_doc_chunks:
+                # Sort by chunk_index to get document order
+                all_doc_chunks.sort(key=lambda c: (c.get('page_number', 0), c.get('chunk_index', 0)))
+                total_doc_chunks = len(all_doc_chunks)
+                
+                # Select chunks by position based on required types
+                position_based_chunks = []
+                if 'background' in chunk_types:
+                    # First 20% of chunks for background
+                    background_end = max(1, int(total_doc_chunks * 0.2))
+                    position_based_chunks.extend(all_doc_chunks[:background_end])
+                if 'holding' in chunk_types:
+                    # Last 20% of chunks for holding
+                    holding_start = max(0, int(total_doc_chunks * 0.8))
+                    position_based_chunks.extend(all_doc_chunks[holding_start:])
+                # For other types (procedural_history, issue_framing, etc.), use middle sections
+                other_types = [ct for ct in chunk_types if ct not in ['background', 'holding']]
+                if other_types:
+                    # Middle 40-60% for procedural history and other types
+                    middle_start = max(0, int(total_doc_chunks * 0.2))
+                    middle_end = min(total_doc_chunks, int(total_doc_chunks * 0.6))
+                    position_based_chunks.extend(all_doc_chunks[middle_start:middle_end])
+                
+                # Remove duplicates (chunks might overlap in first/last 20%)
+                seen_chunk_ids = set()
+                unique_position_chunks = []
+                for chunk in position_based_chunks:
+                    chunk_id = chunk.get('chunk_id') or f"c_p{chunk.get('page_number', 0):04d}_i{chunk.get('chunk_index', 0):04d}"
+                    if chunk_id not in seen_chunk_ids:
+                        seen_chunk_ids.add(chunk_id)
+                        unique_position_chunks.append(chunk)
+                
+                # Limit to reasonable number for classification
+                max_fallback = min(len(unique_position_chunks), top_k * 3)
+                unique_position_chunks = unique_position_chunks[:max_fallback]
+                
+                # Classify position-based chunks
+                # Ensure position-based chunks have scores (use 0.5 as default for position-based)
+                for chunk in unique_position_chunks:
+                    if 'score' not in chunk or chunk.get('score') is None:
+                        chunk['score'] = 0.5
+                classified_position_chunks = self._backfill_and_classify_chunks(unique_position_chunks, document_id)
+                
+                # Filter position-based chunks by required types
+                filtered_position_chunks = [
+                    chunk for chunk in classified_position_chunks
+                    if chunk.get('chunk_type') in chunk_types
+                ]
+                
+                # If still no chunks match, force assign types based on position
+                if not filtered_position_chunks and unique_position_chunks:
+                    # Force assign types based on position in original document
+                    # Re-sort by position to ensure correct ordering
+                    unique_position_chunks_sorted = sorted(unique_position_chunks, key=lambda c: (c.get('page_number', 0), c.get('chunk_index', 0)))
+                    for chunk in unique_position_chunks_sorted:
+                        page = chunk.get('page_number', 0)
+                        chunk_idx = chunk.get('chunk_index', 0)
+                        # Calculate position in document (0.0 to 1.0)
+                        # Use a simple heuristic: page number relative to total pages
+                        # For more accuracy, we'd need total pages, but chunk_index works too
+                        position_ratio = chunk_idx / max(1, total_doc_chunks - 1)
+                        
+                        # Assign type based on position
+                        if 'background' in chunk_types and position_ratio < 0.2:
+                            chunk['chunk_type'] = 'background'
+                            filtered_position_chunks.append(chunk)
+                        elif 'holding' in chunk_types and position_ratio >= 0.8:
+                            chunk['chunk_type'] = 'holding'
+                            filtered_position_chunks.append(chunk)
+                        elif any(ct in chunk_types for ct in ['procedural_history', 'issue_framing', 'argument_claimant', 'argument_defendant', 'reasoning', 'citation']):
+                            # For other types, assign based on what's needed
+                            # Prioritize procedural_history in middle sections
+                            if 'procedural_history' in chunk_types and 0.2 <= position_ratio < 0.6:
+                                chunk['chunk_type'] = 'procedural_history'
+                                filtered_position_chunks.append(chunk)
+                            elif 'issue_framing' in chunk_types and 0.3 <= position_ratio < 0.7:
+                                chunk['chunk_type'] = 'issue_framing'
+                                filtered_position_chunks.append(chunk)
+                
+                # Use position-based chunks if we found any
+                if filtered_position_chunks:
+                    filtered_chunks = filtered_position_chunks
+        
         # Step 4: Limit to top_k and enforce hard limit
         # Sort by score (highest first) for deterministic selection
-        filtered_chunks.sort(key=lambda c: c.get('score', 0.0), reverse=True)
+        # For position-based chunks, use chunk_index as score proxy
+        filtered_chunks.sort(key=lambda c: c.get('score', c.get('chunk_index', 0)), reverse=True)
         
         # Take top_k, but never exceed hard limit
         max_chunks = min(top_k, settings.CASE_SUMMARY_MAX_CHUNKS_PER_CALL)

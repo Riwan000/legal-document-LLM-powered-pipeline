@@ -11,8 +11,8 @@ def main():
     print("="*70)
     print("  Starting FastAPI Backend Server")
     print("="*70)
-    print("\nServer will start at: http://localhost:8000")
-    print("API Documentation: http://localhost:8000/docs")
+    print("\nServer will start at: http://localhost:8501")
+    print("API Documentation: http://localhost:8501/docs")
     print("\nPress CTRL+C to stop the server\n")
     print("="*70 + "\n")
     
