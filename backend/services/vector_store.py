@@ -1,8 +1,18 @@
 """
-FAISS vector store for storing and retrieving document embeddings.
-Supports similarity search with metadata filtering.
+VectorStore
+-----------
+
+FAISS-based vector store for storing and retrieving document embeddings.
+
+VectorStore guarantees:
+- Exact similarity search using FAISS IndexFlatL2
+- Assumes unit-normalized float32 embeddings from EmbeddingService
+- Supports weighted priority boosting for clause-aware ranking
+- Never generates embeddings
+- Never applies legal or business logic
+- Never performs chunking or splitting
 """
-import os
+import logging
 import pickle
 import numpy as np
 import faiss
@@ -10,6 +20,12 @@ from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
 from backend.config import settings
 from backend.models.document import DocumentChunk
+
+# Expected metadata schema for ranking (documentation)
+REQUIRED_RANKING_METADATA = {
+    "clause_types": list,
+    "hierarchy_level": str,
+}
 
 
 class VectorStore:
@@ -53,11 +69,27 @@ class VectorStore:
         if len(embeddings) != len(chunks):
             raise ValueError(f"Mismatch: {len(embeddings)} embeddings but {len(chunks)} chunks")
         
-        # Normalize embeddings in-place: cosine similarity becomes derivable from L2 distance.
-        faiss.normalize_L2(embeddings)
+        # Enforce float32 and validate embedding contract (unit-normalized from EmbeddingService)
+        embeddings = embeddings.astype('float32', copy=False)
         
-        # FAISS expects float32 arrays.
-        self.index.add(embeddings.astype('float32'))
+        # Validate embedding dimension
+        if embeddings.shape[1] != self.embedding_dim:
+            logging.warning(
+                f"Embedding dimension mismatch: expected {self.embedding_dim}, "
+                f"got {embeddings.shape[1]}"
+            )
+        
+        # Validate unit normalization (contract with EmbeddingService)
+        norms = np.linalg.norm(embeddings, axis=1)
+        if not np.allclose(norms, 1.0, atol=1e-3):
+            logging.warning(
+                "Embeddings are not unit-normalized before adding to VectorStore. "
+                f"Norm range: [{norms.min():.4f}, {norms.max():.4f}]. "
+                "Expected from EmbeddingService."
+            )
+        
+        # FAISS expects float32 arrays. Embeddings should already be normalized.
+        self.index.add(embeddings)
         
         # Persist the fields we need to display citations and support filtering/reranking.
         for chunk in chunks:
@@ -118,13 +150,33 @@ class VectorStore:
         else:
             threshold = similarity_threshold  # Use provided value
         
+        # Enforce float32 and validate query embedding contract (unit-normalized from EmbeddingService)
+        query_embedding = query_embedding.astype('float32', copy=False)
+        
+        # Validate query embedding dimension
+        if query_embedding.shape[0] != self.embedding_dim:
+            logging.warning(
+                f"Query embedding dimension mismatch: expected {self.embedding_dim}, "
+                f"got {query_embedding.shape[0]}"
+            )
+        
+        # Validate unit normalization (contract with EmbeddingService)
+        query_norm = np.linalg.norm(query_embedding)
+        if not np.allclose(query_norm, 1.0, atol=1e-3):
+            logging.warning(
+                f"Query embedding is not unit-normalized. Norm: {query_norm:.4f}. "
+                "Expected from EmbeddingService."
+            )
+        
         query_embedding = query_embedding.reshape(1, -1)
-        faiss.normalize_L2(query_embedding)
         
         # Exact search in FAISS (IndexFlatL2).
-        distances, indices = self.index.search(query_embedding.astype('float32'), top_k)
-        
         # For unit-normalized vectors: cosine_similarity = 1 - (L2_distance^2 / 2)
+        distances, indices = self.index.search(query_embedding, top_k)
+        
+        # Convert L2 distances to cosine similarities
+        # For unit-normalized vectors: cosine_similarity = 1 - (L2_distance^2 / 2)
+        # score ∈ [0, 1], where 1.0 means maximum similarity
         similarities = 1 - (distances[0] ** 2 / 2)
         
         results = []
@@ -193,17 +245,20 @@ class VectorStore:
     def search_with_priority(
         self,
         query_embedding: np.ndarray,
-        priority_clause_types: List[str] = None,
+        priority_weights: Dict[str, float] = None,
         top_k: int = None,
         document_id_filter: Optional[str] = None,
         similarity_threshold: Optional[float] = -1.0
     ) -> List[Dict[str, Any]]:
         """
-        Search with priority boosting for specific clause types.
+        Search with weighted priority boosting for specific clause types.
+        
+        Uses weighted sum instead of binary matching: clauses matching multiple query types
+        get cumulative weights, avoiding "everything is equally relevant" syndrome.
         
         Args:
             query_embedding: Query vector of shape (embedding_dim,)
-            priority_clause_types: List of clause types to boost (e.g., ["Governing Law", "Termination"])
+            priority_weights: Dict mapping clause_type → weight for weighted boosting
             top_k: Number of results to return
             document_id_filter: Optional filter by document ID
             similarity_threshold: Similarity threshold
@@ -219,34 +274,43 @@ class VectorStore:
             similarity_threshold=similarity_threshold
         )
         
-        if not priority_clause_types:
-            # No priority types, return standard results
+        if not priority_weights:
+            # No priority weights, return standard results
             return results[:top_k or settings.TOP_K_RESULTS]
         
-        # Boost scores for priority clause types
-        priority_set = {pt.lower() for pt in priority_clause_types}
-        boost_factor = 0.15  # Boost by 15% for priority clauses
+        # Boosting rules:
+        # - priority_score is cumulative over matching clause types
+        # - boost_factor scales the influence of priority over base similarity
+        # - final score is capped at 1.0 to preserve valid similarity range
+        boost_factor = 0.15  # Base boost factor
         
         for result in results:
-            # Check if result matches priority clause types
-            # Metadata is already spread into result dict, not nested
-            clause_types = result.get('clause_types', [])
-            hierarchy_level = result.get('hierarchy_level', 'contract')
+            # Only boost reasonably good base matches (prevents weak matches from dominating)
+            base_score = result.get("score", 0.0)
+            if base_score < settings.MIN_BASE_SIMILARITY_FOR_BOOST:
+                continue
             
-            # Check clause types
-            matches_priority = any(
-                pt.lower() in ct.lower() or ct.lower() in pt.lower()
-                for pt in priority_clause_types
-                for ct in clause_types
+            # Metadata is already spread into result dict, not nested
+            # Harden metadata access (graceful degradation if missing/malformed)
+            clause_types = result.get("clause_types") or []
+            if not isinstance(clause_types, list):
+                clause_types = []
+            
+            hierarchy_level = result.get("hierarchy_level", "contract")
+            
+            # Calculate priority score as sum of weights for matching clause types
+            priority_score = sum(
+                priority_weights.get(clause_type.lower(), 0.0)
+                for clause_type in clause_types
             )
             
             # Also check hierarchy level for "Governing Law" type
-            if "governing law" in priority_set and hierarchy_level == "law":
-                matches_priority = True
+            if "governing law" in priority_weights and hierarchy_level == "law":
+                priority_score += priority_weights.get("governing law", 0.0)
             
-            if matches_priority:
-                # Boost the score
-                result['score'] = min(1.0, result['score'] + boost_factor)
+            if priority_score > 0:
+                # Apply weighted boost (clauses matching multiple types get higher boost)
+                result['score'] = min(1.0, result['score'] + priority_score * boost_factor)
                 result['priority_boosted'] = True
         
         # Re-sort by boosted scores
@@ -299,39 +363,23 @@ class VectorStore:
     
     def delete_document(self, document_id: str) -> int:
         """
-        Delete all chunks for a document (for demo - in production, use more efficient method).
+        Delete all chunks for a document.
+        
+        Deletion is not safely supported with IndexFlatL2.
+        In production, use ID-mapped indices (e.g., IndexIDMap) or rebuild the entire
+        index with a controlled pipeline.
         
         Args:
             document_id: Document ID to delete
             
         Returns:
-            Number of chunks deleted
+            Number of chunks deleted (raises NotImplementedError)
         """
-        # Find indices to remove
-        indices_to_remove = [
-            i for i, metadata in enumerate(self.metadata)
-            if metadata['document_id'] == document_id
-        ]
-        
-        if not indices_to_remove:
-            return 0
-        
-        # Note: FAISS doesn't support efficient deletion
-        # For demo, we'll rebuild the index (not efficient for large datasets)
-        # In production, consider using FAISS with ID mapping or a different approach
-        
-        # Remove from metadata
-        for i in reversed(indices_to_remove):
-            # Reverse order to maintain indices
-            del self.metadata[i]
-        
-        # Rebuild index (simplified - in production, use more efficient method)
-        if len(self.metadata) > 0:
-            # Would need to rebuild from remaining embeddings
-            # For demo, we'll just note this limitation
-            pass
-        
-        return len(indices_to_remove)
+        raise NotImplementedError(
+            "Vector deletion is not safely supported with IndexFlatL2. "
+            "Use FAISS ID-mapped indices (IndexIDMap) or rebuild the index in a "
+            "controlled pipeline."
+        )
     
     def save(self, filepath: Path = None) -> None:
         """
@@ -346,12 +394,16 @@ class VectorStore:
         faiss.write_index(self.index, str(filepath))
         # FAISS built-in serialization
         
-        # Save metadata
+        # Save metadata with versioning for safe future migrations
         metadata_path = filepath.with_suffix('.metadata.pkl')
-        # Create metadata filename (e.g., legal_documents.index.metadata.pkl)
         with open(metadata_path, 'wb') as f:
-            pickle.dump(self.metadata, f)
-            # Serialize metadata using pickle
+            pickle.dump(
+                {
+                    "version": 1,
+                    "metadata": self.metadata,
+                },
+                f
+            )
     
     def load(self, filepath: Path = None) -> None:
         """
@@ -369,11 +421,22 @@ class VectorStore:
         self.index = faiss.read_index(str(filepath))
         # Load FAISS index from disk
         
-        # Load metadata
+        # Load metadata with version checking
         metadata_path = filepath.with_suffix('.metadata.pkl')
         with open(metadata_path, 'rb') as f:
-            self.metadata = pickle.load(f)
-            # Deserialize metadata
+            payload = pickle.load(f)
+        
+        # Check version for safe migrations
+        version = payload.get("version", 0)
+        if version != 1:
+            error_msg = (
+                f"Unsupported vector store metadata version: {version}. "
+                "Implement a migration or rebuild the index."
+            )
+            logging.error(error_msg)
+            raise ValueError(error_msg)
+        
+        self.metadata = payload["metadata"]
         
         # Update embedding dimension from loaded index
         self.embedding_dim = self.index.d

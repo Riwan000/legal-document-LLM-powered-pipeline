@@ -39,6 +39,14 @@ class Settings(BaseSettings):
     SIMILARITY_THRESHOLD: float = 0.65
     OCR_SIMILARITY_THRESHOLD: float = 0.4  # Lower threshold for OCR documents due to text quality issues
     MIN_SIMILARITY_THRESHOLD: float = 0.3  # Absolute minimum threshold for any search (fallback for very low scores)
+    MIN_BASE_SIMILARITY_FOR_BOOST: float = 0.4  # Minimum base similarity required for priority boosting in weighted ranking
+    
+    # Language & Bilingual Configuration
+    OCR_LANGUAGE: str = "eng+ara"  # Tesseract OCR language ('eng', 'ara', 'eng+ara' for multi)
+    DEFAULT_RESPONSE_LANGUAGE: Optional[str] = None  # None = auto-detect, 'ar' = Arabic, 'en' = English
+    LANGUAGE_DETECTION_THRESHOLD: float = 0.1  # Arabic character ratio threshold for language detection
+    ENABLE_QUERY_TRANSLATION: bool = True  # Enable query translation to match document language
+    TRANSLATION_FALLBACK_TO_ORIGINAL: bool = True  # Use original query if translation fails
     
     # Legal RAG Configuration
     COVERED_TOPICS: List[str] = ["employment", "termination", "benefits", "compensation", "governing law", "dispute resolution"]

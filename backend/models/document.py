@@ -26,11 +26,28 @@ class ClauseMetadata(BaseModel):
 
 
 class QueryClassification(BaseModel):
-    """Classification of user query for rule-based processing."""
-    query_type: str = Field(..., description="Type of query (termination, legality, benefits, compliance, etc.)")
+    """
+    Classification of user query for rule-based processing.
+    
+    Conceptual distinction:
+    - query_types: User intent (what they want to know) → used for answer generation, priority boosting
+    - scope_topics: Retrieval filters (what to search) → used for document search/ranking
+    """
+    query_types: List[str] = Field(default_factory=lambda: ["general"], description="List of query intent types (termination, legality, benefits, compliance, etc.)")
     requires_legal_hierarchy: bool = Field(False, description="Whether query requires legal hierarchy analysis")
-    scope_topics: List[str] = Field(default_factory=list, description="Topics extracted from query")
+    scope_topics: List[str] = Field(default_factory=list, description="Topics extracted from query for retrieval filtering (what to search for in documents)")
     is_legal_query: bool = Field(False, description="Whether this is a legal/compliance query requiring citations")
+    risk_level: str = Field("low", description="Risk level: high, medium, or low (controls answer strictness)")
+    requires_clarification: bool = Field(False, description="Whether query requires clarification (missing context)")
+    missing_context: List[str] = Field(default_factory=list, description="List of missing context fields (e.g., jurisdiction, contract_type)")
+    
+    @property
+    def query_type(self) -> str:
+        """
+        Backward compatibility property.
+        Returns the first query type or "general" if empty.
+        """
+        return self.query_types[0] if self.query_types else "general"
 
 
 class AnswerResponse(BaseModel):

@@ -2,6 +2,7 @@
 Streamlit frontend for Legal Document Intelligence MVP.
 Multi-page application connecting to FastAPI backend.
 """
+import os
 import streamlit as st
 import requests
 from typing import Dict, Any, Optional
@@ -18,8 +19,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Backend API base URL (FastAPI). If you change backend port/host, update this.
-API_BASE_URL = "http://localhost:8000"
+# Backend API base URL (FastAPI). Streamlit acts as a server-side proxy:
+# all API calls are made from the Streamlit server, so users only hit the UI port.
+API_BASE_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 
 # -----------------------------------------------------------------------------
 # UI styling
@@ -85,7 +87,7 @@ def upload_document(file, document_type: str = "document", display_name: Optiona
         return None
 
 
-def search_documents(query: str, top_k: int = 5, document_id: Optional[str] = None, generate_response: bool = True) -> Optional[Dict]:
+def search_documents(query: str, top_k: int = 5, document_id: Optional[str] = None, generate_response: bool = True, response_language: Optional[str] = None) -> Optional[Dict]:
     """Search documents using RAG."""
     try:
         data = {
@@ -95,6 +97,8 @@ def search_documents(query: str, top_k: int = 5, document_id: Optional[str] = No
         }
         if document_id:
             data["document_id"] = document_id
+        if response_language:
+            data["response_language"] = response_language
         
         response = requests.post(f"{API_BASE_URL}/api/search", data=data, timeout=60)
         response.raise_for_status()
@@ -110,8 +114,17 @@ def extract_clauses(document_id: str) -> Optional[Dict]:
         data = {"document_id": document_id}
         # Increased timeout to 5 minutes (300 seconds) for large documents
         response = requests.post(f"{API_BASE_URL}/api/extract-clauses", data=data, timeout=300)
-        response.raise_for_status()
-        return response.json()
+        if response.status_code >= 400:
+            # Try to surface FastAPI error details (e.g., {"detail": "..."}).
+            try:
+                payload = response.json()
+                detail = payload.get("detail") if isinstance(payload, dict) else None
+            except Exception:
+                detail = None
+            st.error(f"Clause extraction failed ({response.status_code})." + (f" Detail: {detail}" if detail else ""))
+            return None
+        result = response.json()
+        return result
     except requests.exceptions.Timeout:
         st.error("Clause extraction timed out. The document may be too large. Please try with a smaller document or contact support.")
         return None
@@ -398,11 +411,18 @@ elif page == "🔍 RAG Search":
         placeholder="e.g., What are the payment terms? What are the termination conditions?"
     )
     
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
         top_k = st.slider("Number of results", 1, 20, 5)
     with col2:
         generate_response = st.checkbox("Generate LLM response", value=True)
+    with col3:
+        response_language = st.selectbox(
+            "Response Language",
+            [None, "ar", "en"],
+            format_func=lambda x: "Auto (match query)" if x is None else ("Arabic" if x == "ar" else "English"),
+            help="Choose response language (Auto detects from query)"
+        )
     
     if st.button("Search", type="primary"):
         if query:
@@ -411,7 +431,8 @@ elif page == "🔍 RAG Search":
                     query=query,
                     top_k=top_k,
                     document_id=selected_doc,
-                    generate_response=generate_response
+                    generate_response=generate_response,
+                    response_language=response_language
                 )
                 
                 if result:
@@ -467,56 +488,37 @@ elif page == "📋 Clause Extraction":
                 result = extract_clauses(selected_doc)
                 
                 if result and result.get('clauses'):
-                    # Get total clauses count - handle different response formats
-                    total_clauses = result.get('total_clauses') or result.get('count') or len(result.get('clauses', []))
-                    if total_clauses:
-                        st.success(f"✅ Extracted {total_clauses} clause(s)")
-                    else:
-                        st.success(f"✅ Extracted {len(result.get('clauses', []))} clause(s)")
+                    clauses = result.get('clauses', [])
+                    st.success(f"✅ Extracted {len(clauses)} clause(s)")
+                    # Group by document_section (new schema)
+                    clauses_by_section = {}
+                    for clause in clauses:
+                        if not isinstance(clause, dict):
+                            continue
+                        section = clause.get('document_section', 'ambiguous')
+                        clause_text = clause.get('verbatim_text', '')
+                        page_start = clause.get('page_start', 0)
+                        clause_heading = clause.get('clause_heading')
+                        clause_id = clause.get('clause_id')
+                        
+                        if section not in clauses_by_section:
+                            clauses_by_section[section] = []
+                        clauses_by_section[section].append({
+                            'section': section,
+                            'text': clause_text,
+                            'page_start': page_start,
+                            'clause_id': clause_id,
+                            'heading': clause_heading
+                        })
                     
-                    # Group by clause type
-                    clauses_by_type = {}
-                    for clause in result['clauses']:
-                        # Handle both dict format and structured clause format
-                        if isinstance(clause, dict):
-                            clause_type = clause.get('type', 'Unknown')
-                            # Handle structured clauses with type enum
-                            if isinstance(clause_type, dict):
-                                clause_type = clause_type.get('value', 'Unknown')
-                            elif hasattr(clause_type, 'value'):
-                                clause_type = clause_type.value
-                            
-                            page_num = clause.get('page_number')
-                            # Handle evidence blocks in structured clauses
-                            if not page_num and clause.get('evidence'):
-                                evidence = clause['evidence'][0] if isinstance(clause['evidence'], list) else clause['evidence']
-                                page_num = evidence.get('page', 0) if isinstance(evidence, dict) else 0
-                            
-                            clause_text = clause.get('text', '')
-                            # Handle structured clauses with evidence blocks
-                            if not clause_text and clause.get('evidence'):
-                                evidence = clause['evidence'][0] if isinstance(clause['evidence'], list) else clause['evidence']
-                                if isinstance(evidence, dict):
-                                    clause_text = evidence.get('clean_text', '') or evidence.get('raw_text', '')
-                            
-                            if clause_type not in clauses_by_type:
-                                clauses_by_type[clause_type] = []
-                            clauses_by_type[clause_type].append({
-                                'type': clause_type,
-                                'text': clause_text,
-                                'page_number': page_num or 0,
-                                'clause_id': clause.get('clause_id'),
-                                'title': clause.get('title')
-                            })
-                    
-                    for clause_type, clauses in clauses_by_type.items():
-                        st.subheader(f"📌 {clause_type} ({len(clauses)} clause(s))")
-                        for clause in clauses:
-                            expander_label = f"Page {clause['page_number']}"
-                            if clause.get('title'):
-                                expander_label = f"{clause['title']} - Page {clause['page_number']}"
+                    for section, section_clauses in clauses_by_section.items():
+                        st.subheader(f"📌 {section} ({len(section_clauses)} clause(s))")
+                        for clause in section_clauses:
+                            expander_label = f"Page {clause['page_start']}"
+                            if clause.get('heading'):
+                                expander_label = f"{clause['heading']} - Page {clause['page_start']}"
                             elif clause.get('clause_id'):
-                                expander_label = f"{clause['clause_id']} - Page {clause['page_number']}"
+                                expander_label = f"{clause['clause_id']} - Page {clause['page_start']}"
                             
                             with st.expander(expander_label):
                                 if clause.get('text'):

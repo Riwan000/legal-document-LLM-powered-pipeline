@@ -13,6 +13,41 @@ from backend.models.document import DocumentChunk, DocumentMetadata, DocumentUpl
 from backend.config import settings
 
 
+def detect_document_language(pages: List[tuple]) -> str:
+    """
+    Detect primary language of document from parsed pages.
+    
+    Args:
+        pages: List of tuples (text, page_number, is_ocr)
+        
+    Returns:
+        Language code ('ar' for Arabic, 'en' for English)
+    """
+    # Sample text from pages (use first few pages and middle pages for better coverage)
+    sample_text = ""
+    sample_size = min(5, len(pages))  # Sample up to 5 pages
+    indices = [0] + [len(pages) // 2] + list(range(min(3, len(pages))))
+    
+    for idx in set(indices):
+        if idx < len(pages):
+            page_data = pages[idx]
+            if len(page_data) >= 1:
+                sample_text += page_data[0] + " "
+    
+    if not sample_text.strip():
+        return 'en'  # Default to English if no text
+    
+    # Simple heuristic: check for Arabic characters
+    arabic_chars = set('ابتثجحخدذرزسشصضطظعغفقكلمنهوي')
+    text_chars = set(sample_text.replace(' ', ''))
+    arabic_ratio = len(text_chars.intersection(arabic_chars)) / max(len(text_chars), 1)
+    
+    if arabic_ratio > settings.LANGUAGE_DETECTION_THRESHOLD:
+        return 'ar'
+    else:
+        return 'en'
+
+
 class DocumentIngestionService:
     """Service for ingesting and processing documents."""
     
@@ -73,6 +108,9 @@ class DocumentIngestionService:
             # Count OCR chunks
             ocr_chunks = sum(1 for chunk in chunks if chunk.metadata.get('is_ocr', False))
             
+            # Detect document language
+            document_language = detect_document_language(pages)
+            
             # Create metadata
             metadata = DocumentMetadata(
                 document_id=document_id,
@@ -80,7 +118,8 @@ class DocumentIngestionService:
                 file_type=file_path.suffix.lower(),
                 upload_date=datetime.now(),
                 total_pages=len(pages),
-                total_chunks=len(chunks)
+                total_chunks=len(chunks),
+                language=document_language
             )
             
             return DocumentUploadResponse(
@@ -168,6 +207,13 @@ class DocumentIngestionService:
         if coverage_ratio < 0.9:  # Less than 90% coverage
             print(f"Warning: Low text coverage in chunks ({coverage_ratio:.1%})")
             print(f"  Total text: {total_text_length} chars, Chunked: {total_chunked_text} chars")
+        
+        # Detect document language and add to chunk metadata
+        document_language = detect_document_language(pages)
+        for chunk in chunks:
+            if chunk.metadata is None:
+                chunk.metadata = {}
+            chunk.metadata['language'] = document_language
         
         return chunks
 
