@@ -46,14 +46,32 @@ class ClauseStore:
         self.clause_cache: Dict[str, StructuredClause] = {}
 
         # Canonical clause types for integration with weighted ranking.
+        # Must match ClauseType enum values (normalized to lowercase with underscores).
+        # This set is used for validation and ensures consistency across the system.
         self.CANONICAL_CLAUSE_TYPES = {
+            # All ClauseType enum values (from backend/models/clause.py)
+            "governing_law",
+            "regulatory_compliance",
             "termination",
-            "notice",
-            "payment terms",
-            "benefits",
-            "governing law",
-            "probation",
-            "compensation",
+            "compensation_benefits",
+            "salary_wages",
+            "employer_obligations",
+            "employee_obligations",
+            "conduct_discipline",
+            "jurisdiction",
+            "dispute_resolution",
+            "confidentiality",
+            "liability",
+            "other",
+            # Legacy/alternative names for backward compatibility with existing data
+            # These may appear in older documents or alternative naming conventions
+            "notice",  # Often part of termination
+            "payment_terms",  # Alternative for salary_wages or compensation_benefits
+            "benefits",  # Alternative for compensation_benefits
+            "probation",  # Often part of termination
+            "compensation",  # Alternative for compensation_benefits
+            "governing law",  # Legacy format with space (for backward compatibility)
+            "payment terms",  # Legacy format with space
         }
         
         # Load existing data (index + cache)

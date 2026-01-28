@@ -277,7 +277,6 @@ class VectorStore:
         if not priority_weights:
             # No priority weights, return standard results
             return results[:top_k or settings.TOP_K_RESULTS]
-        
         # Boosting rules:
         # - priority_score is cumulative over matching clause types
         # - boost_factor scales the influence of priority over base similarity
@@ -295,7 +294,6 @@ class VectorStore:
             clause_types = result.get("clause_types") or []
             if not isinstance(clause_types, list):
                 clause_types = []
-            
             hierarchy_level = result.get("hierarchy_level", "contract")
             
             # Calculate priority score as sum of weights for matching clause types
@@ -417,26 +415,53 @@ class VectorStore:
         if not filepath.exists():
             raise FileNotFoundError(f"Vector store not found: {filepath}")
         
-        # Load FAISS index
-        self.index = faiss.read_index(str(filepath))
-        # Load FAISS index from disk
-        
-        # Load metadata with version checking
+        # Load metadata with version checking FIRST to avoid partially updating
+        # the index in case of incompatible metadata formats.
         metadata_path = filepath.with_suffix('.metadata.pkl')
         with open(metadata_path, 'rb') as f:
             payload = pickle.load(f)
         
         # Check version for safe migrations
-        version = payload.get("version", 0)
-        if version != 1:
+        # Legacy payloads (pre-versioning) may be a plain list; we still fail
+        # loud, but we avoid corrupting the in-memory index by validating
+        # before loading FAISS.
+        if isinstance(payload, dict):
+            version = payload.get("version", 0)
+            if version != 1:
+                error_msg = (
+                    f"Unsupported vector store metadata version: {version}. "
+                    "Implement a migration or rebuild the index."
+                )
+                logging.error(error_msg)
+                raise ValueError(error_msg)
+            self.metadata = payload["metadata"]
+        else:
+            # Legacy format: plain list -> treat as incompatible and fail loud
             error_msg = (
-                f"Unsupported vector store metadata version: {version}. "
+                f"Unsupported legacy vector store metadata format: {type(payload).__name__}. "
                 "Implement a migration or rebuild the index."
             )
             logging.error(error_msg)
             raise ValueError(error_msg)
         
-        self.metadata = payload["metadata"]
+        # Only load FAISS index after metadata has been validated to keep index
+        # and metadata in sync.
+        self.index = faiss.read_index(str(filepath))
+        # Load FAISS index from disk
+        
+        # After loading, enforce consistency between FAISS index and metadata.
+        # If they disagree, treat the persisted data as unsafe and reset to an
+        # empty index to avoid runtime IndexError during search.
+        if self.index.ntotal != len(self.metadata):
+            logging.error(
+                "VectorStore load mismatch: FAISS ntotal=%s, metadata_len=%s. "
+                "Resetting to empty index to avoid inconsistent state.",
+                self.index.ntotal,
+                len(self.metadata),
+            )
+            # Reset to a fresh, empty index and clear metadata
+            self.index = faiss.IndexFlatL2(self.embedding_dim)
+            self.metadata = []
         
         # Update embedding dimension from loaded index
         self.embedding_dim = self.index.d

@@ -597,6 +597,24 @@ async def search_documents(
             )
         return result
     except Exception as e:
+        # Minimal debug logging for search failures (debug mode)
+        try:
+            import json, time  # Local import to avoid global side effects
+            with open(r'c:\Users\LEGION\Desktop\Projects\legal-document-LLM-powered-pipeline\.cursor\debug.log', 'a', encoding='utf-8') as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run-search",
+                    "location": "main.py:599",
+                    "message": "search_documents exception",
+                    "data": {
+                        "exception_type": type(e).__name__,
+                        "exception_msg": str(e),
+                    },
+                    "timestamp": int(time.time() * 1000),
+                }) + "\n")
+        except Exception:
+            # Logging must never break the API
+            pass
         raise HTTPException(status_code=500, detail=f"Error searching: {str(e)}")
 
 
