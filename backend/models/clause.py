@@ -68,6 +68,15 @@ class StructuredClause(BaseModel):
     consistency_flag: Optional[str] = Field(None, description="Consistency flag if mismatch detected")
     language: Optional[str] = Field(None, description="Language code ('ar', 'en')")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    # Normalized fields for ranking / matching (populated once on save/load)
+    normalized_clause_type: Optional[str] = Field(
+        None,
+        description="Normalized clause type for ranking (lowercase canonical form)"
+    )
+    normalized_authority_level: Optional[str] = Field(
+        None,
+        description="Normalized authority level for ranking (lowercase canonical form)"
+    )
     
     class Config:
         use_enum_values = True

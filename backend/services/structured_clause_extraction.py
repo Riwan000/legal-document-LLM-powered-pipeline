@@ -1,603 +1,795 @@
 """
-Structured Legal Clause Extraction Engine.
-Transforms unstructured documents into clean, authoritative, machine-readable legal clauses.
+Deterministic Structure-Aware Legal Clause Extraction Engine.
+Converts unstructured legal documents into verbatim, auditable clauses without interpretation.
 """
 from typing import List, Dict, Any, Optional, Tuple
 from pathlib import Path
-import ollama
-import json
-import uuid
 import re
+import hashlib
+import logging
+from enum import Enum
+from dataclasses import dataclass
 
 from backend.config import settings
 from backend.services.document_ingestion import DocumentIngestionService
-from backend.utils.ocr_cleanup import OCRCleanupService
-from backend.services.authority_classifier import AuthorityClassifier
-from backend.services.clause_taxonomy import ClauseTaxonomyService
-from backend.models.clause import (
-    StructuredClause, EvidenceBlock, AuthorityLevel, ClauseType, TerminationSubtype
-)
-from backend.services.clause_validator import ClauseValidator
+
+# Configure logger for clause extraction
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Page:
+    """Represents a page with page number and lines."""
+    page_number: int
+    lines: List[str]
+    is_ocr: bool = False
+    
+    def get_text(self) -> str:
+        """Get full text by joining lines (for section classification)."""
+        return '\n'.join(self.lines)
+
+
+class DocumentSection(str, Enum):
+    """Document section types."""
+    ADMINISTRATIVE_MATERIAL = "administrative_material"
+    CONTRACTUAL_TERMS = "contractual_terms"
+    JUDICIAL_REASONING = "judicial_reasoning"
+    STATUTORY_TEXT = "statutory_text"
+    ANNEXURES_SCHEDULES = "annexures_schedules"
+    AMBIGUOUS = "ambiguous"  # Page cannot be confidently classified
+
+
+class ExtractedClause:
+    """Represents an extracted clause with verbatim text."""
+    
+    def __init__(
+        self,
+        clause_id: str,
+        document_section: str,
+        page_start: int,
+        page_end: int,
+        clause_heading: str,
+        verbatim_text: str,
+        normalized_text: Optional[str] = None
+    ):
+        self.clause_id = clause_id
+        self.document_section = document_section
+        self.page_start = page_start
+        self.page_end = page_end
+        self.clause_heading = clause_heading
+        self.verbatim_text = verbatim_text
+        self.normalized_text = normalized_text
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for API response (strict JSON schema)."""
+        result = {
+            "clause_id": self.clause_id,
+            "document_section": self.document_section,
+            "page_start": self.page_start,
+            "page_end": self.page_end,
+            "clause_heading": self.clause_heading if self.clause_heading else None,  # null if not present
+            "verbatim_text": self.verbatim_text
+        }
+        if self.normalized_text:
+            result["normalized_text"] = self.normalized_text
+        return result
 
 
 class StructuredClauseExtractionService:
-    """Service for extracting structured legal clauses with authority modeling."""
+    """Deterministic service for extracting legal clauses with structure-first approach."""
+    
+    # Hard condition: Minimum character count for valid clause
+    MIN_CLAUSE_LENGTH = 50
+    MIN_VERB_LINES_FOR_CONTRACT = 2
     
     def __init__(self):
         """Initialize structured clause extraction service."""
-        self.ollama_client = ollama.Client(host=settings.OLLAMA_BASE_URL)
         self.ingestion_service = DocumentIngestionService()
-        self.ocr_cleanup = OCRCleanupService()
-        self.authority_classifier = AuthorityClassifier()
-        self.taxonomy_service = ClauseTaxonomyService()
-        self.validator = ClauseValidator()
+        
+        # Section detection patterns (rule-based)
+        self.section_patterns = {
+            DocumentSection.ADMINISTRATIVE_MATERIAL: [
+                r'\b(cover\s+letter|dear\s+sir|dear\s+madam|yours\s+sincerely|regards|signature|date:|dated:)',
+                r'\b(page\s+\d+|page\s+of\s+\d+)',
+                r'\b(confidential|private|internal\s+use\s+only)',
+            ],
+            DocumentSection.CONTRACTUAL_TERMS: [
+                r'\b(contract|agreement|terms\s+and\s+conditions|clause|article|section)',
+                r'\b(party|parties|employer|employee|contractor)',
+                r'\b(hereby|whereas|now\s+therefore)',
+            ],
+            DocumentSection.JUDICIAL_REASONING: [
+                r'\b(court|judge|judgment|order|ruling|decision)',
+                r'\b(plaintiff|defendant|petitioner|respondent)',
+                r'\b(whereas\s+the\s+court|it\s+is\s+ordered|the\s+court\s+finds)',
+            ],
+            DocumentSection.STATUTORY_TEXT: [
+                r'\b(act|statute|regulation|law|legislation)',
+                r'\b(section\s+\d+|article\s+\d+|clause\s+\d+)',
+                r'\b(shall\s+be|must\s+comply|required\s+by\s+law)',
+            ],
+            DocumentSection.ANNEXURES_SCHEDULES: [
+                r'\b(annexure|annex|schedule|appendix|attachment)',
+                r'\b(schedule\s+[a-z]|annexure\s+\d+)',
+            ],
+        }
+        
+        # Operative sections that can produce clauses
+        self.operative_sections = {
+            DocumentSection.CONTRACTUAL_TERMS,
+            DocumentSection.JUDICIAL_REASONING,
+            DocumentSection.STATUTORY_TEXT
+        }
+        
+        # Contract body entry gate patterns (must match at least two on the same page)
+        self.contract_entry_patterns = [
+            r"\bemployment\s+agreement\b",
+            r"\b(first|1st)\s+party\b",
+            r"\b(second|2nd)\s+party\b",
+            r"\bthis\s+agreement\b",
+            r"\bthe\s+first\s+party\s+shall\b",
+            r"\bthe\s+second\s+party\s+shall\b",
+        ]
+        
+        # Administrative override markers (force administrative_material)
+        self.administrative_markers = [
+            r"\bministry\b",
+            r"\bminister\b",
+            r"\bcircular\b",
+            r"\bdear\s+sir\b",
+            r"\bsir\b",
+            r"\bemail\b",
+            r"\btelephone\b",
+            r"\bphone\b",
+            r"@\w+\.\w+",
+            r"\bno\.\s*\d+\b"
+        ]
+        
+        # Verb list for substantive clause detection
+        self.verb_markers = [
+            "shall", "may", "will", "must", "acknowledge", "agree", "agrees",
+            "undertake", "undertakes", "require", "requires", "provide", "provides",
+            "terminate", "terminates", "pay", "pays", "comply", "complies",
+            "entitled", "liable", "obligated", "obliges", "warrant", "warrants"
+        ]
+        
+        # Label/field keywords to reject as clauses
+        self.label_markers = [
+            "visa no", "visa number", "origin", "telephone", "phone", "email",
+            "nationality", "passport", "address", "date of birth", "employee no"
+        ]
     
     def extract_structured_clauses(
         self,
         file_path: str,
         document_id: str
-    ) -> List[StructuredClause]:
+    ) -> List[ExtractedClause]:
         """
-        Extract structured legal clauses from document.
+        Extract clauses using deterministic structure-first approach.
         
         Args:
             file_path: Path to document file
             document_id: Unique document identifier
             
         Returns:
-            List of StructuredClause objects
+            List of ExtractedClause objects
         """
         file_path = Path(file_path)
+        logger.info(f"Starting clause extraction for document_id={document_id}, file_path={file_path}")
         
-        # Step 1: Parse document pages
-        pages = self.ingestion_service.parser.parse_file(file_path)
-        if not pages:
+        # Step 1: Parse document pages and convert to List[Page]
+        try:
+            raw_pages = self.ingestion_service.parser.parse_file(file_path)
+        except Exception as parse_error:
+            logger.error(f"Error parsing file {file_path}: {str(parse_error)}", exc_info=True)
             return []
         
-        # Step 2: Extract raw clauses with OCR cleanup
-        raw_clauses = []
-        for page_data in pages:
+        if not raw_pages:
+            logger.warning(f"No pages extracted from {file_path}")
+            return []
+        
+        logger.info(f"Parsed {len(raw_pages)} pages from document")
+        
+        # Convert parser output to List[Page] with lines[]
+        # EXECUTION GUARANTEE: Validate page-level input, fail if invalid
+        pages: List[Page] = []
+        
+        for page_data in raw_pages:
             if len(page_data) == 3:
                 text, page_number, is_ocr = page_data
             else:
                 text, page_number = page_data
                 is_ocr = False
             
-            # Clean OCR text if needed
-            if is_ocr or self._needs_ocr_cleanup(text):
-                cleaned = self.ocr_cleanup.normalize_text(text)
-                raw_text = cleaned['raw_text']
-                clean_text = cleaned['clean_text']
-            else:
-                raw_text = text
-                clean_text = text
+            # FAIL-CLOSED: Reject invalid page numbers (must be 1-indexed, never 0)
+            if page_number is None or page_number <= 0:
+                logger.error(f"Invalid page_number detected: {page_number}. Must be 1-indexed. Fail-closed.")
+                return []
             
-            # Extract clauses from page
-            page_clauses = self._extract_clauses_from_page(
-                clean_text, raw_text, page_number, document_id
-            )
-            raw_clauses.extend(page_clauses)
+            # FAIL-CLOSED: Reject chunk-like input (check for embeddings/tokens indicators)
+            if text and ('embedding' in text.lower() or 'chunk' in text.lower() or 'token' in text.lower()):
+                # This might be chunk metadata, not page text - fail closed
+                logger.error("Input appears to be chunks/embeddings, not page-level text. Fail-closed.")
+                return []
+            
+            # Split text into lines (preserve verbatim line structure)
+            lines = text.split('\n') if text else []
+            
+            # Validate we have lines[] structure
+            if not isinstance(lines, list):
+                logger.error(f"Invalid input: lines is not a list. Fail-closed.")
+                return []
+            
+            pages.append(Page(
+                page_number=page_number,
+                lines=lines,
+                is_ocr=is_ocr
+            ))
+            logger.debug(f"Page {page_number}: {len(lines)} lines, is_ocr={is_ocr}, text_length={len(text)}")
         
-        # Step 3: Structure clauses with authority and taxonomy
-        structured_clauses = []
-        for raw_clause in raw_clauses:
-            structured = self._structure_clause(raw_clause, document_id)
-            if structured:
-                structured_clauses.append(structured)
+        # Step 2: Classify sections (one section per page, fail-closed per page)
+        page_sections = []
+        section_counts = {}
         
-        # Step 4: Merge evidence blocks for same clauses
-        merged_clauses = self._merge_clause_evidence(structured_clauses)
+        for page in pages:
+            # Use joined text for section classification (pattern matching)
+            text = page.get_text()
+            
+            try:
+                section = self._classify_page_section(text, page.page_number)
+            except Exception as section_error:
+                logger.error(f"Error classifying section for page {page.page_number}: {str(section_error)}", exc_info=True)
+                # Fail closed on classification error
+                return []
+            
+            page_sections.append({
+                'page': page,
+                'section': section
+            })
+            section_counts[section.value] = section_counts.get(section.value, 0) + 1
+            logger.debug(f"Page {page.page_number}: classified as section={section.value}")
         
-        # Step 5: Link bilingual clauses
-        linked_clauses = self._link_bilingual_clauses(merged_clauses)
+        logger.info(f"Section classification complete: {section_counts}")
         
-        # Step 6: Validate clauses
-        validated_clauses = []
-        for clause in linked_clauses:
-            validation = self.validator.validate_clause(clause)
-            if validation['valid']:
-                validated_clauses.append(clause)
-            else:
-                print(f"Warning: Clause {clause.clause_id} failed validation: {validation['errors']}")
-                # Still include invalid clauses but log warnings
-                validated_clauses.append(clause)
+        # Step 3: Check if any operative section exists (global fail-closed check)
+        has_operative_section = any(
+            page['section'] in self.operative_sections
+            for page in page_sections
+        )
         
-        return validated_clauses
+        if not has_operative_section:
+            # No operative sections detected - fail closed
+            logger.warning(f"No operative sections detected in document {document_id}. Fail-closed: returning empty clauses.")
+            return []
+        
+        logger.info("Operative sections detected. Proceeding with clause extraction.")
+        
+        # Step 4: Extract clauses from operative sections only
+        all_clauses = []
+        current_clause_buffer = None
+        current_section = None
+        current_page_start = None
+        contract_body_active = False
+        
+        for i, page_info in enumerate(page_sections):
+            section = page_info['section']
+            page = page_info['page']
+            page_number = page.page_number
+            lines = page.lines  # Use lines[] directly from Page object
+            
+            # Contract body entry gate (applies only to contractual_terms)
+            if section == DocumentSection.CONTRACTUAL_TERMS and not contract_body_active:
+                if self._meets_contract_entry_gate(lines):
+                    contract_body_active = True
+                    logger.info(f"Contract body entry gate crossed on page {page_number}.")
+                else:
+                    # Do not emit clauses or start buffers until gate is crossed
+                    if current_clause_buffer:
+                        current_clause_buffer = None
+                        current_section = None
+                        current_page_start = None
+                    continue
+            
+            # FAIL-CLOSED: Skip ambiguous pages BEFORE any clause operations
+            # Do not create clause buffers, do not emit clauses from ambiguous pages
+            if section == DocumentSection.AMBIGUOUS:
+                logger.debug(f"Page {page_number}: AMBIGUOUS section - skipping (fail-closed)")
+                # Terminate any clause that was spanning into this ambiguous page
+                if current_clause_buffer:
+                    logger.debug(f"Terminating clause buffer spanning into ambiguous page {page_number}")
+                    clause = self._finalize_clause(
+                        current_clause_buffer,
+                        current_section,
+                        current_page_start,
+                        page_number - 1,
+                        document_id
+                    )
+                    if clause:
+                        all_clauses.append(clause)
+                        logger.debug(f"Finalized clause from previous page: {clause.clause_id}")
+                    current_clause_buffer = None
+                    current_section = None
+                # Skip this page entirely - do not process for clause extraction
+                continue
+            
+            # Skip non-operative sections (but not ambiguous - already handled above)
+            if section not in self.operative_sections:
+                # Terminate any clause that was spanning into this non-operative section
+                if current_clause_buffer:
+                    clause = self._finalize_clause(
+                        current_clause_buffer,
+                        current_section,
+                        current_page_start,
+                        page_number - 1,
+                        document_id
+                    )
+                    if clause:
+                        all_clauses.append(clause)
+                    current_clause_buffer = None
+                    current_section = None
+                continue
+            
+            # Check if we need to terminate current clause due to section boundary change
+            if current_clause_buffer and current_section != section:
+                # Section changed (but both are operative) - finalize current clause
+                clause = self._finalize_clause(
+                    current_clause_buffer,
+                    current_section,
+                    current_page_start,
+                    page_number - 1,
+                    document_id
+                )
+                if clause:
+                    all_clauses.append(clause)
+                current_clause_buffer = None
+                current_section = None
+            
+            # Extract clause boundaries from this page's lines
+            clause_starts = self._detect_clause_starts(lines)
+            logger.debug(f"Page {page_number} ({section.value}): detected {len(clause_starts)} clause starts")
+            
+            # Process lines directly from Page object
+            for line_idx, line in enumerate(lines):
+                # Check if this line starts a new clause
+                is_clause_start = any(
+                    start['line'] == line_idx for start in clause_starts
+                )
+                
+                if is_clause_start:
+                    # Finalize previous clause if exists
+                    if current_clause_buffer:
+                        logger.debug(f"Finalizing previous clause before starting new one at page {page_number}, line {line_idx}")
+                        clause = self._finalize_clause(
+                            current_clause_buffer,
+                            current_section,
+                            current_page_start,
+                            page_number,
+                            document_id
+                        )
+                        if clause:
+                            all_clauses.append(clause)
+                            logger.debug(f"Finalized clause: {clause.clause_id} (pages {clause.page_start}-{clause.page_end})")
+                    
+                    # Start new clause
+                    clause_start_info = next(
+                        s for s in clause_starts if s['line'] == line_idx
+                    )
+                    logger.debug(f"Starting new clause at page {page_number}, line {line_idx}: heading='{clause_start_info['heading']}'")
+                    current_clause_buffer = {
+                        'heading': clause_start_info['heading'],
+                        'text_lines': [line],
+                        'start_line': line_idx
+                    }
+                    current_section = section
+                    current_page_start = page_number
+                elif current_clause_buffer:
+                    # Continue current clause (may span pages if section is same)
+                    current_clause_buffer['text_lines'].append(line)
+                elif not current_clause_buffer and section in self.operative_sections:
+                    # No current clause but we're in an operative section
+                    # This might be continuation text - check if next page continues
+                    # For now, we'll only start clauses on explicit starts
+                    pass
+            
+            # Check if we're at document end or section boundary
+            is_last_page = (i == len(page_sections) - 1)
+            next_section = page_sections[i + 1]['section'] if not is_last_page else None
+            
+            if is_last_page or (next_section and next_section != section):
+                # Finalize current clause at end of section
+                if current_clause_buffer:
+                    logger.debug(f"Finalizing clause at end of section (page {page_number}, is_last={is_last_page})")
+                    clause = self._finalize_clause(
+                        current_clause_buffer,
+                        current_section,
+                        current_page_start,
+                        page_number,
+                        document_id
+                    )
+                    if clause:
+                        all_clauses.append(clause)
+                        logger.debug(f"Finalized clause: {clause.clause_id} (pages {clause.page_start}-{clause.page_end})")
+                    current_clause_buffer = None
+                    current_section = None
+        
+        # Step 5: Deduplicate clauses (exact match on verbatim_text, same section)
+        logger.info(f"Before deduplication: {len(all_clauses)} clauses")
+        deduplicated = self._deduplicate_clauses(all_clauses)
+        logger.info(f"After deduplication: {len(deduplicated)} clauses")
+        
+        # Step 6: Sort by page_start, section order, appearance
+        section_order = {
+            DocumentSection.CONTRACTUAL_TERMS.value: 0,
+            DocumentSection.JUDICIAL_REASONING.value: 1,
+            DocumentSection.STATUTORY_TEXT.value: 2,
+        }
+        deduplicated.sort(key=lambda c: (
+            c.page_start,
+            section_order.get(c.document_section, 999),
+            c.clause_heading
+        ))
+        
+        logger.info(f"Clause extraction complete for {document_id}: {len(deduplicated)} clauses extracted")
+        return deduplicated
     
-    def _needs_ocr_cleanup(self, text: str) -> bool:
-        """Check if text needs OCR cleanup."""
-        # Check for common OCR error patterns
-        ocr_indicators = [
-            'shali', 'const.tule', 'agreemeni', 'authort.es',
-            'Nolce', 'terminateg', 'jne', 'Dy a'
-        ]
-        return any(indicator in text.lower() for indicator in ocr_indicators)
-    
-    def _extract_clauses_from_page(
-        self,
-        clean_text: str,
-        raw_text: str,
-        page_number: int,
-        document_id: str
-    ) -> List[Dict[str, Any]]:
+    def _classify_page_section(self, text: str, page_number: int) -> DocumentSection:
         """
-        Extract clauses from a page using LLM.
+        Classify a page into exactly one section.
+        Returns AMBIGUOUS if classification is uncertain.
+        """
+        text_lower = text.lower()
+        section_scores = {}
+        
+        # Administrative override: force administrative_material
+        if self._is_administrative_page(text_lower):
+            logger.debug(f"Page {page_number}: Administrative override matched -> ADMINISTRATIVE_MATERIAL")
+            return DocumentSection.ADMINISTRATIVE_MATERIAL
+        
+        # Score each section based on pattern matches
+        for section, patterns in self.section_patterns.items():
+            score = 0
+            for pattern in patterns:
+                matches = len(re.findall(pattern, text_lower, re.IGNORECASE))
+                score += matches
+            section_scores[section] = score
+        
+        # Find highest scoring section
+        if not section_scores or max(section_scores.values()) == 0:
+            # No patterns matched - check if page is too fragmented
+            if len(text.strip()) < 50:  # Very short page
+                logger.debug(f"Page {page_number}: No patterns matched, very short page -> ADMINISTRATIVE_MATERIAL")
+                return DocumentSection.ADMINISTRATIVE_MATERIAL
+            # Default to ambiguous if we can't classify
+            logger.debug(f"Page {page_number}: No patterns matched -> AMBIGUOUS")
+            return DocumentSection.AMBIGUOUS
+        
+        max_score = max(section_scores.values())
+        top_sections = [s for s, score in section_scores.items() if score == max_score]
+        
+        # If multiple sections tie, mark as ambiguous
+        if len(top_sections) > 1:
+            logger.debug(f"Page {page_number}: Multiple sections tied (score={max_score}): {[s.value for s in top_sections]} -> AMBIGUOUS")
+            return DocumentSection.AMBIGUOUS
+        
+        result = top_sections[0] if top_sections else DocumentSection.AMBIGUOUS
+        
+        # Tighten contractual_terms: require party definitions OR sustained modal language
+        if result == DocumentSection.CONTRACTUAL_TERMS:
+            if not self._has_party_definitions(text_lower) and not self._has_sustained_modal_language(text):
+                logger.debug(f"Page {page_number}: contractual_terms missing party definitions/modal language -> AMBIGUOUS")
+                return DocumentSection.AMBIGUOUS
+        
+        logger.debug(f"Page {page_number}: Classified as {result.value} (score={max_score})")
+        return result
+    
+    def _detect_clause_starts(self, lines: List[str]) -> List[Dict[str, Any]]:
+        """
+        Detect clause start positions with explicit priority order.
         
         Args:
-            clean_text: Normalized text
-            raw_text: Original OCR text
-            page_number: Page number
-            document_id: Document ID
+            lines: List of lines from Page.lines[]
             
         Returns:
-            List of raw clause dictionaries
+            List of dicts with 'line' and 'heading' keys.
         """
-        prompt = self._build_extraction_prompt(clean_text)
+        clause_starts = []
         
-        try:
-            # Limit response length and add timeout handling
-            response = self.ollama_client.generate(
-                model=settings.OLLAMA_MODEL,
-                prompt=prompt,
-                options={
-                    'temperature': 0.1,
-                    'format': 'json',
-                    'num_predict': 2000  # Limit response length to avoid very long responses
-                }
-            )
+        for line_idx, line in enumerate(lines):
+            line_stripped = line.strip()
+            if not line_stripped:
+                continue
             
-            response_text = response.get('response', '') if isinstance(response, dict) else str(response)
-            clauses = self._parse_clause_response(response_text, raw_text, clean_text, page_number)
+            heading = None
+            priority = None
             
-            return clauses
-        except Exception as e:
-            print(f"Error extracting clauses from page {page_number}: {str(e)}")
-            return []
-    
-    def _build_extraction_prompt(self, text: str) -> str:
-        """Build prompt for clause extraction."""
-        return f"""You are a legal clause extraction system. Extract legal clauses from the following text.
-
-IMPORTANT RULES:
-- Extract complete legal clauses, not text fragments
-- One clause may span multiple sentences
-- Clauses are defined by legal intent, not formatting
-- Return ONLY clauses found in the text
-- Do NOT create or fabricate clauses
-
-Return your response as a JSON array of objects with this exact format:
-[
-  {{
-    "title": "Clause title or heading",
-    "text": "Complete clause text verbatim",
-    "start_index": 0
-  }},
-  {{
-    "title": "Another clause",
-    "text": "Complete clause text",
-    "start_index": 150
-  }}
-]
-
-Document text:
-{text}
-
-JSON response:"""
-    
-    def _parse_clause_response(
-        self,
-        response_text: str,
-        raw_text: str,
-        clean_text: str,
-        page_number: int
-    ) -> List[Dict[str, Any]]:
-        """Parse LLM response and extract clause information."""
-        clauses = []
-        
-        # Extract JSON from response
-        json_text = self._extract_json_from_response(response_text)
-        if not json_text:
-            return clauses
-        
-        try:
-            # Try to parse JSON - handle both string and actual JSON
-            if isinstance(json_text, str):
-                parsed_clauses = json.loads(json_text)
-            else:
-                parsed_clauses = json_text  # Already parsed
+            # Priority 1: Explicit numbering (^\\d+\\.)
+            match = re.match(r'^(\d+)\.\s*(.+)', line_stripped)
+            if match:
+                heading = match.group(2).strip()
+                priority = 1
             
-            if isinstance(parsed_clauses, list):
-                for clause in parsed_clauses:
-                    if isinstance(clause, dict) and 'text' in clause:
-                        # Find paragraph and line information
-                        clause_text = clause['text']
-                        start_index = clause.get('start_index', 0)
-                        
-                        # Find paragraph number
-                        paragraph = self._find_paragraph_number(clean_text, start_index)
-                        
-                        # Find line range
-                        line_start, line_end = self._find_line_range(clean_text, start_index, len(clause_text))
-                        
-                        clauses.append({
-                            'title': clause.get('title', 'Untitled Clause'),
-                            'text': clause_text,
-                            'raw_text': raw_text[start_index:start_index + len(clause_text)] if start_index < len(raw_text) else clause_text,
-                            'page_number': page_number,
-                            'paragraph': paragraph,
-                            'line_start': line_start,
-                            'line_end': line_end,
-                            'start_index': start_index
-                        })
-        except json.JSONDecodeError as e:
-            print(f"Failed to parse JSON response: {str(e)}")
-            print(f"JSON text (first 500 chars): {json_text[:500]}")
-            # Try to extract clauses manually using regex as fallback
-            try:
-                clauses = self._fallback_extract_clauses(json_text, clean_text, raw_text, page_number)
-                if clauses:
-                    print(f"Fallback extraction succeeded: found {len(clauses)} clauses")
-            except Exception as fallback_error:
-                print(f"Fallback extraction also failed: {str(fallback_error)}")
-        
-        return clauses
-    
-    def _find_paragraph_number(self, text: str, start_index: int) -> Optional[int]:
-        """Find paragraph number for given index."""
-        # Count paragraphs before start_index
-        text_before = text[:start_index]
-        paragraphs = text_before.split('\n\n')
-        return len(paragraphs) if paragraphs else None
-    
-    def _find_line_range(self, text: str, start_index: int, length: int) -> Tuple[Optional[int], Optional[int]]:
-        """Find line range for clause."""
-        text_before = text[:start_index]
-        text_clause = text[start_index:start_index + length]
-        
-        line_start = text_before.count('\n') + 1
-        line_end = line_start + text_clause.count('\n')
-        
-        return (line_start, line_end)
-    
-    def _extract_json_from_response(self, response_text: str) -> Optional[str]:
-        """Extract JSON from LLM response with robust error handling."""
-        import re
-        
-        # Remove markdown code blocks
-        if '```json' in response_text:
-            start = response_text.find('```json') + 7
-            end = response_text.find('```', start)
-            if end != -1:
-                json_text = response_text[start:end].strip()
-            else:
-                json_text = response_text[start:].strip()
-        elif '```' in response_text:
-            start = response_text.find('```') + 3
-            end = response_text.find('```', start)
-            if end != -1:
-                json_text = response_text[start:end].strip()
-            else:
-                json_text = response_text[start:].strip()
-        else:
-            json_text = response_text.strip()
-        
-        # Try to find JSON array
-        if not json_text.startswith('['):
-            start_brace = json_text.find('[')
-            if start_brace != -1:
-                end_brace = json_text.rfind(']')
-                if end_brace != -1 and end_brace > start_brace:
-                    json_text = json_text[start_brace:end_brace + 1]
-        
-        # Handle literal \n characters (backslash-n) - convert to actual newlines
-        # But preserve escaped \n inside string values
-        # Check if we have literal \n (not actual newlines) in the structure
-        if '\\n' in json_text:
-            # Try to decode if it's a Python string representation
-            try:
-                import ast
-                # If it looks like a string representation, try to decode it
-                if json_text.startswith('"') or json_text.startswith("'"):
-                    decoded = ast.literal_eval(json_text)
-                    if isinstance(decoded, str):
-                        json_text = decoded
-                else:
-                    # It might be a raw string with literal \n - convert them carefully
-                    # Only convert \n that's outside of string values
-                    # Simple approach: replace literal \n with actual newline, but be careful with escaped ones in strings
-                    # We'll use a state machine to track if we're inside a string
-                    result = []
-                    in_string = False
-                    escape_next = False
-                    i = 0
-                    while i < len(json_text):
-                        char = json_text[i]
-                        if escape_next:
-                            if char == 'n':
-                                if in_string:
-                                    # Keep escaped \n inside string values
-                                    result.append('\\n')
-                                else:
-                                    # Convert literal \n to actual newline outside strings
-                                    result.append('\n')
-                            else:
-                                result.append('\\' + char)
-                            escape_next = False
-                        elif char == '\\':
-                            escape_next = True
-                            # Don't append yet, wait to see if it's \n
-                        elif char == '"':
-                            # Toggle string state
-                            if i > 0 and json_text[i-1] == '\\' and not escape_next:
-                                # This quote is escaped, don't toggle
-                                result.append(char)
-                            else:
-                                in_string = not in_string
-                                result.append(char)
-                        else:
-                            if escape_next:
-                                # We had a backslash but it wasn't \n, add it
-                                result.append('\\')
-                                escape_next = False
-                            result.append(char)
-                        i += 1
-                    # Handle trailing backslash
-                    if escape_next:
-                        result.append('\\')
-                    json_text = ''.join(result)
-            except Exception as e:
-                # If decoding fails, try simple replacement for structure newlines only
-                # Replace \n that appears after [ or { or , and before " (indicating structure)
-                json_text = re.sub(r'([\[{,\s])\\n(\s*[{"])', r'\1\n\2', json_text)
-                json_text = re.sub(r'([}\]\s])\\n(\s*[}\]])', r'\1\n\2', json_text)
-                # Last resort: if we still have literal \n and no actual newlines, replace all
-                if '\\n' in json_text and '\n' not in json_text[:200]:
-                    # This is risky but better than failing - replace all literal \n
-                    json_text = json_text.replace('\\n', '\n')
-        
-        # Clean up common JSON issues more carefully
-        # First, try to fix single quotes to double quotes (but be careful with apostrophes)
-        # Only replace single quotes that are clearly string delimiters (not inside words)
-        json_text = re.sub(r"'([^']*)':", r'"\1":', json_text)  # Fix keys with single quotes
-        json_text = re.sub(r":\s*'([^']*)'", r': "\1"', json_text)  # Fix string values with single quotes
-        
-        # Fix unquoted property names (but not if already quoted or if it's a number/boolean)
-        # Match property names at the start of object or after comma
-        json_text = re.sub(r'([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:', r'\1"\2":', json_text)
-        
-        # Remove trailing commas before closing brackets/braces
-        json_text = re.sub(r',\s*([}\]])', r'\1', json_text)
-        
-        # Fix escaped quotes inside strings - handle cases like: "text": ""quoted text""
-        # Replace double quotes at start/end of string values with escaped quotes
-        json_text = re.sub(r':\s*""([^"]+)""', r': "\1"', json_text)  # Fix double-double quotes
-        json_text = re.sub(r':\s*"([^"]*)"([^,}\]]*)"', lambda m: f': "{m.group(1)}{m.group(2)}"', json_text)
-        
-        # Remove illegal ASCII control characters, but KEEP JSON-whitespace controls:
-        # - \t (0x09), \n (0x0a), \r (0x0d) are valid whitespace in JSON outside strings.
-        # Escaping them globally into literal "\n" sequences breaks JSON parsing (e.g. "[\n{...").
-        json_text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', json_text)
-
-        # Remove common invisible Unicode format characters that sometimes appear in LLM output
-        # (BOM, zero-width spaces, directional marks). These can break json.loads.
-        json_text = re.sub(r'[\ufeff\u200b\u200c\u200d\u2060\u200e\u200f\u202a-\u202e]', '', json_text)
-        
-        return json_text
-    
-    def _fallback_extract_clauses(
-        self,
-        json_text: str,
-        clean_text: str,
-        raw_text: str,
-        page_number: int
-    ) -> List[Dict[str, Any]]:
-        """Fallback method to extract clauses using regex when JSON parsing fails."""
-        clauses = []
-        
-        # Try to find clause-like patterns in the text
-        # Look for patterns like: "title": "...", "text": "..." or 'title': '...', 'text': '...'
-        # Handle both double and single quotes
-        patterns = [
-            r'"title"\s*:\s*"([^"]+)"\s*,\s*"text"\s*:\s*"([^"]+)"',
-            r"'title'\s*:\s*'([^']+)'\s*,\s*'text'\s*:\s*'([^']+)'",
-            r'title["\']\s*:\s*["\']([^"\']+)["\']\s*,\s*text["\']\s*:\s*["\']([^"\']+)["\']'
-        ]
-        
-        for pattern in patterns:
-            matches = re.finditer(pattern, json_text, re.DOTALL)
-            for match in matches:
-                title = match.group(1)
-                text = match.group(2)
-                
-                # Clean up escaped characters
-                title = title.replace('\\n', '\n').replace('\\t', '\t').replace('\\"', '"').replace("\\'", "'")
-                text = text.replace('\\n', '\n').replace('\\t', '\t').replace('\\"', '"').replace("\\'", "'")
-                
-                # Find start index in clean text
-                # Try to find a unique substring from the text
-                search_text = text[:100] if len(text) > 100 else text
-                start_index = clean_text.find(search_text)
-                if start_index == -1:
-                    start_index = 0
-                
-                paragraph = self._find_paragraph_number(clean_text, start_index)
-                line_start, line_end = self._find_line_range(clean_text, start_index, len(text))
-                
-                clauses.append({
-                    'title': title,
-                    'text': text,
-                    'raw_text': raw_text[start_index:start_index + len(text)] if start_index < len(raw_text) else text,
-                    'page_number': page_number,
-                    'paragraph': paragraph,
-                    'line_start': line_start,
-                    'line_end': line_end,
-                    'start_index': start_index
+            # Priority 2: Explicit numbering with parenthesis (^\\d+\\))
+            if not heading:
+                match = re.match(r'^(\d+)\)\s*(.+)', line_stripped)
+                if match:
+                    heading = match.group(2).strip()
+                    priority = 2
+            
+            # Priority 3: Roman numerals (^I+\\.)
+            if not heading:
+                match = re.match(r'^(I{1,4}|IV|IX|V|VI{0,3}|X{1,3})\.\s*(.+)', line_stripped, re.IGNORECASE)
+                if match:
+                    heading = match.group(2).strip()
+                    priority = 3
+            
+            # Priority 4: Arabic numerals (^[٠-٩]+)
+            if not heading:
+                match = re.match(r'^([٠-٩]+)[\.\)]\s*(.+)', line_stripped)
+                if match:
+                    heading = match.group(2).strip()
+                    priority = 4
+            
+            # Priority 5: ALL CAPS headings
+            if not heading and line_stripped.isupper() and len(line_stripped) > 5:
+                heading = line_stripped
+                priority = 5
+            
+            # Priority 6: Title Case headings (isolated by line breaks)
+            if not heading:
+                # Check if line is Title Case and isolated
+                if (line_idx == 0 or not lines[line_idx - 1].strip()) and \
+                   (line_idx == len(lines) - 1 or not lines[line_idx + 1].strip()):
+                    words = line_stripped.split()
+                    if words and all(w[0].isupper() for w in words if w):
+                        heading = line_stripped
+                        priority = 6
+            
+            # Priority 7: Indentation heuristics (lowest priority)
+            if not heading:
+                # Check for significant indentation (at least 4 spaces or tab)
+                if line.startswith('    ') or line.startswith('\t'):
+                    # Check if previous line was less indented
+                    if line_idx > 0:
+                        prev_line = lines[line_idx - 1]
+                        if not prev_line.startswith('    ') and not prev_line.startswith('\t'):
+                            heading = line_stripped
+                            priority = 7
+            
+            if heading:
+                clause_starts.append({
+                    'line': line_idx,
+                    'heading': heading,
+                    'priority': priority
                 })
         
-        return clauses
+        # Sort by line number (maintain document order)
+        clause_starts.sort(key=lambda x: x['line'])
+        
+        # Remove lower-priority starts that conflict with higher-priority ones
+        filtered_starts = []
+        for start in clause_starts:
+            # Check if there's a higher-priority start nearby (within 3 lines)
+            conflict = False
+            for other in clause_starts:
+                if other['priority'] < start['priority'] and \
+                   abs(other['line'] - start['line']) <= 3:
+                    conflict = True
+                    break
+            if not conflict:
+                filtered_starts.append(start)
+        
+        return filtered_starts
+
+    def _meets_contract_entry_gate(self, lines: List[str]) -> bool:
+        """Return True if at least two contract entry patterns are present on the page."""
+        text_lower = "\n".join(lines).lower()
+        hits = 0
+        for pattern in self.contract_entry_patterns:
+            if re.search(pattern, text_lower, re.IGNORECASE):
+                hits += 1
+        return hits >= 2
+
+    def _is_administrative_page(self, text_lower: str) -> bool:
+        """Detect administrative material overrides (force administrative_material)."""
+        return any(re.search(pattern, text_lower, re.IGNORECASE) for pattern in self.administrative_markers)
+
+    def _has_party_definitions(self, text_lower: str) -> bool:
+        """Detect party definitions in a page."""
+        return ("first party" in text_lower and "second party" in text_lower)
+
+    def _has_sustained_modal_language(self, text: str) -> bool:
+        """Require sustained 'shall/may/will' across multiple lines."""
+        lines = [line.strip().lower() for line in text.split("\n") if line.strip()]
+        modal_lines = 0
+        for line in lines:
+            if any(modal in line for modal in ["shall", "may", "will"]):
+                modal_lines += 1
+        return modal_lines >= self.MIN_VERB_LINES_FOR_CONTRACT
+
+    def _is_all_caps(self, text: str) -> bool:
+        """Return True if text is all caps (ignoring non-alpha)."""
+        letters = [c for c in text if c.isalpha()]
+        return bool(letters) and all(c.isupper() for c in letters)
+
+    def _is_label_or_field(self, lines: List[str]) -> bool:
+        """Detect labels/field names (e.g., 'Visa No', 'Origin', 'Telephone No')."""
+        if not lines:
+            return True
+        first_line = lines[0].strip().lower()
+        if any(marker in first_line for marker in self.label_markers):
+            return True
+        # Label patterns: short noun phrase, optional colon, no verbs
+        if len(first_line.split()) <= 5 and re.match(r"^[A-Za-z][A-Za-z\s\-/]*:?$", first_line, re.IGNORECASE):
+            if not self._contains_verb(first_line):
+                return True
+        return False
+
+    def _contains_verb(self, text: str) -> bool:
+        """Check for at least one verb marker in text (tolerant to OCR noise)."""
+        lower = text.lower()
+        # Standard verb markers
+        if any(re.search(rf"\\b{verb}\\b", lower) for verb in self.verb_markers):
+            return True
+        # OCR-tolerant patterns for 'shall'/'may'/'will'
+        if re.search(r"\\bsh[a1]ll\\b", lower):
+            return True
+        if re.search(r"\\bma[yv]\\b", lower):
+            return True
+        if re.search(r"\\bwi[l1]{2}\\b", lower):
+            return True
+        return False
+
+    def _is_substantive_clause(self, verbatim_text: str, lines: List[str]) -> bool:
+        """Check substantive clause rules."""
+        if self._is_all_caps(verbatim_text):
+            return False
+        if self._is_label_or_field(lines):
+            return False
+        if not self._contains_verb(verbatim_text):
+            return False
+        # Reject very short noun-phrase-only buffers
+        non_empty_lines = [line.strip() for line in lines if line.strip()]
+        if len(non_empty_lines) <= 2 and sum(len(l.split()) for l in non_empty_lines) <= 8:
+            return False
+        return True
     
-    def _structure_clause(
+    def _finalize_clause(
         self,
-        raw_clause: Dict[str, Any],
+        clause_buffer: Dict[str, Any],
+        section: DocumentSection,
+        page_start: int,
+        page_end: int,
         document_id: str
-    ) -> Optional[StructuredClause]:
+    ) -> Optional[ExtractedClause]:
         """
-        Structure a raw clause with authority, taxonomy, and evidence.
+        Finalize a clause from buffer and create ExtractedClause object.
         
-        Args:
-            raw_clause: Raw clause dictionary
-            document_id: Document ID
-            
-        Returns:
-            StructuredClause or None if invalid
+        Hard Condition: Do not emit a clause unless:
+        A. A valid clause start was detected (enforced by clause_buffer creation)
+        B. At least MIN_CLAUSE_LENGTH characters of verbatim text exist
+        
+        Returns None if conditions are not met.
         """
-        clause_text = raw_clause['text']
+        if not clause_buffer or not clause_buffer['text_lines']:
+            return None
         
-        # Step 1: Classify clause type
-        clause_type = self.taxonomy_service.classify_clause_type(clause_text)
+        # Join text lines (preserve verbatim formatting)
+        verbatim_text = '\n'.join(clause_buffer['text_lines']).strip()
         
-        # Step 2: Classify authority level
-        jurisdiction = self.authority_classifier.extract_jurisdiction(clause_text)
-        # Get clause type value (handle both enum and string)
-        clause_type_str = clause_type.value if hasattr(clause_type, 'value') else str(clause_type)
-        authority_level = self.authority_classifier.classify_authority(
-            clause_text, clause_type_str, jurisdiction
-        )
+        # FAIL-CLOSED: Drop empty clauses
+        if verbatim_text == "":
+            logger.debug(f"Empty clause detected - discarding (fail-closed)")
+            return None
         
-        # Step 3: Determine override capability
-        override_info = self.authority_classifier.determine_override_capability(
-            authority_level, clause_text
-        )
+        # Hard condition B: Minimum character count
+        if len(verbatim_text) < self.MIN_CLAUSE_LENGTH:
+            logger.debug(f"Clause too short ({len(verbatim_text)} chars < {self.MIN_CLAUSE_LENGTH}) - discarding (fail-closed)")
+            return None
         
-        # Step 4: Classify termination subtype if applicable
-        subtype = None
-        # Compare enum values properly - handle both enum and string
-        clause_type_enum = clause_type if isinstance(clause_type, ClauseType) else ClauseType(clause_type) if isinstance(clause_type, str) else clause_type
-        if clause_type_enum == ClauseType.TERMINATION:
-            subtype_obj = self.taxonomy_service.classify_termination_subtype(clause_text)
-            if subtype_obj:
-                subtype = subtype_obj.value if hasattr(subtype_obj, 'value') else str(subtype_obj)
+        # Clause heading may be absent; keep as None in output
+        heading = clause_buffer.get('heading')
+        if heading:
+            heading = heading.strip()
         
-        # Step 5: Separate payment categories
-        payment_info = self.taxonomy_service.separate_payment_categories(clause_text)
+        # Heading-only rule: heading cannot be a clause by itself
+        if heading:
+            body_lines = clause_buffer['text_lines'][1:]
+            has_body = any(line.strip() for line in body_lines)
+            if not has_body:
+                logger.debug("Heading-only buffer detected - discarding clause (fail-closed)")
+                return None
         
-        # Step 6: Detect language
-        language = self.ocr_cleanup._detect_language(clause_text)
+        # Substantive text gating: must contain verb and not be label/ALL CAPS
+        if not self._is_substantive_clause(verbatim_text, clause_buffer['text_lines']):
+            logger.debug("Non-substantive clause text detected - discarding clause (fail-closed)")
+            return None
         
-        # Step 7: Generate clause ID
+        # Generate deterministic clause_id (heading may be empty string, will be null in output)
         clause_id = self._generate_clause_id(
-            clause_type, raw_clause['page_number'], document_id
+            document_id,
+            section.value,
+            heading or "",  # Use empty string for hash, but output will be null
+            verbatim_text
         )
         
-        # Step 8: Create evidence block
-        evidence = EvidenceBlock(
-            page=raw_clause['page_number'],
-            paragraph=raw_clause.get('paragraph'),
-            line_start=raw_clause.get('line_start'),
-            line_end=raw_clause.get('line_end'),
-            raw_text=raw_clause.get('raw_text', clause_text),
-            clean_text=clause_text
-        )
+        # Normalization disabled - preserve verbatim text exactly
+        normalized_text = self._normalize_text(verbatim_text)
         
-        # Step 9: Create structured clause
-        structured_clause = StructuredClause(
+        return ExtractedClause(
             clause_id=clause_id,
-            title=raw_clause.get('title', 'Untitled Clause'),
-            type=clause_type,
-            subtype=subtype,
-            authority_level=authority_level,
-            jurisdiction=jurisdiction,
-            can_override_contract=override_info['can_override_contract'],
-            overrides=override_info['overrides'],
-            evidence=[evidence],
-            explicitly_provided=payment_info.get('explicitly_provided', True),
-            language=language,
-            metadata={
-                'is_salary': payment_info.get('is_salary', False),
-                'is_allowance': payment_info.get('is_allowance', False),
-                'is_employer_cost': payment_info.get('is_employer_cost', False)
-            }
+            document_section=section.value,
+            page_start=page_start,
+            page_end=page_end,
+            clause_heading=heading,
+            verbatim_text=verbatim_text,
+            normalized_text=normalized_text
         )
-        
-        return structured_clause
     
     def _generate_clause_id(
         self,
-        clause_type: ClauseType,
-        page_number: int,
-        document_id: str
+        document_id: str,
+        document_section: str,
+        clause_heading: str,
+        verbatim_text: str
     ) -> str:
-        """Generate unique clause ID."""
-        # Handle both enum and string
-        if hasattr(clause_type, 'value'):
-            type_slug = clause_type.value.replace('_', '-')
-        else:
-            type_slug = str(clause_type).replace('_', '-')
-        return f"{type_slug}_{document_id[:8]}_p{page_number}_{uuid.uuid4().hex[:6]}"
+        """
+        Generate deterministic clause_id using SHA-256 hash.
+        Hash includes: document_id + document_section + clause_heading + verbatim_text
+        """
+        # Create hash input (no derived fields like page_end or index)
+        hash_input = f"{document_id}|{document_section}|{clause_heading}|{verbatim_text}"
+        hash_obj = hashlib.sha256(hash_input.encode('utf-8'))
+        hash_hex = hash_obj.hexdigest()[:16]  # Use first 16 chars for readability
+        
+        # Create readable ID
+        section_slug = document_section.replace('_', '-')[:10]
+        heading_slug = re.sub(r'[^a-zA-Z0-9]', '', clause_heading)[:20]
+        
+        return f"{section_slug}_{heading_slug}_{hash_hex}"
     
-    def _merge_clause_evidence(
+    def _normalize_text(self, verbatim_text: str) -> Optional[str]:
+        """
+        Generate normalized text (optional, for downstream use only).
+        
+        ABSOLUTE PROHIBITION: Must NOT modify verbatim text.
+        Forbidden: spell correction, hyphen joining, word reconstruction, whitespace cleanup.
+        
+        Returns None (normalization disabled to preserve verbatim text exactly).
+        """
+        # STRICT RULE: Do not normalize OCR text - preserve verbatim exactly
+        # All normalization is FORBIDDEN per specification:
+        # - Hyphen joining: FORBIDDEN
+        # - Whitespace cleanup: FORBIDDEN  
+        # - Spell correction: FORBIDDEN
+        # - Word reconstruction: FORBIDDEN
+        
+        # Return None to omit normalized_text field
+        # Downstream systems should use verbatim_text only
+        return None
+    
+    def _deduplicate_clauses(
         self,
-        clauses: List[StructuredClause]
-    ) -> List[StructuredClause]:
+        clauses: List[ExtractedClause]
+    ) -> List[ExtractedClause]:
         """
-        Merge evidence blocks for clauses that appear multiple times.
-        Multiple evidences may belong to one clause.
+        Deduplicate clauses using exact match on verbatim_text.
+        Only deduplicates within same document and same section.
         """
-        # Group clauses by semantic similarity (same title and similar text)
-        clause_groups = {}
+        seen = {}  # (section, verbatim_text) -> clause
+        unique_clauses = []
+        duplicates_count = 0
         
         for clause in clauses:
-            # Create key from title and first 50 chars of text
-            clean_text = clause.evidence[0].clean_text if clause.evidence else ""
-            key = f"{clause.title}_{clean_text[:50]}"
+            key = (clause.document_section, clause.verbatim_text)
             
-            if key not in clause_groups:
-                clause_groups[key] = []
-            clause_groups[key].append(clause)
-        
-        # Merge evidence blocks
-        merged_clauses = []
-        for key, group in clause_groups.items():
-            if len(group) == 1:
-                merged_clauses.append(group[0])
+            if key not in seen:
+                seen[key] = clause
+                unique_clauses.append(clause)
             else:
-                # Merge: take first clause, combine all evidence
-                primary = group[0]
-                all_evidence = []
-                for clause in group:
-                    all_evidence.extend(clause.evidence)
-                
-                # Update primary clause with all evidence
-                primary.evidence = all_evidence
-                merged_clauses.append(primary)
+                duplicates_count += 1
+                logger.debug(f"Duplicate clause detected: {clause.clause_id} (same as {seen[key].clause_id})")
         
-        return merged_clauses
-    
-    def _link_bilingual_clauses(
-        self,
-        clauses: List[StructuredClause]
-    ) -> List[StructuredClause]:
-        """
-        Link Arabic and English versions of the same clause.
-        """
-        # Separate by language
-        arabic_clauses = [c for c in clauses if c.language == 'ar']
-        english_clauses = [c for c in clauses if c.language == 'en']
+        if duplicates_count > 0:
+            logger.info(f"Removed {duplicates_count} duplicate clauses")
         
-        # Try to match clauses by type and similar content
-        for ar_clause in arabic_clauses:
-            for en_clause in english_clauses:
-                if (ar_clause.type == en_clause.type and
-                    ar_clause.authority_level == en_clause.authority_level):
-                    # Link them
-                    ar_clause.linked_clause_id = en_clause.clause_id
-                    en_clause.linked_clause_id = ar_clause.clause_id
-                    
-                    # Check for consistency (simplified - would need translation in production)
-                    # For now, mark for review if types match but content differs significantly
-                    if len(ar_clause.evidence[0].clean_text) != len(en_clause.evidence[0].clean_text):
-                        ar_clause.consistency_flag = "review_required"
-                        en_clause.consistency_flag = "review_required"
-        
-        return clauses
-
+        return unique_clauses

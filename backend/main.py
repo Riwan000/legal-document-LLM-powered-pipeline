@@ -103,8 +103,14 @@ async def startup_event():
     clause_validator = ClauseValidator()
     print("Clause validator initialized")
     
-    # Initialize RAG service (with clause store)
-    rag_service = RAGService(embedding_service, vector_store, clause_store)
+    # Initialize translation service (before RAG service, as RAG may need it)
+    translation_service = TranslationService(None)  # Will be set after RAG is created
+    
+    # Initialize RAG service (with clause store and translation service)
+    rag_service = RAGService(embedding_service, vector_store, clause_store, translation_service)
+    
+    # Update translation service with RAG service reference
+    translation_service.rag_service = rag_service
     
     # Initialize clause extractor
     clause_extractor = ClauseExtractionService()
@@ -114,9 +120,6 @@ async def startup_event():
     
     # Initialize summarization service
     summarization_service = SummarizationService(rag_service)
-    
-    # Initialize translation service
-    translation_service = TranslationService(rag_service)
     
     print("All services initialized successfully!")
 
@@ -145,42 +148,69 @@ async def shutdown_event():
             print(f"Error saving vector store: {e}")
 
 
+@app.get("/api/extract-clauses")
+async def extract_clauses_help():
+    """
+    Helper endpoint for browsers/tools that accidentally GET this path.
+    The actual clause extraction endpoint is POST /api/extract-clauses.
+    """
+    return {
+        "message": "Use POST /api/extract-clauses with form-data: document_id (required), file_path (optional), use_structured (optional), validate (optional)."
+    }
+
+
 @app.post("/api/extract-clauses")
 async def extract_clauses(
     document_id: str = Form(...),
     file_path: Optional[str] = Form(None),
     use_structured: bool = Form(True),
-    validate: bool = Form(True)
+    include_telemetry: bool = Form(False)
 ):
     """
-    Extract structured clauses from a contract and store them.
+    Extract clauses from a document using deterministic structure-first extraction.
     
     Args:
         document_id: Document ID
         file_path: Optional file path (if not provided, searches in documents directory)
-        use_structured: Use structured extraction engine (default: True)
-        validate: Validate clauses before storing (default: True)
+        use_structured: Use deterministic structured extraction (default: True, always used)
+        include_telemetry: Include extraction telemetry in response (default: False)
         
     Returns:
-        Dict with extracted clauses, validation results, and storage status
+        Extraction-only schema:
+        {
+            "schema_version": "1.0",
+            "document_id": "...",
+            "extraction_mode": "structure_first_verbatim",
+            "clauses": [...],
+            "telemetry": {...}  # Optional, if include_telemetry=True
+        }
     """
-    global clause_extractor, clause_store, clause_validator
+    global clause_extractor
     
     if not clause_extractor:
         raise HTTPException(status_code=500, detail="Clause extractor not initialized")
-    if not clause_store:
-        raise HTTPException(status_code=500, detail="Clause store not initialized")
-    if not clause_validator:
-        raise HTTPException(status_code=500, detail="Clause validator not initialized")
     
+    def _find_document_path(doc_id: str) -> Optional[str]:
+        # Exact match first (current convention: <document_id>.<ext>)
+        for ext in ['.pdf', '.docx', '.doc']:
+            p = settings.DOCUMENTS_PATH / f"{doc_id}{ext}"
+            if p.exists():
+                return str(p)
+        # Fallback: prefix match (helps if doc_id is truncated / legacy naming)
+        for ext in ['.pdf', '.docx', '.doc']:
+            matches = list(settings.DOCUMENTS_PATH.glob(f"{doc_id}*{ext}"))
+            if matches:
+                return str(matches[0])
+        # Last resort: any extension starting with id
+        any_matches = list(settings.DOCUMENTS_PATH.glob(f"{doc_id}*"))
+        if any_matches:
+            return str(any_matches[0])
+        return None
+
     # Find file if path not provided
     if not file_path:
         # Search in documents directory
-        for ext in ['.pdf', '.docx', '.doc']:
-            potential_path = settings.DOCUMENTS_PATH / f"{document_id}{ext}"
-            if potential_path.exists():
-                file_path = str(potential_path)
-                break
+        file_path = _find_document_path(document_id)
         
         if not file_path:
             raise HTTPException(status_code=404, detail="Document file not found")
@@ -195,16 +225,15 @@ async def extract_clauses(
         executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         
         def extract_sync():
-            if use_structured:
-                return clause_extractor.structured_extractor.extract_structured_clauses(
-                    file_path, document_id
-                )
+            if include_telemetry:
+                return clause_extractor.extract_clauses_with_telemetry(file_path, document_id)
             else:
-                return clause_extractor.extract_clauses(file_path, document_id, use_structured=False)
+                clauses = clause_extractor.extract_clauses(file_path, document_id, use_structured=True)
+                return {"clauses": clauses}
         
         # Run with 4 minute timeout (240 seconds) - slightly less than frontend timeout
         try:
-            structured_clauses = await asyncio.wait_for(
+            extraction_result = await asyncio.wait_for(
                 loop.run_in_executor(executor, extract_sync),
                 timeout=240.0
             )
@@ -214,49 +243,22 @@ async def extract_clauses(
                 detail="Clause extraction timed out after 4 minutes. The document may be too large. Try processing smaller documents or contact support."
             )
         
-        if use_structured:
-            
-            # Validate if requested
-            validation_results = None
-            if validate:
-                validation_results = clause_validator.validate_clauses_batch(structured_clauses)
-                # Filter out invalid clauses if any
-                valid_clauses = [
-                    clause for clause, result in zip(structured_clauses, validation_results['results'])
-                    if result['valid']
-                ]
-            else:
-                valid_clauses = structured_clauses
-            
-            # Store clauses
-            clause_store.save_clauses(document_id, valid_clauses)
-            
-            # Convert to dict for response
-            clauses_dict = [clause.model_dump() for clause in valid_clauses]
-            
-            return {
-                "clauses": clauses_dict,
-                "count": len(valid_clauses),
-                "total_clauses": len(valid_clauses),  # For frontend compatibility
-                "total_extracted": len(structured_clauses),
-                "validation": validation_results if validation_results else None,
-                "stored": True
-            }
-        else:
-            # Legacy extraction - convert to dict format
-            clauses_dict = []
-            for clause in structured_clauses:
-                if isinstance(clause, dict):
-                    clauses_dict.append(clause)
-                else:
-                    clauses_dict.append(clause.model_dump() if hasattr(clause, 'model_dump') else clause)
-            
-            return {
-                "clauses": clauses_dict,
-                "count": len(clauses_dict),
-                "total_clauses": len(clauses_dict),  # For frontend compatibility
-                "stored": False
-            }
+        # Build response with extraction-only schema
+        clauses = extraction_result.get("clauses", [])
+        telemetry = extraction_result.get("telemetry")
+        
+        response = {
+            "schema_version": "1.0",
+            "document_id": document_id,
+            "extraction_mode": "structure_first_verbatim",
+            "clauses": clauses
+        }
+        
+        # Add telemetry if requested
+        if include_telemetry and telemetry:
+            response["telemetry"] = telemetry
+        
+        return response
             
     except HTTPException:
         raise
@@ -556,7 +558,8 @@ async def search_documents(
     query: str = Form(...),
     top_k: Optional[int] = Form(None),
     document_id: Optional[str] = Form(None),
-    generate_response: bool = Form(True)
+    generate_response: bool = Form(True),
+    response_language: Optional[str] = Form(None)
 ):
     """
     Search documents using RAG.
@@ -566,6 +569,7 @@ async def search_documents(
         top_k: Number of results (defaults to config)
         document_id: Optional filter by document ID
         generate_response: Whether to generate LLM response
+        response_language: Optional response language ('ar', 'en', or None for auto)
         
     Returns:
         Search results with answer and sources
@@ -576,12 +580,21 @@ async def search_documents(
         raise HTTPException(status_code=500, detail="RAG service not initialized")
     
     try:
-        result = rag_service.query(
-            query=query,
-            top_k=top_k,
-            document_id_filter=document_id,
-            generate_response=generate_response
-        )
+        # Use multilingual query if language is specified
+        if response_language:
+            result = rag_service.query_multilingual(
+                query=query,
+                response_language=response_language,
+                top_k=top_k,
+                document_id_filter=document_id
+            )
+        else:
+            result = rag_service.query(
+                query=query,
+                top_k=top_k,
+                document_id_filter=document_id,
+                generate_response=generate_response
+            )
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error searching: {str(e)}")

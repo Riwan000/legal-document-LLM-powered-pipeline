@@ -2,17 +2,19 @@
 Helper script to start the FastAPI backend.
 Run this to start the server with proper configuration.
 """
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 def main():
     """Start the FastAPI backend server."""
+    port = int(os.getenv("BACKEND_PORT", "8000"))
     print("="*70)
     print("  Starting FastAPI Backend Server")
     print("="*70)
-    print("\nServer will start at: http://localhost:8501")
-    print("API Documentation: http://localhost:8501/docs")
+    print(f"\nServer will start at: http://localhost:{port}")
+    print(f"API Documentation: http://localhost:{port}/docs")
     print("\nPress CTRL+C to stop the server\n")
     print("="*70 + "\n")
     
@@ -22,8 +24,9 @@ def main():
             sys.executable, "-m", "uvicorn",
             "backend.main:app",
             "--reload",
+            "--reload-dir", "backend",
             "--host", "0.0.0.0",
-            "--port", "8000"
+            "--port", str(port)
         ])
     except KeyboardInterrupt:
         print("\n\nServer stopped.")

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Tuple, Optional
 import pypdf
 from docx import Document
+from backend.config import settings
 
 # Optional OCR imports (for scanned PDFs)
 try:
@@ -120,7 +121,7 @@ class FileParser:
                 actual_page = page_map.get(img_idx)
                 if actual_page and actual_page in page_numbers:
                     try:
-                        text = pytesseract.image_to_string(image, lang='eng')
+                        text = pytesseract.image_to_string(image, lang=settings.OCR_LANGUAGE)
                         text = text.strip()
                         if text:
                             text_pages.append((text, actual_page))
@@ -163,8 +164,8 @@ class FileParser:
                     # Perform OCR on the image
                     # Note: Requires Tesseract OCR to be installed
                     # Windows: Set TESSDATA_PREFIX environment variable if needed
-                    text = pytesseract.image_to_string(image, lang='eng')
-                    # Default to English; can be extended for multilingual support
+                    text = pytesseract.image_to_string(image, lang=settings.OCR_LANGUAGE)
+                    # Uses configurable OCR language (default: eng+ara for bilingual support)
                     
                     # Clean up text
                     text = text.strip()

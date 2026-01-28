@@ -2,14 +2,25 @@
 Translation service for bilingual support.
 Handles Arabic-English cross-language document search and response generation.
 """
-from typing import Optional, Dict, Any
-from backend.services.rag_service import RAGService
+from typing import Optional, Dict, Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from backend.services.rag_service import RAGService
+
+from backend.config import settings
+
+# Optional translation imports
+try:
+    from deep_translator import GoogleTranslator
+    TRANSLATION_AVAILABLE = True
+except ImportError:
+    TRANSLATION_AVAILABLE = False
 
 
 class TranslationService:
     """Service for handling bilingual queries and responses."""
     
-    def __init__(self, rag_service: RAGService):
+    def __init__(self, rag_service: "RAGService"):
         """
         Initialize the translation service.
         
@@ -18,6 +29,68 @@ class TranslationService:
         """
         self.rag_service = rag_service
         # RAG service already uses multilingual embeddings
+        
+        # Initialize translator if available
+        self.translator = None
+        if TRANSLATION_AVAILABLE:
+            try:
+                self.translator = GoogleTranslator
+            except Exception as e:
+                print(f"Warning: Translation service not available: {str(e)}")
+                self.translator = None
+    
+    def translate_text(self, text: str, source_lang: str, target_lang: str) -> str:
+        """
+        Translate text from source language to target language.
+        
+        Args:
+            text: Text to translate
+            source_lang: Source language code ('ar' or 'en')
+            target_lang: Target language code ('ar' or 'en')
+            
+        Returns:
+            Translated text, or original text if translation fails
+        """
+        # If languages are the same, no translation needed
+        if source_lang == target_lang:
+            return text
+        
+        # If translation not available, return original
+        if not TRANSLATION_AVAILABLE or not self.translator:
+            if settings.TRANSLATION_FALLBACK_TO_ORIGINAL:
+                return text
+            raise RuntimeError("Translation service not available")
+        
+        try:
+            # Map language codes to GoogleTranslator format
+            lang_map = {'ar': 'ar', 'en': 'en'}
+            source = lang_map.get(source_lang, 'en')
+            target = lang_map.get(target_lang, 'en')
+            
+            # Translate using GoogleTranslator
+            translator_instance = self.translator(source=source, target=target)
+            translated = translator_instance.translate(text)
+            
+            # Check if GoogleTranslator returned an error message instead of translation
+            error_indicators = [
+                "I'm sorry",
+                "cannot provide a translation",
+                "Can I help you with something else",
+                "translation failed",
+                "unable to translate"
+            ]
+            if any(indicator.lower() in translated.lower() for indicator in error_indicators):
+                print(f"Warning: Translation returned error message: {translated}")
+                if settings.TRANSLATION_FALLBACK_TO_ORIGINAL:
+                    return text
+                raise RuntimeError(f"Translation failed: GoogleTranslator returned error message: {translated}")
+            
+            return translated
+        except Exception as e:
+            print(f"Warning: Translation failed: {str(e)}")
+            if settings.TRANSLATION_FALLBACK_TO_ORIGINAL:
+                return text
+            raise RuntimeError(f"Translation failed: {str(e)}")
     
     def detect_language(self, text: str) -> str:
         """
