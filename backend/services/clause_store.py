@@ -18,7 +18,7 @@ import json
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-from backend.models.clause import StructuredClause
+from backend.models.clause import StructuredClause, ClauseType
 from backend.config import settings
 
 
@@ -46,15 +46,8 @@ class ClauseStore:
         self.clause_cache: Dict[str, StructuredClause] = {}
 
         # Canonical clause types for integration with weighted ranking.
-        self.CANONICAL_CLAUSE_TYPES = {
-            "termination",
-            "notice",
-            "payment terms",
-            "benefits",
-            "governing law",
-            "probation",
-            "compensation",
-        }
+        # Aligned with ClauseType enum (underscore form) so stored clauses match.
+        self.CANONICAL_CLAUSE_TYPES = {ct.value for ct in ClauseType}
         
         # Load existing data (index + cache)
         self.load()

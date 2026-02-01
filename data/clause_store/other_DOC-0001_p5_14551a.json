@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_DOC-0001_p5_14551a",
+  "title": "Cancellation and Supplementation",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "administrative",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "eriod of 30 days\n\n(0) By the Firs: Party. without neeg for any notice\nOF Cash payment :n trey \"here of or awarg of\ncompensation by reasons of any iMfracuions\nCommitted by the Secong Pany determ-neg\nby the Labour ane Workman Law in Articie 83\nthereof,\n\n(C) By the First Party: in the course of the first three\nmonths which snal! be Considered 4 probation\nPeriod under th",
+      "clean_text": "Both parties acknowledge that this Agreement cancels and Supersedes all agreements prior to its execution neither party shall claim to have any HQnt priviege or benefit other than those mentioned herein Exception is however made in respect of the Second Party's tight. to an end-of-service award and untiseg annual vacations upto the date of execution of this Agreement"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": true,
+    "is_employer_cost": false
+  }
+}

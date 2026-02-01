@@ -21,7 +21,7 @@ st.set_page_config(
 
 # Backend API base URL (FastAPI). Streamlit acts as a server-side proxy:
 # all API calls are made from the Streamlit server, so users only hit the UI port.
-API_BASE_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+API_BASE_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 # -----------------------------------------------------------------------------
 # UI styling
@@ -114,17 +114,8 @@ def extract_clauses(document_id: str) -> Optional[Dict]:
         data = {"document_id": document_id}
         # Increased timeout to 5 minutes (300 seconds) for large documents
         response = requests.post(f"{API_BASE_URL}/api/extract-clauses", data=data, timeout=300)
-        if response.status_code >= 400:
-            # Try to surface FastAPI error details (e.g., {"detail": "..."}).
-            try:
-                payload = response.json()
-                detail = payload.get("detail") if isinstance(payload, dict) else None
-            except Exception:
-                detail = None
-            st.error(f"Clause extraction failed ({response.status_code})." + (f" Detail: {detail}" if detail else ""))
-            return None
-        result = response.json()
-        return result
+        response.raise_for_status()
+        return response.json()
     except requests.exceptions.Timeout:
         st.error("Clause extraction timed out. The document may be too large. Please try with a smaller document or contact support.")
         return None
@@ -220,6 +211,26 @@ def summarize_case_file_stream(document_id: str) -> Optional[Any]:
         st.error(f"Error streaming summary: {str(e)}")
         return None
 
+
+def due_diligence_memo(document_id: str) -> Optional[Dict]:
+    """Due Diligence Memo workflow (WorkflowContext envelope)."""
+    try:
+        data = {"document_id": document_id}
+        response = requests.post(f"{API_BASE_URL}/api/due-diligence-memo", data=data, timeout=300)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        if e.response is not None:
+            try:
+                err = e.response.json().get("detail", e.response.text)
+                st.error(f"Due Diligence Memo failed: {err}")
+            except Exception:
+                st.error(f"Due Diligence Memo failed: {e.response.text}")
+        return None
+    except Exception as e:
+        st.error(f"Error generating due diligence memo: {str(e)}")
+        return None
+
 def search_bilingual(query: str, response_language: Optional[str] = None, document_id: Optional[str] = None) -> Optional[Dict]:
     """Bilingual search."""
     try:
@@ -263,32 +274,237 @@ def rename_document(document_id: str, new_display_name: str) -> Optional[Dict]:
         return None
 
 
+def contract_review(contract_id: str, contract_type: str, jurisdiction: Optional[str] = None, review_depth: Optional[str] = None) -> Optional[Dict]:
+    """Run Contract Review workflow. Returns WorkflowContext as dict."""
+    try:
+        data = {"contract_id": contract_id, "contract_type": contract_type or "employment"}
+        if jurisdiction:
+            data["jurisdiction"] = jurisdiction
+        if review_depth:
+            data["review_depth"] = review_depth
+        response = requests.post(f"{API_BASE_URL}/api/contract-review", data=data, timeout=300)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        if e.response is not None:
+            try:
+                err = e.response.json()
+                st.error(f"Contract review failed: {err.get('detail', e.response.text)}")
+            except Exception:
+                st.error(f"Contract review failed: {e.response.text}")
+        return None
+    except Exception as e:
+        st.error(f"Error running contract review: {str(e)}")
+        return None
+
+
+def document_explore(document_id: str, query: str, top_k: Optional[int] = None) -> Optional[Dict]:
+    """Document Explorer: evidence-only search. Returns { results, workflow_id } or { error } for NO_EVIDENCE/422."""
+    try:
+        data = {"document_id": document_id, "query": query}
+        if top_k is not None:
+            data["top_k"] = top_k
+        response = requests.post(f"{API_BASE_URL}/api/explore", data=data, timeout=60)
+        # Explorer returns:
+        # - 200 {results: [...], workflow_id: ...} on success
+        # - 200 {results: [], message: "Not specified ..."} on NO_EVIDENCE (fail-closed, but not 422)
+        # - 422 structured error for interpretive queries (and other structured failures)
+        if response.status_code == 200:
+            payload = response.json()
+            if isinstance(payload, dict) and payload.get("results") == [] and payload.get("message"):
+                return {"results": [], "message": payload.get("message"), "workflow_id": payload.get("workflow_id")}
+            return payload
+        if response.status_code == 422:
+            detail = response.json().get("detail", {})
+            err = detail.get("error", detail) if isinstance(detail, dict) else {}
+            code = err.get("code", "") if isinstance(err, dict) else ""
+            if code == "INTERPRETIVE_QUERY":
+                return {"error": {"code": "INTERPRETIVE_QUERY", "message": err.get("message", "Interpretive query rejected.")}}
+            st.error(f"Document Explorer: {err.get('message', str(detail)) if isinstance(err, dict) else detail}")
+            return None
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        if e.response is not None:
+            try:
+                err = e.response.json().get("detail", e.response.text)
+                st.error(f"Document Explorer failed: {err}")
+            except Exception:
+                st.error(f"Document Explorer failed: {e.response.text}")
+        return None
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
+        return None
+
+
+# Mandatory disclaimer for workflow outputs
+WORKFLOW_DISCLAIMER = "This system does not provide legal advice. All outputs are for review purposes only."
+
+
 # -----------------------------------------------------------------------------
-# Navigation + routing
+# Navigation + routing (workflow-first)
 # -----------------------------------------------------------------------------
-# We use a sidebar selectbox to route between "pages" inside a single Streamlit app.
-st.sidebar.title("⚖️ Legal Document Intelligence")
+st.sidebar.title("⚖️ Legal Workflows Engine")
 st.sidebar.markdown("---")
 
-# Health gate: stop early if the backend isn't reachable so the UI doesn't spam errors.
+# Health gate
 if not check_backend_health():
     st.sidebar.error("⚠️ Backend not available. Please start the FastAPI server.")
-    st.error("**Backend Connection Error**\n\nPlease ensure the FastAPI backend is running:\n```bash\ncd backend\nuvicorn main:app --reload\n```")
+    st.error("**Backend Connection Error**\n\nPlease ensure the FastAPI backend is running:\n```bash\npython run_backend.py\n```")
     st.stop()
 else:
     st.sidebar.success("✅ Backend connected")
 
-# Page selection (acts like a router).
+# Workflow-first navigation
 page = st.sidebar.selectbox(
     "Navigate",
-    ["📤 Upload Document", "🔍 RAG Search", "📋 Clause Extraction", "⚖️ Contract Comparison", 
-     "📄 Case Summary", "🌐 Bilingual Search", "ℹ️ About"]
+    [
+        "📋 Contract Review",
+        "⚖️ Contract Comparison",
+        "📄 Due Diligence Memo",
+        "🔍 Document Explorer",
+        "📤 Upload Document",
+        "📑 Clause Extraction",
+        "ℹ️ About",
+    ],
 )
+
+# -----------------------------------------------------------------------------
+# Page: Contract Review (workflow)
+# -----------------------------------------------------------------------------
+if page == "📋 Contract Review":
+    st.markdown('<div class="main-header">📋 Contract Review</div>', unsafe_allow_html=True)
+    st.markdown("Identify risks, missing clauses, and evidence for senior review. No legal advice.")
+    st.caption(WORKFLOW_DISCLAIMER)
+    documents = get_documents()
+    if not documents:
+        st.warning("Upload a contract first.")
+    else:
+        doc_options = {d["document_id"]: d.get("display_name", d["document_id"]) for d in documents}
+        contract_id = st.selectbox("Contract", options=list(doc_options.keys()), format_func=lambda x: doc_options[x])
+        contract_type = st.selectbox("Contract type", ["employment", "nda", "msa"])
+        jurisdiction = st.selectbox("Jurisdiction", [None, "Generic GCC", "KSA", "UAE"], format_func=lambda x: x or "—")
+        review_depth = st.selectbox("Review depth", ["standard", "quick"])
+        if st.button("Run Contract Review", type="primary"):
+            with st.spinner("Running contract review..."):
+                result = contract_review(contract_id, contract_type, jurisdiction, review_depth)
+            if result:
+                if result.get("status") == "failed":
+                    err = result.get("error", {})
+                    st.error(f"**{err.get('code', 'Error')}:** {err.get('message', '')}")
+                    if err.get("details"):
+                        st.json(err["details"])
+                else:
+                    ir = result.get("intermediate_results", {}) or {}
+                    resp = ir.get("contract_review.response") or {}
+                    if not isinstance(resp, dict) or not resp:
+                        st.warning("Workflow completed but no Contract Review response was found in intermediate results.")
+                        st.json(result)
+                    else:
+                        st.success("Contract review completed.")
+
+                        # Metadata
+                        meta_cols = st.columns(4)
+                        meta_cols[0].metric("Workflow ID", str(resp.get("workflow_id", ""))[:12] + "…")
+                        meta_cols[1].metric("Document", resp.get("document_id", ""))
+                        meta_cols[2].metric("Contract type", resp.get("contract_type", ""))
+                        meta_cols[3].metric("Jurisdiction", resp.get("jurisdiction") or "—")
+
+                        # Risks table
+                        risks = resp.get("risks", []) or []
+                        st.subheader("Risk table")
+                        if not risks:
+                            st.info("No risks were identified for the selected profile and evidence.")
+                        else:
+                            rows = []
+                            for r in risks:
+                                if not isinstance(r, dict):
+                                    continue
+                                rows.append(
+                                    {
+                                        "severity": r.get("severity", ""),
+                                        "status": r.get("status", ""),
+                                        "description": r.get("description", ""),
+                                        "clause_types": ", ".join(r.get("clause_types", []) or []),
+                                        "clause_ids": ", ".join(r.get("clause_ids", []) or []),
+                                        "pages": ", ".join([str(p) for p in (r.get("page_numbers", []) or [])]),
+                                    }
+                                )
+                            st.dataframe(rows, use_container_width=True, hide_index=True)
+
+                        # Evidence blocks
+                        evidence = resp.get("evidence", []) or []
+                        st.subheader("Clause evidence blocks")
+                        if not evidence:
+                            st.info("No clause evidence blocks were produced.")
+                        else:
+                            for ev in evidence:
+                                if not isinstance(ev, dict):
+                                    continue
+                                with st.expander(f"Clause {ev.get('clause_id', '')} — Page {ev.get('page_number', 0)}"):
+                                    st.write("**Raw text:**")
+                                    st.write(ev.get("raw_text", ""))
+                                    st.write("**Cleaned text:**")
+                                    st.write(ev.get("clean_text", ""))
+
+                        # Executive summary
+                        st.subheader("Executive summary")
+                        exec_items = resp.get("executive_summary", []) or []
+                        if not exec_items:
+                            st.info("No executive summary items were produced.")
+                        else:
+                            for item in exec_items:
+                                if isinstance(item, dict):
+                                    sev = item.get("severity")
+                                    text = item.get("text", "")
+                                    if sev:
+                                        st.markdown(f"- **{sev}**: {text}")
+                                    else:
+                                        st.markdown(f"- {text}")
+
+                        st.caption(resp.get("disclaimer", WORKFLOW_DISCLAIMER))
+
+                        with st.expander("Raw workflow output (JSON)"):
+                            st.json(resp)
+
+# -----------------------------------------------------------------------------
+# Page: Document Explorer (read-only evidence search)
+# -----------------------------------------------------------------------------
+elif page == "🔍 Document Explorer":
+    st.markdown('<div class="main-header">🔍 Document Explorer</div>', unsafe_allow_html=True)
+    st.markdown("Locate evidence in a single document. No interpretation or advice—evidence only.")
+    st.caption(WORKFLOW_DISCLAIMER)
+    documents = get_documents()
+    if not documents:
+        st.warning("Upload a document first.")
+    else:
+        doc_options = {d["document_id"]: d.get("display_name", d["document_id"]) for d in documents}
+        document_id = st.selectbox("Document", options=list(doc_options.keys()), format_func=lambda x: doc_options[x])
+        query = st.text_input("Query (e.g. Where is termination notice?)", placeholder="Where is… / Show clauses related to…")
+        top_k = st.slider("Max results", min_value=1, max_value=25, value=10)
+        if st.button("Search", type="primary"):
+            if not query or not query.strip():
+                st.warning("Enter a query.")
+            else:
+                with st.spinner("Searching..."):
+                    result = document_explore(document_id, query, top_k=top_k)
+                if result and result.get("error", {}).get("code") == "INTERPRETIVE_QUERY":
+                    st.warning(result.get("error", {}).get("message", "Interpretive query rejected."))
+                elif result and result.get("results") is not None:
+                    results = result.get("results", [])
+                    if not results:
+                        st.info(result.get("message") or "Not specified in the provided document.")
+                    else:
+                        for i, hit in enumerate(results, 1):
+                            with st.expander(f"Page {hit.get('page_number', 0)} — Score {hit.get('score', 0):.2f}"):
+                                st.write(hit.get("text_snippet", ""))
+                elif result and result.get("error", {}).get("code") == "NO_EVIDENCE":
+                    st.info(result.get("error", {}).get("message") or "Not specified in the provided document.")
 
 # -----------------------------------------------------------------------------
 # Page: Upload Document
 # -----------------------------------------------------------------------------
-if page == "📤 Upload Document":
+elif page == "📤 Upload Document":
     st.markdown('<div class="main-header">📤 Document Upload</div>', unsafe_allow_html=True)
     
     st.markdown("""
@@ -379,85 +595,9 @@ if page == "📤 Upload Document":
             st.info("No documents uploaded yet")
 
 # -----------------------------------------------------------------------------
-# Page: RAG Search
-# -----------------------------------------------------------------------------
-elif page == "🔍 RAG Search":
-    st.markdown('<div class="main-header">🔍 RAG Semantic Search</div>', unsafe_allow_html=True)
-    
-    st.markdown("""
-    Search your documents using natural language queries. The system uses RAG (Retrieval-Augmented Generation)
-    to find relevant information and generate answers with citations.
-    """)
-    
-    # Get documents for filtering
-    documents = get_documents()
-    document_options = {None: "All Documents"}
-    for doc in documents:
-        # Use display_name, show version if not latest
-        display_name = doc.get('display_name', doc.get('document_id', 'Unknown'))
-        version_label = f" (v{doc.get('version', 1)})" if not doc.get('is_latest', True) else ""
-        label = f"{display_name}{version_label} ({doc.get('total_chunks', 0)} chunks)"
-        document_options[doc['document_id']] = label
-    
-    selected_doc = st.selectbox(
-        "Filter by Document (optional)",
-        options=list(document_options.keys()),
-        format_func=lambda x: document_options[x]
-    )
-    
-    query = st.text_area(
-        "Enter your query",
-        height=100,
-        placeholder="e.g., What are the payment terms? What are the termination conditions?"
-    )
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        top_k = st.slider("Number of results", 1, 20, 5)
-    with col2:
-        generate_response = st.checkbox("Generate LLM response", value=True)
-    with col3:
-        response_language = st.selectbox(
-            "Response Language",
-            [None, "ar", "en"],
-            format_func=lambda x: "Auto (match query)" if x is None else ("Arabic" if x == "ar" else "English"),
-            help="Choose response language (Auto detects from query)"
-        )
-    
-    if st.button("Search", type="primary"):
-        if query:
-            with st.spinner("Searching documents..."):
-                result = search_documents(
-                    query=query,
-                    top_k=top_k,
-                    document_id=selected_doc,
-                    generate_response=generate_response,
-                    response_language=response_language
-                )
-                
-                if result:
-                    if result.get('answer'):
-                        st.subheader("Answer")
-                        st.write(result['answer'])
-                    
-                    if result.get('sources'):
-                        st.subheader("Sources")
-                        for i, source in enumerate(result['sources'], 1):
-                            # Use display_name in citation (never show document_hash)
-                            doc_name = source.get('display_name', source.get('document_id', 'Unknown'))
-                            with st.expander(f"Source {i} - {doc_name}, Page {source['page_number']} (Score: {source['score']:.2f})"):
-                                st.write(f"**Document:** {doc_name}")
-                                st.write(f"**Document ID:** {source.get('document_id', 'N/A')}")
-                                st.write(f"**Page:** {source['page_number']}")
-                                st.write(f"**Text:**")
-                                st.write(source['text'])
-        else:
-            st.warning("Please enter a query")
-
-# -----------------------------------------------------------------------------
 # Page: Clause Extraction
 # -----------------------------------------------------------------------------
-elif page == "📋 Clause Extraction":
+elif page == "📑 Clause Extraction":
     st.markdown('<div class="main-header">📋 Clause Extraction</div>', unsafe_allow_html=True)
     
     st.markdown("""
@@ -545,6 +685,7 @@ elif page == "⚖️ Contract Comparison":
     - Missing clauses (in template but not in contract)
     - Extra clauses (in contract but not in template)
     """)
+    st.caption(WORKFLOW_DISCLAIMER)
     
     documents = get_documents()
     if len(documents) < 2:
@@ -623,17 +764,15 @@ elif page == "⚖️ Contract Comparison":
 # -----------------------------------------------------------------------------
 # Page: Case Summary
 # -----------------------------------------------------------------------------
-elif page == "📄 Case Summary":
-    st.markdown('<div class="main-header">📄 Case File Summary</div>', unsafe_allow_html=True)
+elif page == "📄 Due Diligence Memo":
+    st.markdown('<div class="main-header">📄 Due Diligence Memo</div>', unsafe_allow_html=True)
     
     st.markdown("""
-    Generate comprehensive summaries of case files including:
-    - Executive summary
-    - Timeline of events
-    - Key arguments
-    - Open issues
-    - Source citations
+    Generate a structured, deterministic due diligence memo from case documents:
+    - Case spine, executive summary, timeline, key arguments, open issues
+    - All sections with mandatory citations. No legal advice.
     """)
+    st.caption(WORKFLOW_DISCLAIMER)
     
     documents = get_documents()
     if not documents:
@@ -652,191 +791,241 @@ elif page == "📄 Case Summary":
             options=list(document_options.keys()),
             format_func=lambda x: document_options[x]
         )
-        
-        top_k = st.slider("Number of chunks to analyze", 5, 20, 10)
-        
-        if st.button("Generate Summary", type="primary"):
-            # Streaming mode via SSE
-            with st.spinner("Streaming summary (this may take a few minutes)..."):
-                spine_box = st.empty()
-                exec_box = st.empty()
-                timeline_box = st.empty()
-                args_box = st.empty()
-                issues_box = st.empty()
-                citations_box = st.empty()
 
-                spine = None
-                executive_summary_items = []
-                timeline_events = []
-                claimant_args = []
-                defendant_args = []
-                open_issues = []
-                citations = []
+        tab_workflow, tab_stream = st.tabs(["Workflow output", "Streaming (advanced)"])
 
-                stream = summarize_case_file_stream(selected_doc)
-                if stream is None:
-                    st.error("Streaming failed. Try again or use the non-streaming endpoint.")
-                else:
-                    for event_name, payload in stream:
-                        if event_name == "error":
-                            st.error(f"**Error {payload.get('code', 'UNKNOWN')}:** {payload.get('message', '')}")
-                            if payload.get("details"):
-                                st.json(payload["details"])
-                            break
-
-                        if event_name == "case_spine":
-                            spine = payload
-                        elif event_name == "executive_summary_item":
-                            executive_summary_items.append(payload)
-                        elif event_name == "timeline_event":
-                            timeline_events.append(payload)
-                        elif event_name == "claimant_argument_item":
-                            claimant_args.append(payload)
-                        elif event_name == "defendant_argument_item":
-                            defendant_args.append(payload)
-                        elif event_name == "open_issue_item":
-                            open_issues.append(payload)
-                        elif event_name == "citations":
-                            citations = payload.get("citations", [])
-                        elif event_name == "done":
-                            # Final summary is also included in done (if status=ok)
-                            pass
-
-                        # Render progressively
-                        if spine:
-                            with spine_box.container():
-                                with st.expander("Case Spine", expanded=True):
-                                    st.write(f"**Case:** {spine.get('case_name', 'N/A')}")
-                                    st.write(f"**Court:** {spine.get('court', 'N/A')}")
-                                    st.write(f"**Date:** {spine.get('date', 'N/A')}")
-                                    st.write(f"**Parties:** {', '.join(spine.get('parties', []))}")
-                                    st.write(f"**Procedural Posture:** {spine.get('procedural_posture', 'N/A')}")
-                                    if spine.get('core_issues'):
-                                        st.write("**Core Issues:**")
-                                        for issue in spine['core_issues']:
-                                            st.write(f"- {issue}")
-
-                        with exec_box.container():
-                            st.subheader("Executive Summary")
-                            if executive_summary_items:
-                                for item in executive_summary_items:
-                                    source = item.get("source", {})
-                                    st.write(item.get("text", ""))
-                                    st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}")
-                            else:
-                                st.write("Waiting for executive summary...")
-
-                        with timeline_box.container():
-                            st.subheader("Timeline of Events")
-                            if timeline_events:
-                                table = []
-                                for ev in timeline_events:
-                                    source = ev.get("source", {})
-                                    table.append({
-                                        "Date": ev.get("date", "N/A"),
-                                        "Event": ev.get("event", ""),
-                                        "Source": f"P{source.get('page', 0)} ({source.get('chunk_id', '')[:12]}...)"
-                                    })
-                                st.table(table)
-                            else:
-                                st.write("Waiting for timeline...")
-
-                        with args_box.container():
-                            st.subheader("Key Arguments")
-                            if claimant_args:
-                                st.write("**Claimant/Plaintiff Arguments:**")
-                                for arg in claimant_args:
-                                    source = arg.get("source", {})
-                                    st.write(f"- {arg.get('text', '')}")
-                                    st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')[:12]}...")
-                            if defendant_args:
-                                st.write("**Defendant/Respondent Arguments:**")
-                                for arg in defendant_args:
-                                    source = arg.get("source", {})
-                                    st.write(f"- {arg.get('text', '')}")
-                                    st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')[:12]}...")
-                            if not claimant_args and not defendant_args:
-                                st.write("Waiting for arguments (may be empty)...")
-
-                        with issues_box.container():
-                            st.subheader("Open Issues")
-                            if open_issues:
-                                for issue in open_issues:
-                                    source = issue.get("source", {})
-                                    st.write(f"- {issue.get('text', '')}")
-                                    st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')[:12]}...")
-                            else:
-                                st.write("Waiting for open issues (may be empty)...")
-
-                        if citations:
-                            with citations_box.container():
-                                with st.expander("All Citations"):
-                                    for c in citations:
-                                        st.write(f"**{c.get('chunk_id', '')}** (Page {c.get('page', 0)}, Type: {c.get('chunk_type', 'unknown')})")
-
-# -----------------------------------------------------------------------------
-# Page: Bilingual Search
-# -----------------------------------------------------------------------------
-elif page == "🌐 Bilingual Search":
-    st.markdown('<div class="main-header">🌐 Bilingual Search</div>', unsafe_allow_html=True)
-    
-    st.markdown("""
-    Search documents in Arabic or English. The system uses multilingual embeddings to enable
-    cross-language search - Arabic queries can retrieve English documents and vice versa.
-    """)
-    
-    documents = get_documents()
-    document_options = {None: "All Documents"}
-    for doc in documents:
-        # Use display_name, show version if not latest
-        display_name = doc.get('display_name', doc.get('document_id', 'Unknown'))
-        version_label = f" (v{doc.get('version', 1)})" if not doc.get('is_latest', True) else ""
-        label = f"{display_name}{version_label} ({doc.get('total_chunks', 0)} chunks)"
-        document_options[doc['document_id']] = label
-    
-    selected_doc = st.selectbox(
-        "Filter by Document (optional)",
-        options=list(document_options.keys()),
-        format_func=lambda x: document_options[x]
-    )
-    
-    query = st.text_area(
-        "Enter your query (Arabic or English)",
-        height=100,
-        placeholder="e.g., ما هي شروط الدفع؟ or What are the payment terms?"
-    )
-    
-    response_language = st.selectbox(
-        "Response Language",
-        [None, "ar", "en"],
-        format_func=lambda x: "Auto (match query)" if x is None else ("Arabic" if x == "ar" else "English")
-    )
-    
-    if st.button("Search", type="primary"):
-        if query:
-            with st.spinner("Searching documents..."):
-                result = search_bilingual(query, response_language, selected_doc)
-                
+        with tab_workflow:
+            st.markdown("Generate a due diligence memo via the workflow endpoint `/api/due-diligence-memo`.")
+            if st.button("Generate Due Diligence Memo", type="primary"):
+                with st.spinner("Generating due diligence memo..."):
+                    result = due_diligence_memo(selected_doc)
                 if result:
-                    if result.get('query_language'):
-                        st.info(f"Detected query language: {result['query_language']}")
-                    
-                    if result.get('answer'):
-                        st.subheader("Answer")
-                        st.write(result['answer'])
-                    
-                    if result.get('sources'):
-                        st.subheader("Sources")
-                        for i, source in enumerate(result['sources'], 1):
-                            # Use display_name in citation (never show document_hash)
-                            doc_name = source.get('display_name', source.get('document_id', 'Unknown'))
-                            with st.expander(f"Source {i} - {doc_name}, Page {source['page_number']}"):
-                                st.write(f"**Document:** {doc_name}")
-                                st.write(f"**Document ID:** {source.get('document_id', 'N/A')}")
-                                st.write(f"**Text:**")
-                                st.write(source['text'])
-        else:
-            st.warning("Please enter a query")
+                    status = result.get("status")
+                    error = result.get("error", {}) if isinstance(result.get("error"), dict) else {}
+                    final_output = result.get("final_output")
+                    intermediate = result.get("intermediate_results", {}) or {}
+                    render_output = True
+
+                    if status == "failed":
+                        st.error(f"**{error.get('code', 'ERROR')}**: {error.get('message', '')}")
+                        if error.get("details"):
+                            st.json(error.get("details"))
+                        st.info("No memo content was generated.")
+                        render_output = False
+
+                    if status == "completed_with_warnings":
+                        st.warning("Partial memo generated with warnings.")
+                        warnings = []
+                        for key, section in intermediate.items():
+                            if isinstance(section, dict) and section.get("status") in ("skipped", "failed"):
+                                warnings.append(f"{key}: {section.get('error', {}).get('message', 'Section skipped')}")
+                        if warnings:
+                            st.write("\n".join(warnings))
+
+                    if render_output and not isinstance(final_output, dict):
+                        st.warning("Workflow completed but no final output was produced.")
+                        st.json(result)
+                        render_output = False
+
+                    if render_output:
+                        spine = final_output.get("case_spine") or {}
+                        with st.expander("Case Spine", expanded=True):
+                            st.write(f"**Case:** {spine.get('case_name', 'N/A')}")
+                            st.write(f"**Court:** {spine.get('court', 'N/A')}")
+                            st.write(f"**Date:** {spine.get('date', 'N/A')}")
+                            st.write(f"**Parties:** {', '.join(spine.get('parties', []))}")
+                            st.write(f"**Procedural Posture:** {spine.get('procedural_posture', 'N/A')}")
+                            if spine.get("core_issues"):
+                                st.write("**Core Issues:**")
+                                for issue in spine.get("core_issues", []):
+                                    st.write(f"- {issue}")
+
+                        st.subheader("Executive Summary")
+                        exec_items = final_output.get("executive_summary") or []
+                        if exec_items:
+                            for item in exec_items:
+                                source = (item or {}).get("source", {})
+                                st.write((item or {}).get("text", ""))
+                                st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}")
+                        else:
+                            st.info("No executive summary items.")
+
+                        st.subheader("Timeline of Events")
+                        timeline = final_output.get("timeline") or []
+                        if timeline:
+                            table = []
+                            for ev in timeline:
+                                source = (ev or {}).get("source", {})
+                                table.append(
+                                    {
+                                        "Date": (ev or {}).get("date", "N/A"),
+                                        "Event": (ev or {}).get("event", ""),
+                                        "Source": f"P{source.get('page', 0)} ({(source.get('chunk_id', '') or '')[:12]}...)",
+                                    }
+                                )
+                            st.table(table)
+                        else:
+                            st.info("No timeline events.")
+
+                        st.subheader("Key Arguments")
+                        args = final_output.get("key_arguments") or {}
+                        claimant = args.get("claimant", []) if isinstance(args, dict) else []
+                        defendant = args.get("defendant", []) if isinstance(args, dict) else []
+                        if claimant:
+                            st.write("**Claimant/Plaintiff**")
+                            for arg in claimant:
+                                source = (arg or {}).get("source", {})
+                                st.write(f"- {(arg or {}).get('text', '')}")
+                                st.caption(f"Source: Page {source.get('page', 0)}, Chunk {(source.get('chunk_id', '') or '')[:12]}...")
+                        if defendant:
+                            st.write("**Defendant/Respondent**")
+                            for arg in defendant:
+                                source = (arg or {}).get("source", {})
+                                st.write(f"- {(arg or {}).get('text', '')}")
+                                st.caption(f"Source: Page {source.get('page', 0)}, Chunk {(source.get('chunk_id', '') or '')[:12]}...")
+                        if not claimant and not defendant:
+                            st.info("No arguments extracted.")
+
+                        st.subheader("Open Issues")
+                        issues = final_output.get("open_issues") or []
+                        if issues:
+                            for issue in issues:
+                                source = (issue or {}).get("source", {})
+                                st.write(f"- {(issue or {}).get('text', '')}")
+                                st.caption(f"Source: Page {source.get('page', 0)}, Chunk {(source.get('chunk_id', '') or '')[:12]}...")
+                        else:
+                            st.info("No open issues.")
+
+                        citations = final_output.get("citations") or []
+                        if citations:
+                            with st.expander("All citations"):
+                                for c in citations:
+                                    st.write(
+                                        f"**{(c or {}).get('chunk_id', '')}** "
+                                        f"(Page {(c or {}).get('page', 0)}, Type: {(c or {}).get('chunk_type', 'unknown')})"
+                                    )
+
+                        st.caption(WORKFLOW_DISCLAIMER)
+                        with st.expander("Raw workflow output (JSON)"):
+                            st.json(result)
+
+        with tab_stream:
+            st.markdown("Streaming mode uses `/api/summarize/stream` (SSE).")
+            if st.button("Stream Summary (SSE)", type="secondary"):
+                with st.spinner("Streaming summary (this may take a few minutes)..."):
+                    spine_box = st.empty()
+                    exec_box = st.empty()
+                    timeline_box = st.empty()
+                    args_box = st.empty()
+                    issues_box = st.empty()
+                    citations_box = st.empty()
+
+                    spine = None
+                    executive_summary_items = []
+                    timeline_events = []
+                    claimant_args = []
+                    defendant_args = []
+                    open_issues = []
+                    citations = []
+
+                    stream = summarize_case_file_stream(selected_doc)
+                    if stream is None:
+                        st.error("Streaming failed. Try the workflow output tab instead.")
+                    else:
+                        for event_name, payload in stream:
+                            if event_name == "error":
+                                st.error(f"**Error {payload.get('code', 'UNKNOWN')}:** {payload.get('message', '')}")
+                                if payload.get("details"):
+                                    st.json(payload["details"])
+                                break
+
+                            if event_name == "case_spine":
+                                spine = payload
+                            elif event_name == "executive_summary_item":
+                                executive_summary_items.append(payload)
+                            elif event_name == "timeline_event":
+                                timeline_events.append(payload)
+                            elif event_name == "claimant_argument_item":
+                                claimant_args.append(payload)
+                            elif event_name == "defendant_argument_item":
+                                defendant_args.append(payload)
+                            elif event_name == "open_issue_item":
+                                open_issues.append(payload)
+                            elif event_name == "citations":
+                                citations = payload.get("citations", [])
+                            elif event_name == "done":
+                                pass
+
+                            if spine:
+                                with spine_box.container():
+                                    with st.expander("Case Spine", expanded=True):
+                                        st.write(f"**Case:** {spine.get('case_name', 'N/A')}")
+                                        st.write(f"**Court:** {spine.get('court', 'N/A')}")
+                                        st.write(f"**Date:** {spine.get('date', 'N/A')}")
+                                        st.write(f"**Parties:** {', '.join(spine.get('parties', []))}")
+                                        st.write(f"**Procedural Posture:** {spine.get('procedural_posture', 'N/A')}")
+                                        if spine.get('core_issues'):
+                                            st.write("**Core Issues:**")
+                                            for issue in spine['core_issues']:
+                                                st.write(f"- {issue}")
+
+                            with exec_box.container():
+                                st.subheader("Executive Summary")
+                                if executive_summary_items:
+                                    for item in executive_summary_items:
+                                        source = item.get("source", {})
+                                        st.write(item.get("text", ""))
+                                        st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}")
+                                else:
+                                    st.write("Waiting for executive summary...")
+
+                            with timeline_box.container():
+                                st.subheader("Timeline of Events")
+                                if timeline_events:
+                                    table = []
+                                    for ev in timeline_events:
+                                        source = ev.get("source", {})
+                                        table.append({
+                                            "Date": ev.get("date", "N/A"),
+                                            "Event": ev.get("event", ""),
+                                            "Source": f"P{source.get('page', 0)} ({source.get('chunk_id', '')[:12]}...)"
+                                        })
+                                    st.table(table)
+                                else:
+                                    st.write("Waiting for timeline...")
+
+                            with args_box.container():
+                                st.subheader("Key Arguments")
+                                if claimant_args:
+                                    st.write("**Claimant/Plaintiff Arguments:**")
+                                    for arg in claimant_args:
+                                        source = arg.get("source", {})
+                                        st.write(f"- {arg.get('text', '')}")
+                                        st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')[:12]}...")
+                                if defendant_args:
+                                    st.write("**Defendant/Respondent Arguments:**")
+                                    for arg in defendant_args:
+                                        source = arg.get("source", {})
+                                        st.write(f"- {arg.get('text', '')}")
+                                        st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')[:12]}...")
+                                if not claimant_args and not defendant_args:
+                                    st.write("Waiting for arguments (may be empty)...")
+
+                            with issues_box.container():
+                                st.subheader("Open Issues")
+                                if open_issues:
+                                    for issue in open_issues:
+                                        source = issue.get("source", {})
+                                        st.write(f"- {issue.get('text', '')}")
+                                        st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')[:12]}...")
+                                else:
+                                    st.write("Waiting for open issues (may be empty)...")
+
+                            if citations:
+                                with citations_box.container():
+                                    with st.expander("All Citations"):
+                                        for c in citations:
+                                            st.write(f"**{c.get('chunk_id', '')}** (Page {c.get('page', 0)}, Type: {c.get('chunk_type', 'unknown')})")
 
 # -----------------------------------------------------------------------------
 # Page: About
@@ -892,11 +1081,11 @@ elif page == "ℹ️ About":
     
     ### ✅ What This System Can Do:
     - Document ingestion and indexing
-    - Semantic search across documents
+    - Contract Review workflow (risks, evidence, executive summary)
+    - Contract Comparison workflow
+    - Due Diligence Memo workflow
+    - Document Explorer (evidence-only search, Arabic/English)
     - Clause extraction (verbatim)
-    - Contract comparison (textual differences)
-    - Case file summarization
-    - Bilingual Arabic-English search
     
     ### ❌ What This System Cannot Do:
     - Legal advice or interpretation
@@ -945,11 +1134,11 @@ elif page == "ℹ️ About":
     
     ### 5-Minute Walkthrough:
     1. **Upload a Contract**: Navigate to Upload Document, upload a PDF/DOCX
-    2. **RAG Search**: Go to RAG Search, ask "What are the payment terms?"
-    3. **Clause Extraction**: Navigate to Clause Extraction, view extracted clauses
-    4. **Contract Comparison**: Compare contract against template
-    5. **Case Summary**: Generate summary of a case file
-    6. **Bilingual Search**: Try Arabic query: "ما هي شروط الدفع؟"
+    2. **Document Explorer**: Go to Document Explorer, ask "Where are the payment terms?" (evidence only)
+    3. **Contract Review**: Run Contract Review workflow for risks and clause evidence
+    4. **Clause Extraction**: Navigate to Clause Extraction, view extracted clauses
+    5. **Contract Comparison**: Compare contract against template
+    6. **Due Diligence Memo**: Generate summary of a case file
     7. **Explain RAG**: Review this About page
     """)
 

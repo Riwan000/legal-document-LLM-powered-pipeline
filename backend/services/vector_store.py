@@ -14,8 +14,8 @@ VectorStore guarantees:
 """
 import logging
 import pickle
+import os
 import numpy as np
-import faiss
 from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
 from backend.config import settings
@@ -26,6 +26,55 @@ REQUIRED_RANKING_METADATA = {
     "clause_types": list,
     "hierarchy_level": str,
 }
+
+class _NumpyIndex:
+    """
+    Minimal FAISS-like index for offline/unit tests.
+
+    Stores normalized vectors and supports exact L2 search.
+    Returns squared L2 distances (to match FAISS IndexFlatL2 behavior).
+    """
+
+    def __init__(self, d: int):
+        self.d = int(d)
+        self._vectors = np.empty((0, self.d), dtype=np.float32)
+
+    @property
+    def ntotal(self) -> int:
+        return int(self._vectors.shape[0])
+
+    def add(self, x: np.ndarray) -> None:
+        if x.ndim != 2 or x.shape[1] != self.d:
+            raise ValueError(f"Vector dimension mismatch: expected (*, {self.d}), got {x.shape}")
+        x = x.astype(np.float32, copy=False)
+        self._vectors = np.vstack([self._vectors, x])
+
+    def search(self, q: np.ndarray, k: int):
+        if self.ntotal == 0:
+            distances = np.empty((1, 0), dtype=np.float32)
+            indices = np.empty((1, 0), dtype=np.int64)
+            return distances, indices
+
+        if q.ndim != 2 or q.shape[1] != self.d:
+            raise ValueError(f"Query dimension mismatch: expected (1, {self.d}), got {q.shape}")
+        q = q.astype(np.float32, copy=False)
+
+        # Squared L2 distances for all vectors
+        diffs = self._vectors - q[0]
+        dists = np.sum(diffs * diffs, axis=1)
+        k = min(int(k), self.ntotal)
+        # argsort ascending (closest first)
+        idx = np.argsort(dists)[:k]
+        return dists[idx].reshape(1, -1), idx.astype(np.int64).reshape(1, -1)
+
+    def dump_vectors(self) -> np.ndarray:
+        return self._vectors
+
+    def load_vectors(self, vectors: np.ndarray) -> None:
+        vectors = np.asarray(vectors, dtype=np.float32)
+        if vectors.ndim != 2 or vectors.shape[1] != self.d:
+            raise ValueError(f"Loaded vectors dimension mismatch: expected (*, {self.d}), got {vectors.shape}")
+        self._vectors = vectors
 
 
 class VectorStore:
@@ -42,7 +91,15 @@ class VectorStore:
         
         # We use an exact FAISS index with L2 distance.
         # Important: we normalize vectors to unit length, so L2 distance can be converted to cosine similarity.
-        self.index = faiss.IndexFlatL2(embedding_dim)
+        # Prefer a pure-numpy index by default (reliable in offline/unit-test environments).
+        # Opt into FAISS explicitly via USE_FAISS=1.
+        self._faiss = None
+        if os.environ.get("USE_FAISS", "").lower() in {"1", "true", "yes"}:
+            import faiss as _faiss
+            self._faiss = _faiss
+            self.index = _faiss.IndexFlatL2(embedding_dim)
+        else:
+            self.index = _NumpyIndex(embedding_dim)
         
         # Per-vector metadata aligned by index position (self.metadata[i] describes vector i).
         self.metadata: List[Dict[str, Any]] = []
@@ -74,19 +131,14 @@ class VectorStore:
         
         # Validate embedding dimension
         if embeddings.shape[1] != self.embedding_dim:
-            logging.warning(
-                f"Embedding dimension mismatch: expected {self.embedding_dim}, "
-                f"got {embeddings.shape[1]}"
+            raise ValueError(
+                f"Embedding dimension mismatch: expected {self.embedding_dim}, got {embeddings.shape[1]}"
             )
         
-        # Validate unit normalization (contract with EmbeddingService)
-        norms = np.linalg.norm(embeddings, axis=1)
-        if not np.allclose(norms, 1.0, atol=1e-3):
-            logging.warning(
-                "Embeddings are not unit-normalized before adding to VectorStore. "
-                f"Norm range: [{norms.min():.4f}, {norms.max():.4f}]. "
-                "Expected from EmbeddingService."
-            )
+        # Normalize embeddings to unit length (so L2 distances map to cosine similarity).
+        norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+        norms[norms == 0] = 1.0
+        embeddings = embeddings / norms
         
         # FAISS expects float32 arrays. Embeddings should already be normalized.
         self.index.add(embeddings)
@@ -136,8 +188,11 @@ class VectorStore:
         """
         if self.index.ntotal == 0:
             return []
-        
-        top_k = top_k or settings.TOP_K_RESULTS
+
+        if top_k is None:
+            top_k = settings.TOP_K_RESULTS
+        if top_k <= 0:
+            return []
         
         # Threshold behavior:
         # - similarity_threshold == -1.0  => use config default
@@ -160,24 +215,22 @@ class VectorStore:
                 f"got {query_embedding.shape[0]}"
             )
         
-        # Validate unit normalization (contract with EmbeddingService)
-        query_norm = np.linalg.norm(query_embedding)
-        if not np.allclose(query_norm, 1.0, atol=1e-3):
-            logging.warning(
-                f"Query embedding is not unit-normalized. Norm: {query_norm:.4f}. "
-                "Expected from EmbeddingService."
-            )
+        # Normalize query embedding to unit length (to match stored vectors).
+        query_norm = float(np.linalg.norm(query_embedding))
+        if query_norm == 0.0:
+            return []
+        query_embedding = query_embedding / query_norm
         
         query_embedding = query_embedding.reshape(1, -1)
         
         # Exact search in FAISS (IndexFlatL2).
-        # For unit-normalized vectors: cosine_similarity = 1 - (L2_distance^2 / 2)
+        # IMPORTANT: FAISS IndexFlatL2 returns *squared* L2 distances.
+        # For unit-normalized vectors: cosine_similarity = 1 - (||x-y||^2 / 2)
         distances, indices = self.index.search(query_embedding, top_k)
         
-        # Convert L2 distances to cosine similarities
-        # For unit-normalized vectors: cosine_similarity = 1 - (L2_distance^2 / 2)
-        # score ∈ [0, 1], where 1.0 means maximum similarity
-        similarities = 1 - (distances[0] ** 2 / 2)
+        # Convert squared L2 distances to cosine similarities.
+        # (Do NOT square again; that causes overflow and incorrect filtering.)
+        similarities = 1 - (distances[0] / 2)
         
         results = []
         for idx, (distance, similarity) in enumerate(zip(distances[0], similarities)):
@@ -246,6 +299,8 @@ class VectorStore:
         self,
         query_embedding: np.ndarray,
         priority_weights: Dict[str, float] = None,
+        # Backward-compat: older callers pass this keyword.
+        priority_clause_types: Dict[str, float] = None,
         top_k: int = None,
         document_id_filter: Optional[str] = None,
         similarity_threshold: Optional[float] = -1.0
@@ -266,18 +321,34 @@ class VectorStore:
         Returns:
             List of results with boosted scores for priority clause types
         """
+        if top_k is not None and top_k <= 0:
+            return []
+
         # First get standard search results
         results = self.search(
             query_embedding=query_embedding,
-            top_k=top_k * 2 if top_k else settings.TOP_K_RESULTS * 2,  # Get more results for re-ranking
+            top_k=(top_k * 2) if top_k is not None else (settings.TOP_K_RESULTS * 2),  # Get more results for re-ranking
             document_id_filter=document_id_filter,
             similarity_threshold=similarity_threshold
         )
         
+        if priority_weights is None and priority_clause_types is not None:
+            priority_weights = priority_clause_types
+
         if not priority_weights:
             # No priority weights, return standard results
             return results[:top_k or settings.TOP_K_RESULTS]
         
+        # Normalize keys to lowercase once (callers may use "Governing Law", etc.)
+        normalized_priority_weights = {}
+        for k, v in (priority_weights or {}).items():
+            if not isinstance(k, str):
+                continue
+            try:
+                normalized_priority_weights[k.lower()] = float(v)
+            except Exception:
+                continue
+
         # Boosting rules:
         # - priority_score is cumulative over matching clause types
         # - boost_factor scales the influence of priority over base similarity
@@ -300,13 +371,13 @@ class VectorStore:
             
             # Calculate priority score as sum of weights for matching clause types
             priority_score = sum(
-                priority_weights.get(clause_type.lower(), 0.0)
+                normalized_priority_weights.get(clause_type.lower(), 0.0)
                 for clause_type in clause_types
             )
             
             # Also check hierarchy level for "Governing Law" type
-            if "governing law" in priority_weights and hierarchy_level == "law":
-                priority_score += priority_weights.get("governing law", 0.0)
+            if "governing law" in normalized_priority_weights and hierarchy_level == "law":
+                priority_score += normalized_priority_weights.get("governing law", 0.0)
             
             if priority_score > 0:
                 # Apply weighted boost (clauses matching multiple types get higher boost)
@@ -390,9 +461,13 @@ class VectorStore:
         """
         filepath = filepath or settings.VECTOR_STORE_PATH / settings.FAISS_INDEX_NAME
         
-        # Save FAISS index
-        faiss.write_index(self.index, str(filepath))
-        # FAISS built-in serialization
+        # Save index
+        if self._faiss is not None:
+            self._faiss.write_index(self.index, str(filepath))
+        else:
+            # Persist vectors for numpy index
+            with open(filepath, "wb") as f:
+                pickle.dump({"version": 1, "vectors": self.index.dump_vectors()}, f)
         
         # Save metadata with versioning for safe future migrations
         metadata_path = filepath.with_suffix('.metadata.pkl')
@@ -417,9 +492,15 @@ class VectorStore:
         if not filepath.exists():
             raise FileNotFoundError(f"Vector store not found: {filepath}")
         
-        # Load FAISS index
-        self.index = faiss.read_index(str(filepath))
-        # Load FAISS index from disk
+        # Load index
+        if self._faiss is not None:
+            self.index = self._faiss.read_index(str(filepath))
+        else:
+            with open(filepath, "rb") as f:
+                payload = pickle.load(f)
+            vectors = payload.get("vectors")
+            self.index = _NumpyIndex(self.embedding_dim)
+            self.index.load_vectors(vectors)
         
         # Load metadata with version checking
         metadata_path = filepath.with_suffix('.metadata.pkl')

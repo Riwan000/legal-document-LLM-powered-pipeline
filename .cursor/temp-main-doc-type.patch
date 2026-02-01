@@ -1,0 +1,20 @@
+diff --git a/backend/main.py b/backend/main.py
+--- a/backend/main.py
++++ b/backend/main.py
+@@ -250,6 +250,10 @@
+-        response = {
+-            "schema_version": "1.0",
+-            "document_id": document_id,
+-            "extraction_mode": "structure_first_verbatim",
+-            "clauses": clauses
+-        }
++        response = {
++            "schema_version": "1.0",
++            "document_id": document_id,
++            "extraction_mode": "structure_first_verbatim",
++            "clauses": clauses,
++            "document_type": extraction_result.get("document_type")
++            or getattr(getattr(clause_extractor, "structured_extractor", None), "last_document_type", None).value
++            if getattr(getattr(clause_extractor, "structured_extractor", None), "last_document_type", None)
++            else None
++        }

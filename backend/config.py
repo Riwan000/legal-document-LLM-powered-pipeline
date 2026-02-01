@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     
     # Embedding Model Configuration
     EMBEDDING_MODEL: str = "paraphrase-multilingual-MiniLM-L12-v2"
+    # Fallback when primary model fails with low memory (e.g. OSError 1455 paging file)
+    EMBEDDING_MODEL_FALLBACK: str = "paraphrase-multilingual-MiniLM-L6-v2"
+    # Second fallback (smaller, English-only) if first fallback also fails
+    EMBEDDING_MODEL_FALLBACK_2: str = "all-MiniLM-L6-v2"
     
     # Vector Store Configuration
     VECTOR_STORE_PATH: Path = Path("data/vector_store")
@@ -43,6 +47,8 @@ class Settings(BaseSettings):
     
     # Language & Bilingual Configuration
     OCR_LANGUAGE: str = "eng+ara"  # Tesseract OCR language ('eng', 'ara', 'eng+ara' for multi)
+    OCR_DPI: int = 200  # DPI for PDF→image (lower reduces memory; 300 for higher accuracy)
+    OCR_PAGES_PER_BATCH: int = 10  # Process OCR in batches to avoid MemoryError in subprocess reader
     DEFAULT_RESPONSE_LANGUAGE: Optional[str] = None  # None = auto-detect, 'ar' = Arabic, 'en' = English
     LANGUAGE_DETECTION_THRESHOLD: float = 0.1  # Arabic character ratio threshold for language detection
     ENABLE_QUERY_TRANSLATION: bool = True  # Enable query translation to match document language
@@ -64,6 +70,15 @@ class Settings(BaseSettings):
     # Case Summarization Configuration
     CASE_SUMMARY_SEED: int = 42  # Fixed seed for deterministic LLM outputs
     CASE_SUMMARY_TEMPERATURE: float = 0.0  # Zero temperature for determinism
+    
+    # Contract Review / Workflow Configuration (v0.2)
+    CONTRACT_REVIEW_SEED: int = 42  # Fixed seed for determinism
+    CONTRACT_REVIEW_TEMPERATURE: float = 0.0  # Zero temperature for determinism
+    DOCUMENT_EXPLORER_MAX_RESULTS: int = 10  # Limit results for Document Explorer
+    # Thresholds used to map a numeric risk score to a severity band.
+    # Convention: score >= high => "High"; score >= medium => "Medium"; otherwise "Low".
+    # Can be overridden via env var `RISK_SEVERITY_THRESHOLDS` as JSON (e.g. {"high":0.8,"medium":0.5}).
+    RISK_SEVERITY_THRESHOLDS: Dict[str, float] = {"high": 0.8, "medium": 0.5}
     
     # Section-specific top-K limits (PRD requirements)
     CASE_SUMMARY_EXEC_MAX_CHUNKS: int = 8  # Executive summary max chunks

@@ -1,0 +1,29 @@
+{
+  "clause_id": "salary-wages_DOC-0001_p5_bd5d42",
+  "title": "Responsibility for Death Compensation",
+  "type": "salary_wages",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "C— _ either of the two parties or IMMedialely upon\n\n& SErving SUCH notice and after Making to the\notner pany a Payment of wages in jiey of the\nNouce period of 30 days\n\n(0) By the Firs: Party. without neeg for any notice\nOF Cash payment :n trey \"here of or awarg of\ncompensation by reas",
+      "clean_text": "The First Party acknowledges that it shall be fully responsible for Payment of death compensation Including blood money, On behalf of the Second Party should the latter be held Quilty of causing the Geath of a thirg Dany and is required to pay any compensation, inc luding bioog money."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

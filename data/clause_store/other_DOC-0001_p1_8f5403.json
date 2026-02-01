@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_DOC-0001_p1_8f5403",
+  "title": "Submission of Employment Contract",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 1,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "No.Z-11025/392/2013-Emig\nGovernment of India\nMinistry of Overseas Indian Affairs\n(Emigration Section)\n\n1021, Akbar Bhawan,\nChanakyapuri, New ",
+      "clean_text": "Submission of Employment Contract signed by both Foreign Employer (FE) and intending emigrant* and countersigned by the Recruiting Agent (RA)"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

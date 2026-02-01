@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_DOC-0001_p1_25371f",
+  "title": "Revision of eWakala instructions for Saudi Arabia",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "administrative",
+  "jurisdiction": "Saudi Arabia",
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 1,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "No.Z-11025/392/2013-Emig\nGovernment of India\nMinistry of Overseas Indian Affairs\n(Emigration Section)\n\n1021, Akbar Bhawan,\nChanakyapuri, New Delhi,\nthe | July 2014\nTo\nAll Protectors of Emigrants\n\nSubject: Submission of Employment Contract signed by both Foreign Employer (FE)\nand intending emigrant* and countersigned by the Recruiting Agent (RA) —\nrevision of eWakala instructions f",
+      "clean_text": "In partial modification of the circular issued by Ministry of Labour vide No. CNo.11011/25/2003-PGE-I, dated 14.11.2003, am directed to inform that inputs have been received by the Indian Mission in Riyadh that the competent authorities in the Kingdom of Saudi Arabia (KSA) do not issue a Specimen Employment Contract in the prescribed format for clearances given on e-Wakala system."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

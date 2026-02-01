@@ -1,0 +1,18 @@
+contract_type: NDA
+
+expected_clauses:
+  - confidentiality
+  - term
+  - governing_law
+  - liability
+  - remedies
+
+optional_clauses:
+  - non_solicitation
+
+risk_weights:
+  governing_law: high
+  liability: high
+  confidentiality: medium
+  term: low
+  remedies: medium

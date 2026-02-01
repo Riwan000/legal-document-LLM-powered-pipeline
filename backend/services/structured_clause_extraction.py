@@ -37,6 +37,15 @@ class DocumentSection(str, Enum):
     STATUTORY_TEXT = "statutory_text"
     ANNEXURES_SCHEDULES = "annexures_schedules"
     AMBIGUOUS = "ambiguous"  # Page cannot be confidently classified
+    UNKNOWN = "unknown"      # Section unknown but still eligible for extraction
+
+
+class DocumentType(str, Enum):
+    """Document type for section gating."""
+    CONTRACT = "contract"
+    JUDGMENT = "judgment"
+    STATUTE = "statute"
+    UNKNOWN = "unknown"
 
 
 class ExtractedClause:
@@ -50,7 +59,8 @@ class ExtractedClause:
         page_end: int,
         clause_heading: str,
         verbatim_text: str,
-        normalized_text: Optional[str] = None
+        normalized_text: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None
     ):
         self.clause_id = clause_id
         self.document_section = document_section
@@ -59,6 +69,7 @@ class ExtractedClause:
         self.clause_heading = clause_heading
         self.verbatim_text = verbatim_text
         self.normalized_text = normalized_text
+        self.metadata = metadata or {}
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API response (strict JSON schema)."""
@@ -72,6 +83,8 @@ class ExtractedClause:
         }
         if self.normalized_text:
             result["normalized_text"] = self.normalized_text
+        if self.metadata:
+            result["metadata"] = self.metadata
         return result
 
 
@@ -81,10 +94,57 @@ class StructuredClauseExtractionService:
     # Hard condition: Minimum character count for valid clause
     MIN_CLAUSE_LENGTH = 50
     MIN_VERB_LINES_FOR_CONTRACT = 2
+    MAX_HEADING_LENGTH = 80
+    MAX_DOC_TYPE_SAMPLE_PAGES = 3
+    
+    # Conservative keyword map for post-extraction section labeling.
+    SECTION_KEYWORDS = {
+        "termination": [
+            "terminate",
+            "termination",
+            "probation",
+            "notice period",
+            "notice",
+            "expiry",
+        ],
+        "payment": [
+            "payment",
+            "wages",
+            "salary",
+            "compensation",
+            "fees",
+            "remuneration",
+            "blood money",
+        ],
+        "liability": [
+            "liable",
+            "liability",
+            "responsible",
+            "indemnify",
+            "indemnity",
+        ],
+    }
+    
+    CONFIDENTIALITY_PATTERNS = [
+        r"shall\s+keep\s+confidential",
+        r"must\s+keep\s+confidential",
+        r"undertakes?\s+to\s+keep\s+confidential",
+        r"shall\s+not\s+disclose",
+        r"non[-\s]?disclosure",
+    ]
+    
+    CONFIDENCE_MAP = {
+        "keyword_match": "medium",
+        "multiple_section_matches": "low",
+        "no_keywords_found": "low",
+        "document_type_gate": "high",
+        "case_citation_pattern": "medium",
+    }
     
     def __init__(self):
         """Initialize structured clause extraction service."""
         self.ingestion_service = DocumentIngestionService()
+        self.last_document_type: Optional[DocumentType] = None
         
         # Section detection patterns (rule-based)
         self.section_patterns = {
@@ -118,7 +178,8 @@ class StructuredClauseExtractionService:
         self.operative_sections = {
             DocumentSection.CONTRACTUAL_TERMS,
             DocumentSection.JUDICIAL_REASONING,
-            DocumentSection.STATUTORY_TEXT
+            DocumentSection.STATUTORY_TEXT,
+            DocumentSection.UNKNOWN,
         }
         
         # Contract body entry gate patterns (must match at least two on the same page)
@@ -177,7 +238,7 @@ class StructuredClauseExtractionService:
         file_path = Path(file_path)
         logger.info(f"Starting clause extraction for document_id={document_id}, file_path={file_path}")
         
-        # Step 1: Parse document pages and convert to List[Page]
+        # Step 1: Parse document pages and convert to List[Page] (page_number + verbatim lines[]).
         try:
             raw_pages = self.ingestion_service.parser.parse_file(file_path)
         except Exception as parse_error:
@@ -193,6 +254,7 @@ class StructuredClauseExtractionService:
         # Convert parser output to List[Page] with lines[]
         # EXECUTION GUARANTEE: Validate page-level input, fail if invalid
         pages: List[Page] = []
+        pages_text: List[str] = []
         
         for page_data in raw_pages:
             if len(page_data) == 3:
@@ -225,9 +287,13 @@ class StructuredClauseExtractionService:
                 lines=lines,
                 is_ocr=is_ocr
             ))
+            pages_text.append(text or "")
             logger.debug(f"Page {page_number}: {len(lines)} lines, is_ocr={is_ocr}, text_length={len(text)}")
+
+        document_type = self.detect_document_type(pages_text)
+        self.last_document_type = document_type
         
-        # Step 2: Classify sections (one section per page, fail-closed per page)
+        # Step 2: Classify each page into exactly one section (rule-based; fail-closed on error).
         page_sections = []
         section_counts = {}
         
@@ -241,6 +307,11 @@ class StructuredClauseExtractionService:
                 logger.error(f"Error classifying section for page {page.page_number}: {str(section_error)}", exc_info=True)
                 # Fail closed on classification error
                 return []
+
+            # Ambiguous pages still allow extraction, but are labeled as unknown.
+            if section == DocumentSection.AMBIGUOUS:
+                logger.debug(f"Page {page.page_number}: classified as AMBIGUOUS -> UNKNOWN for extraction")
+                section = DocumentSection.UNKNOWN
             
             page_sections.append({
                 'page': page,
@@ -251,7 +322,7 @@ class StructuredClauseExtractionService:
         
         logger.info(f"Section classification complete: {section_counts}")
         
-        # Step 3: Check if any operative section exists (global fail-closed check)
+        # Step 3: Global fail-closed check: if no operative sections exist, emit zero clauses.
         has_operative_section = any(
             page['section'] in self.operative_sections
             for page in page_sections
@@ -264,7 +335,11 @@ class StructuredClauseExtractionService:
         
         logger.info("Operative sections detected. Proceeding with clause extraction.")
         
-        # Step 4: Extract clauses from operative sections only
+        # Step 4: Clause extraction (structure-first):
+        # - enforce contract-body entry gate (contractual_terms)
+        # - skip non-operative sections (fail-closed)
+        # - detect clause starts (headings/numbering heuristics)
+        # - buffer verbatim lines until next start/boundary, then finalize.
         all_clauses = []
         current_clause_buffer = None
         current_section = None
@@ -277,7 +352,7 @@ class StructuredClauseExtractionService:
             page_number = page.page_number
             lines = page.lines  # Use lines[] directly from Page object
             
-            # Contract body entry gate (applies only to contractual_terms)
+            # Step 4.1: Contract body entry gate (applies only to contractual_terms).
             if section == DocumentSection.CONTRACTUAL_TERMS and not contract_body_active:
                 if self._meets_contract_entry_gate(lines):
                     contract_body_active = True
@@ -290,29 +365,7 @@ class StructuredClauseExtractionService:
                         current_page_start = None
                     continue
             
-            # FAIL-CLOSED: Skip ambiguous pages BEFORE any clause operations
-            # Do not create clause buffers, do not emit clauses from ambiguous pages
-            if section == DocumentSection.AMBIGUOUS:
-                logger.debug(f"Page {page_number}: AMBIGUOUS section - skipping (fail-closed)")
-                # Terminate any clause that was spanning into this ambiguous page
-                if current_clause_buffer:
-                    logger.debug(f"Terminating clause buffer spanning into ambiguous page {page_number}")
-                    clause = self._finalize_clause(
-                        current_clause_buffer,
-                        current_section,
-                        current_page_start,
-                        page_number - 1,
-                        document_id
-                    )
-                    if clause:
-                        all_clauses.append(clause)
-                        logger.debug(f"Finalized clause from previous page: {clause.clause_id}")
-                    current_clause_buffer = None
-                    current_section = None
-                # Skip this page entirely - do not process for clause extraction
-                continue
-            
-            # Skip non-operative sections (but not ambiguous - already handled above)
+            # Step 4.2: Skip non-operative sections.
             if section not in self.operative_sections:
                 # Terminate any clause that was spanning into this non-operative section
                 if current_clause_buffer:
@@ -321,7 +374,8 @@ class StructuredClauseExtractionService:
                         current_section,
                         current_page_start,
                         page_number - 1,
-                        document_id
+                        document_id,
+                        document_type
                     )
                     if clause:
                         all_clauses.append(clause)
@@ -337,18 +391,30 @@ class StructuredClauseExtractionService:
                     current_section,
                     current_page_start,
                     page_number - 1,
-                    document_id
+                    document_id,
+                    document_type
                 )
                 if clause:
                     all_clauses.append(clause)
                 current_clause_buffer = None
                 current_section = None
             
-            # Extract clause boundaries from this page's lines
+            # Step 4.4: Detect clause starts on this page (headings / numbering heuristics).
             clause_starts = self._detect_clause_starts(lines)
+            if (
+                not clause_starts
+                and document_type == DocumentType.JUDGMENT
+                and self.has_case_citation(page.get_text())
+            ):
+                first_line = next((line.strip() for line in lines if line.strip()), "")
+                clause_starts = [{
+                    "line": 0,
+                    "heading": first_line,
+                    "priority": 0,
+                }] if first_line else []
             logger.debug(f"Page {page_number} ({section.value}): detected {len(clause_starts)} clause starts")
             
-            # Process lines directly from Page object
+            # Step 4.5: Buffer verbatim lines into clauses and finalize on boundaries.
             for line_idx, line in enumerate(lines):
                 # Check if this line starts a new clause
                 is_clause_start = any(
@@ -356,7 +422,7 @@ class StructuredClauseExtractionService:
                 )
                 
                 if is_clause_start:
-                    # Finalize previous clause if exists
+                    # Step 4.5a: Finalize previous clause before starting new one.
                     if current_clause_buffer:
                         logger.debug(f"Finalizing previous clause before starting new one at page {page_number}, line {line_idx}")
                         clause = self._finalize_clause(
@@ -364,13 +430,14 @@ class StructuredClauseExtractionService:
                             current_section,
                             current_page_start,
                             page_number,
-                            document_id
+                            document_id,
+                            document_type
                         )
                         if clause:
                             all_clauses.append(clause)
                             logger.debug(f"Finalized clause: {clause.clause_id} (pages {clause.page_start}-{clause.page_end})")
                     
-                    # Start new clause
+                    # Step 4.5b: Start new clause buffer at this heading.
                     clause_start_info = next(
                         s for s in clause_starts if s['line'] == line_idx
                     )
@@ -383,7 +450,7 @@ class StructuredClauseExtractionService:
                     current_section = section
                     current_page_start = page_number
                 elif current_clause_buffer:
-                    # Continue current clause (may span pages if section is same)
+                    # Step 4.5c: Continue current clause buffer (may span pages if section remains operative and unchanged).
                     current_clause_buffer['text_lines'].append(line)
                 elif not current_clause_buffer and section in self.operative_sections:
                     # No current clause but we're in an operative section
@@ -391,7 +458,7 @@ class StructuredClauseExtractionService:
                     # For now, we'll only start clauses on explicit starts
                     pass
             
-            # Check if we're at document end or section boundary
+            # Step 4.6: Finalize clause buffers at end-of-section / end-of-document boundaries.
             is_last_page = (i == len(page_sections) - 1)
             next_section = page_sections[i + 1]['section'] if not is_last_page else None
             
@@ -404,7 +471,8 @@ class StructuredClauseExtractionService:
                         current_section,
                         current_page_start,
                         page_number,
-                        document_id
+                        document_id,
+                        document_type
                     )
                     if clause:
                         all_clauses.append(clause)
@@ -412,16 +480,17 @@ class StructuredClauseExtractionService:
                     current_clause_buffer = None
                     current_section = None
         
-        # Step 5: Deduplicate clauses (exact match on verbatim_text, same section)
+        # Step 5: Deduplicate clauses (exact match on verbatim_text within same section).
         logger.info(f"Before deduplication: {len(all_clauses)} clauses")
         deduplicated = self._deduplicate_clauses(all_clauses)
         logger.info(f"After deduplication: {len(deduplicated)} clauses")
         
-        # Step 6: Sort by page_start, section order, appearance
+        # Step 6: Deterministic ordering: page_start, then section order, then clause_heading.
         section_order = {
             DocumentSection.CONTRACTUAL_TERMS.value: 0,
             DocumentSection.JUDICIAL_REASONING.value: 1,
             DocumentSection.STATUTORY_TEXT.value: 2,
+            DocumentSection.UNKNOWN.value: 3,
         }
         deduplicated.sort(key=lambda c: (
             c.page_start,
@@ -628,14 +697,14 @@ class StructuredClauseExtractionService:
         """Check for at least one verb marker in text (tolerant to OCR noise)."""
         lower = text.lower()
         # Standard verb markers
-        if any(re.search(rf"\\b{verb}\\b", lower) for verb in self.verb_markers):
+        if any(re.search(rf"\b{verb}\b", lower) for verb in self.verb_markers):
             return True
         # OCR-tolerant patterns for 'shall'/'may'/'will'
-        if re.search(r"\\bsh[a1]ll\\b", lower):
+        if re.search(r"\bsh[a1]ll\b", lower):
             return True
-        if re.search(r"\\bma[yv]\\b", lower):
+        if re.search(r"\bma[yv]\b", lower):
             return True
-        if re.search(r"\\bwi[l1]{2}\\b", lower):
+        if re.search(r"\bwi[l1]{2}\b", lower):
             return True
         return False
 
@@ -659,7 +728,8 @@ class StructuredClauseExtractionService:
         section: DocumentSection,
         page_start: int,
         page_end: int,
-        document_id: str
+        document_id: str,
+        document_type: DocumentType
     ) -> Optional[ExtractedClause]:
         """
         Finalize a clause from buffer and create ExtractedClause object.
@@ -686,28 +756,39 @@ class StructuredClauseExtractionService:
             logger.debug(f"Clause too short ({len(verbatim_text)} chars < {self.MIN_CLAUSE_LENGTH}) - discarding (fail-closed)")
             return None
         
-        # Clause heading may be absent; keep as None in output
-        heading = clause_buffer.get('heading')
-        if heading:
-            heading = heading.strip()
+        raw_heading = clause_buffer.get('heading')
+        if raw_heading:
+            raw_heading = raw_heading.strip()
         
-        # Heading-only rule: heading cannot be a clause by itself
-        if heading:
+        # Derive a readable clause heading from verbatim text.
+        heading = self.extract_clause_heading(verbatim_text)
+        
+        # Heading-only rule: explicit heading cannot be a clause by itself
+        if raw_heading:
             body_lines = clause_buffer['text_lines'][1:]
             has_body = any(line.strip() for line in body_lines)
             if not has_body:
                 logger.debug("Heading-only buffer detected - discarding clause (fail-closed)")
                 return None
         
-        # Substantive text gating: must contain verb and not be label/ALL CAPS
-        if not self._is_substantive_clause(verbatim_text, clause_buffer['text_lines']):
-            logger.debug("Non-substantive clause text detected - discarding clause (fail-closed)")
-            return None
+        # Post-extraction section classification (keyword-based, conservative).
+        classified_section, section_reason = self.classify_clause_section_with_reason(
+            verbatim_text,
+            document_type
+        )
         
+        # Substantive text gating: must contain verb and not be label/ALL CAPS.
+        # Exception: legal_reasoning in judgments may not have obligation language.
+        if not self._is_substantive_clause(verbatim_text, clause_buffer['text_lines']):
+            if not (document_type == DocumentType.JUDGMENT and section_reason == "case_citation_pattern"):
+                logger.debug("Non-substantive clause text detected - discarding clause (fail-closed)")
+                return None
+        section_confidence = self.CONFIDENCE_MAP.get(section_reason, "low")
+
         # Generate deterministic clause_id (heading may be empty string, will be null in output)
         clause_id = self._generate_clause_id(
             document_id,
-            section.value,
+            classified_section,
             heading or "",  # Use empty string for hash, but output will be null
             verbatim_text
         )
@@ -717,12 +798,17 @@ class StructuredClauseExtractionService:
         
         return ExtractedClause(
             clause_id=clause_id,
-            document_section=section.value,
+            document_section=classified_section,
             page_start=page_start,
             page_end=page_end,
             clause_heading=heading,
             verbatim_text=verbatim_text,
-            normalized_text=normalized_text
+            normalized_text=normalized_text,
+            metadata={
+                "section_reason": section_reason,
+                "section_confidence": section_confidence,
+                "document_type": document_type.value,
+            }
         )
     
     def _generate_clause_id(
@@ -746,6 +832,68 @@ class StructuredClauseExtractionService:
         heading_slug = re.sub(r'[^a-zA-Z0-9]', '', clause_heading)[:20]
         
         return f"{section_slug}_{heading_slug}_{hash_hex}"
+
+    def detect_document_type(self, pages: List[str]) -> DocumentType:
+        """Detect document type using a deterministic keyword heuristic."""
+        sample = " ".join(pages[: self.MAX_DOC_TYPE_SAMPLE_PAGES]).lower()
+        
+        if "judgment" in sample or "lord" in sample or "court of appeal" in sample:
+            return DocumentType.JUDGMENT
+        if "this agreement" in sample or "party" in sample:
+            return DocumentType.CONTRACT
+        if "an act to" in sample or "section" in sample:
+            return DocumentType.STATUTE
+        return DocumentType.UNKNOWN
+
+    def has_case_citation(self, text: str) -> bool:
+        return bool(re.search(r"\bv\b|\[[0-9]{4}\]", text))
+
+    def has_obligation_language(self, text: str) -> bool:
+        return bool(re.search(r"\b(shall|must|agree|undertakes)\b", text, re.IGNORECASE))
+
+    def classify_clause_section_with_reason(
+        self,
+        verbatim_text: str,
+        document_type: DocumentType
+    ) -> Tuple[str, str]:
+        """Classify clause section using keyword presence on verbatim text."""
+        text = (verbatim_text or "").lower()
+        
+        if document_type == DocumentType.JUDGMENT:
+            if self.has_case_citation(text) and not self.has_obligation_language(text):
+                return "legal_reasoning", "case_citation_pattern"
+            return "unknown", "document_type_gate"
+        
+        if document_type != DocumentType.CONTRACT:
+            return "unknown", "document_type_gate"
+        
+        matches: List[str] = []
+        
+        for section, keywords in self.SECTION_KEYWORDS.items():
+            for kw in keywords:
+                if kw in text:
+                    matches.append(section)
+                    break
+        
+        if any(re.search(pattern, text, re.IGNORECASE) for pattern in self.CONFIDENTIALITY_PATTERNS):
+            matches.append("confidentiality")
+        
+        if len(matches) == 1:
+            return matches[0], "keyword_match"
+        if len(matches) > 1:
+            return "unknown", "multiple_section_matches"
+        return "unknown", "no_keywords_found"
+
+    def extract_clause_heading(self, verbatim_text: str) -> str:
+        """Derive a readable clause heading from verbatim text."""
+        lines = [line.strip() for line in (verbatim_text or "").splitlines() if line.strip()]
+        if not lines:
+            return "Untitled Clause"
+        
+        first_line = lines[0]
+        first_line = re.sub(r"^\d+\.\s*", "", first_line)
+        first_line = re.sub(r"\s+", " ", first_line).strip()
+        return first_line[: self.MAX_HEADING_LENGTH]
     
     def _normalize_text(self, verbatim_text: str) -> Optional[str]:
         """

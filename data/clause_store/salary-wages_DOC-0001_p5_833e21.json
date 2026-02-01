@@ -1,0 +1,29 @@
+{
+  "clause_id": "salary-wages_DOC-0001_p5_833e21",
+  "title": "Termination of Agreement",
+  "type": "salary_wages",
+  "subtype": null,
+  "authority_level": "administrative",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "\\ar\n\nft\n\ntermination of his agreement Oy ether Patty n\naccordance with its l€rms except | he remains .n\nthe Kingdom with the agreemeni of the F rs: Party\nand the authort.es concerned\n\n15. This agreement may be terminateg n any of jne\nfollowing cases\n\n(a) Al any time D",
+      "clean_text": "The agreement may be terminated in any of the following cases (a) Any time by a 30 days written Notice from either of the two parties or Immediately upon Serving SUCH notice and after Making to the other party a Payment of wages in lieu of the Notice period of 30 days"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": true,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

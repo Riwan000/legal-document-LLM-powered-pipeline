@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_DOC-0001_p6_1a835d",
+  "title": "Employment contract validity",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 6,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "\\a4\n\n«ep! in the Second Party's file with the First Party\nall copies having been signed by the two parties in\nacknowleogement of their agreement to the con\nne tracts thereof in the presence of the witnesses for\n\n'S €xe",
+      "clean_text": "This employment contract will be the only valid contract, and any subsequent contract entered into between the employer and employee in substitution of this contract will not have no validity vis “a-vi§ (his agreement."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

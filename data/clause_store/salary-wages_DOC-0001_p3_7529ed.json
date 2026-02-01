@@ -1,0 +1,29 @@
+{
+  "clause_id": "salary-wages_DOC-0001_p3_7529ed",
+  "title": "Payment Terms",
+  "type": "salary_wages",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "\nY \\\\wmecontact =\n\n3 The First Party shai! pay te tre Seconc Party\nduring the latter's pertorrrance of s Cutles 3\nmonthly salary of SP ony\n\n46 The First Party wit provice 'ree guilabie accom:\nmodatan with turshings te Ihe Seconc Paty\n\n5 The First Party wil orovice io Ine Second Pat's\ntree fooc (three TNeais daily)\n\n& The Secono Party snat ne ent> se 1h at ane.\nvacaton ot oavs after eact: we've PORES\nof coninuoys sewice under ims Ag'eeme~*\nS",
+      "clean_text": "The First Party shai! pay te tre Seconc Party during the latter's pertorrrance of s Cutles 3 monthly salary of SP ony 46 The First Party wit provice 'ree guilabie accom: modatan with turshings te Ihe Secono Party 5 The First Party wil orovice io Ine Second Pat's tree fooc (three TNeais daily) & The Secono Party snat ne ent> se 1h at ane. vacaton ot oavs after eact: we've PORES of coninuoys sewice under ims Ag'eeme~* Salary for vacation sha "
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": true,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

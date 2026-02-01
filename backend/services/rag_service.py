@@ -60,7 +60,7 @@ class RAGService:
         query: str,
         top_k: int = None,
         document_id_filter: Optional[str] = None,
-        priority_clause_types: List[str] = None
+        priority_clause_types: Any = None
     ) -> List[Dict[str, Any]]:
         """
         Search for relevant document chunks with clause-aware priority boosting.
@@ -75,19 +75,32 @@ class RAGService:
         Returns:
             List of relevant chunks with metadata, ranked by authority
         """
+        if top_k is not None and top_k <= 0:
+            return []
+
         # 1) Classify the query and choose “priority” clause types (boosting).
+        # `priority_clause_types` is a backward-compat parameter name; in this codebase it
+        # is typically a weighted mapping: {clause_type: weight}.
         if priority_clause_types is None:
             classification = self.query_classifier.classify_query(query)
             priority_clause_types = self._get_priority_clause_types(classification)
         
+        # Normalize priority config to a weights dict.
+        priority_weights: Optional[Dict[str, float]] = None
+        if isinstance(priority_clause_types, dict):
+            priority_weights = priority_clause_types
+        elif isinstance(priority_clause_types, list):
+            # Treat list as "equal weight" boosting
+            priority_weights = {str(t): 1.0 for t in priority_clause_types}
+
         # 2) Encode query into an embedding vector (multilingual model supports Arabic/English).
         query_embedding = self.embedding_service.embed_text(query)
         
         # 3) Retrieve top-k chunks. If we have priority clause types, do a “boosted” re-ranking.
-        if priority_clause_types:
+        if priority_weights:
             results = self.vector_store.search_with_priority(
                 query_embedding=query_embedding,
-                priority_clause_types=priority_clause_types,
+                priority_weights=priority_weights,
                 top_k=top_k,
                 document_id_filter=document_id_filter
             )
@@ -100,21 +113,22 @@ class RAGService:
         
         # 4) If semantic results are empty, lower the similarity threshold to be more permissive.
         # This mainly helps OCR-derived text, where embeddings can be noisier.
-        if not results and top_k:
-            if priority_clause_types:
+        if not results:
+            effective_top_k = top_k or settings.TOP_K_RESULTS
+            if priority_weights:
                 results = self.vector_store.search_with_priority(
                     query_embedding=query_embedding,
-                    priority_clause_types=priority_clause_types,
-                    top_k=top_k,
+                    priority_weights=priority_weights,
+                    top_k=effective_top_k,
                     document_id_filter=document_id_filter,
-                    similarity_threshold=settings.MIN_SIMILARITY_THRESHOLD
+                    similarity_threshold=None
                 )
             else:
                 results = self.vector_store.search(
                     query_embedding=query_embedding,
-                    top_k=top_k,
+                    top_k=effective_top_k,
                     document_id_filter=document_id_filter,
-                    similarity_threshold=settings.MIN_SIMILARITY_THRESHOLD
+                    similarity_threshold=None
                 )
         
         # 5) Final fallback: keyword match inside stored chunk text for a given document.
@@ -310,7 +324,8 @@ class RAGService:
         if document_type == 'statute':
             return "The law does not expressly state this."
         else:
-            return "This is not specified in the provided contract."
+            # Tests expect a "couldn't find" phrasing for no-results cases.
+            return "I couldn't find this information in the provided contract."
     
     def _validate_citation_support(self, answer: str, cited_chunks: List[Dict[str, Any]], query: str) -> bool:
         """
@@ -570,6 +585,20 @@ class RAGService:
                 - hierarchy_analysis: Optional hierarchy analysis
                 - sources: List of source chunks
         """
+        # Edge case: explicitly request zero retrieval. Return a safe "not specified"
+        # response with no sources.
+        if top_k == 0:
+            return {
+                "status": "not_specified",
+                "answer": self._get_not_specified_message("contract"),
+                "citation": None,
+                "confidence": "low",
+                "refusal_reason": None,
+                "hierarchy_analysis": {},
+                "sources": [],
+                "query": query,
+            }
+
         # Step 1: Classify query
         classification = self.query_classifier.classify_query(query)
         
