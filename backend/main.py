@@ -32,6 +32,7 @@ from backend.services.clause_validator import ClauseValidator
 from backend.services.document_explorer_service import DocumentExplorerService
 from backend.services.contract_review_service import ContractReviewService
 from backend.services.workflow_orchestrator import WorkflowOrchestrator
+from backend.services.due_diligence_memo_service import DueDiligenceMemoService
 from backend.models.workflow import WorkflowContext
 from backend.services.guardrails import WORKFLOW_DISCLAIMER
 
@@ -96,17 +97,6 @@ async def startup_event():
     document_registry = DocumentRegistry()
     print("Document registry initialized")
     
-    # #region agent log
-    try:
-        import json
-        from pathlib import Path
-        _proj = Path(__file__).resolve().parents[1]  # project root (backend's parent)
-        _log_path = _proj / ".cursor" / "debug.log"
-        with open(_log_path, "a", encoding="utf-8") as _f:
-            _f.write(json.dumps({"hypothesisId": "H2", "location": "main.py:startup_event", "message": "before EmbeddingService()", "data": {"step": "embedding_init"}, "timestamp": __import__("time").time() * 1000, "sessionId": "debug-session"}) + "\n")
-    except Exception:
-        pass
-    # #endregion
     # Initialize embedding service
     embedding_service = EmbeddingService()
     print(f"Embedding service initialized (dimension: {embedding_service.get_embedding_dimension()})")
@@ -158,8 +148,9 @@ async def startup_event():
     # Workflow services (v0.2)
     document_explorer_service = DocumentExplorerService(embedding_service, vector_store)
     contract_review_service = ContractReviewService(clause_store, clause_extractor)
-    workflow_orchestrator = WorkflowOrchestrator(document_explorer_service, contract_review_service)
-    
+    due_diligence_memo_service = DueDiligenceMemoService(rag_service)
+    workflow_orchestrator = WorkflowOrchestrator(document_explorer_service, contract_review_service, due_diligence_memo_service)
+
     print("All services initialized successfully!")
 
 
@@ -864,14 +855,18 @@ async def summarize_case_file(
 @app.post("/api/due-diligence-memo")
 async def due_diligence_memo(
     document_id: str = Form(...),
-    top_k: int = Form(10),
-    include_report: bool = Form(False),
 ):
     """
-    Due Diligence Memo workflow: alias for /api/summarize.
-    Generates structured, deterministic due diligence memo from case documents.
+    Due Diligence Memo workflow (v0.2): returns WorkflowContext envelope.
     """
-    return await summarize_case_file(document_id=document_id, top_k=top_k, include_report=include_report)
+    global workflow_orchestrator
+    if not workflow_orchestrator:
+        raise HTTPException(status_code=500, detail="Workflow orchestrator not initialized")
+    try:
+        ctx = workflow_orchestrator.run_due_diligence_memo(document_id=document_id)
+        return ctx.model_dump()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Due diligence memo failed: {str(e)}")
 
 
 @app.post("/api/summarize/stream")
