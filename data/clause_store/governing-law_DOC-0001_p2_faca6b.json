@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_DOC-0001_p2_faca6b",
+  "title": "The actual employment contract/agreement submitted with the application of emigration clearance is genuine and duly signed by the concerned foreign employer and the intending emigrant",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": "Saudi Arabia",
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 2,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "05\n\n(ii) The RA will include the following point in the affidavit to be submitted by him to\nthe POE along with application for emigration clearance:\n\n“That the actual employment contract/ agreement submitted with the\napplication of emigration clearance is genuine and duly signed by the\nconcerned foreign employer and th",
+      "clean_text": "That the actual employment contract/ agreement submitted with the application of emigration clearance is genuine and duly signed by the concerned foreign employer and the intending emigrant and that the same will be filed/submitted, as per local laws, to the concerned labour authorities in KSA for enforcement purposes."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

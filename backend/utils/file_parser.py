@@ -2,6 +2,7 @@
 File parsing utilities for PDF and DOCX documents.
 Extracts text with page number tracking.
 Supports OCR for scanned/image-based PDFs.
+Uses batched OCR and configurable DPI to avoid MemoryError in subprocess reader.
 """
 import os
 from pathlib import Path
@@ -24,7 +25,7 @@ class FileParser:
     """Parser for PDF and DOCX files with page tracking."""
     
     @staticmethod
-    def parse_pdf(file_path: Path) -> List[Tuple[str, int, bool]]:
+    def parse_pdf(file_path: Path) -> List[Tuple[str, int]]:
         """
         Parse PDF file and extract text with page numbers.
         Falls back to OCR if text extraction fails (for scanned PDFs).
@@ -33,11 +34,9 @@ class FileParser:
             file_path: Path to PDF file
             
         Returns:
-            List of tuples: (text, page_number, is_ocr)
-            is_ocr: True if OCR was used for this page, False otherwise
+            List of tuples: (text, page_number)
         """
         text_pages = []
-        used_ocr = False
         
         try:
             with open(file_path, 'rb') as file:
@@ -56,7 +55,7 @@ class FileParser:
                     
                     if text:
                         # Page has text, add it
-                        text_pages.append((text, page_num + 1, False))  # 1-indexed pages, not OCR
+                        text_pages.append((text, page_num + 1))  # 1-indexed pages
                     else:
                         # Page has no text - might be image-based, mark for OCR
                         pages_needing_ocr.append(page_num + 1)
@@ -71,13 +70,13 @@ class FileParser:
                 ocr_results = FileParser._parse_pdf_with_ocr_selective(file_path, pages_needing_ocr)
                 for text, page_num in ocr_results:
                     if text:  # Only add if OCR found text
-                        text_pages.append((text, page_num, True))  # Mark as OCR
+                        text_pages.append((text, page_num))
             except Exception as ocr_error:
                 # If selective OCR fails, try full document OCR
                 if not text_pages:  # Only if we have NO text at all
                     try:
                         ocr_pages = FileParser._parse_pdf_with_ocr(file_path)
-                        text_pages = [(text, page_num, True) for text, page_num in ocr_pages]
+                        text_pages = [(text, page_num) for text, page_num in ocr_pages]
                     except Exception as full_ocr_error:
                         print(f"Warning: OCR extraction failed: {str(full_ocr_error)}")
                         print("Note: Install Tesseract OCR for scanned PDF support.")
@@ -110,13 +109,11 @@ class FileParser:
         text_pages = []
         
         try:
-            # Convert PDF pages to images
-            images = convert_from_path(str(file_path), dpi=300, first_page=min(page_numbers), last_page=max(page_numbers))
-            
-            # Map image indices to actual page numbers
+            dpi = getattr(settings, "OCR_DPI", 200)
+            images = convert_from_path(str(file_path), dpi=dpi, first_page=min(page_numbers), last_page=max(page_numbers))
             page_map = {i: page_num for i, page_num in enumerate(range(min(page_numbers), max(page_numbers) + 1), start=0)}
-            
-            # Extract text from specified pages using OCR
+
+            # Extract text from specified pages using OCR (one page at a time to limit subprocess buffer)
             for img_idx, image in enumerate(images):
                 actual_page = page_map.get(img_idx)
                 if actual_page and actual_page in page_numbers:
@@ -127,6 +124,7 @@ class FileParser:
                             text_pages.append((text, actual_page))
                     except Exception as e:
                         print(f"Warning: OCR failed for page {actual_page}: {str(e)}")
+                del image  # release image before next to reduce peak memory
             
         except Exception as e:
             print(f"Warning: Selective OCR failed: {str(e)}")
@@ -137,66 +135,64 @@ class FileParser:
     def _parse_pdf_with_ocr(file_path: Path) -> List[Tuple[str, int]]:
         """
         Parse PDF using OCR (for scanned/image-based PDFs).
-        
-        Args:
-            file_path: Path to PDF file
-            
-        Returns:
-            List of tuples: (text, page_number)
+        Processes in batches and uses configurable DPI to avoid MemoryError
+        in subprocess reader (buffer.append(fh.read())).
         """
         if not OCR_AVAILABLE:
             raise ImportError("OCR libraries not available. Install pytesseract, pdf2image, and Pillow.")
         
-        text_pages = []
+        text_pages: List[Tuple[str, int]] = []
+        dpi = getattr(settings, "OCR_DPI", 200)
+        batch_size = getattr(settings, "OCR_PAGES_PER_BATCH", 10)
         
         try:
-            # Convert PDF pages to images
-            # Note: Requires poppler-utils to be installed on the system
-            # Windows: Download from https://github.com/oschwartz10612/poppler-windows/releases
-            # Linux: sudo apt-get install poppler-utils
-            # macOS: brew install poppler
-            images = convert_from_path(str(file_path), dpi=300)
-            # Higher DPI for better OCR accuracy
-            
-            # Extract text from each page using OCR
-            for page_num, image in enumerate(images, start=1):
-                try:
-                    # Perform OCR on the image
-                    # Note: Requires Tesseract OCR to be installed
-                    # Windows: Set TESSDATA_PREFIX environment variable if needed
-                    text = pytesseract.image_to_string(image, lang=settings.OCR_LANGUAGE)
-                    # Uses configurable OCR language (default: eng+ara for bilingual support)
-                    
-                    # Clean up text
-                    text = text.strip()
-                    
-                    # Always add page, even if text is minimal (to ensure coverage)
-                    # Empty text will be handled by chunking
-                    text_pages.append((text, page_num))
-                except pytesseract.TesseractNotFoundError:
-                    raise RuntimeError(
-                        "Tesseract OCR not found. Please install Tesseract:\n"
-                        "Windows: Download from https://github.com/UB-Mannheim/tesseract/wiki\n"
-                        "Linux: sudo apt-get install tesseract-ocr\n"
-                        "macOS: brew install tesseract"
-                    )
-            
-        except FileNotFoundError as e:
-            if 'poppler' in str(e).lower() or 'pdftoppm' in str(e).lower():
-                raise RuntimeError(
-                    "Poppler not found. Required for PDF to image conversion:\n"
-                    "Windows: Download from https://github.com/oschwartz10612/poppler-windows/releases\n"
-                    "Linux: sudo apt-get install poppler-utils\n"
-                    "macOS: brew install poppler"
-                )
-            raise ValueError(f"Error performing OCR on PDF {file_path}: {str(e)}")
+            with open(file_path, "rb") as f:
+                total_pages = len(pypdf.PdfReader(f).pages)
         except Exception as e:
-            raise ValueError(f"Error performing OCR on PDF {file_path}: {str(e)}")
+            raise ValueError(f"Error reading PDF {file_path}: {e}") from e
+        
+        first_page = 1
+        while first_page <= total_pages:
+            last_page = min(first_page + batch_size - 1, total_pages)
+            try:
+                images = convert_from_path(
+                    str(file_path),
+                    dpi=dpi,
+                    first_page=first_page,
+                    last_page=last_page,
+                )
+            except FileNotFoundError as e:
+                if "poppler" in str(e).lower() or "pdftoppm" in str(e).lower():
+                    raise RuntimeError(
+                        "Poppler not found. Required for PDF to image conversion:\n"
+                        "Windows: Download from https://github.com/oschwartz10612/poppler-windows/releases\n"
+                        "Linux: sudo apt-get install poppler-utils\n"
+                        "macOS: brew install poppler"
+                    ) from e
+                raise ValueError(f"Error performing OCR on PDF {file_path}: {e}") from e
+            try:
+                for idx, image in enumerate(images):
+                    page_num = first_page + idx
+                    try:
+                        text = pytesseract.image_to_string(image, lang=settings.OCR_LANGUAGE)
+                        text_pages.append((text.strip(), page_num))
+                    except pytesseract.TesseractNotFoundError:
+                        raise RuntimeError(
+                            "Tesseract OCR not found. Please install Tesseract:\n"
+                            "Windows: Download from https://github.com/UB-Mannheim/tesseract/wiki\n"
+                            "Linux: sudo apt-get install tesseract-ocr\n"
+                            "macOS: brew install tesseract"
+                        )
+                    finally:
+                        del image
+            finally:
+                del images
+            first_page = last_page + 1
         
         return text_pages
     
     @staticmethod
-    def parse_docx(file_path: Path) -> List[Tuple[str, int, bool]]:
+    def parse_docx(file_path: Path) -> List[Tuple[str, int]]:
         """
         Parse DOCX file and extract text.
         Note: DOCX doesn't have native page numbers, so we estimate based on content.
@@ -205,8 +201,7 @@ class FileParser:
             file_path: Path to DOCX file
             
         Returns:
-            List of tuples: (text, estimated_page_number, is_ocr)
-            is_ocr: Always False for DOCX files
+            List of tuples: (text, estimated_page_number)
         """
         text_pages = []
         
@@ -228,20 +223,20 @@ class FileParser:
                     
                     # Estimate new page every ~500 words
                     if word_count >= words_per_page:
-                        text_pages.append((current_text.strip(), current_page, False))  # DOCX never uses OCR
+                        text_pages.append((current_text.strip(), current_page))
                         current_text = ""
                         word_count = 0
                         current_page += 1
             
             # Add remaining text
             if current_text.strip():
-                text_pages.append((current_text.strip(), current_page, False))
+                text_pages.append((current_text.strip(), current_page))
             
             # If no pages created, create at least one
             if not text_pages:
                 full_text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
                 if full_text:
-                    text_pages.append((full_text, 1, False))
+                    text_pages.append((full_text, 1))
                     
         except Exception as e:
             raise ValueError(f"Error parsing DOCX {file_path}: {str(e)}")
@@ -249,7 +244,7 @@ class FileParser:
         return text_pages
     
     @staticmethod
-    def parse_file(file_path: Path) -> List[Tuple[str, int, bool]]:
+    def parse_file(file_path: Path) -> List[Tuple[str, int]]:
         """
         Parse file based on extension (PDF or DOCX).
         
@@ -257,8 +252,7 @@ class FileParser:
             file_path: Path to file
             
         Returns:
-            List of tuples: (text, page_number, is_ocr)
-            is_ocr: True if OCR was used, False otherwise
+            List of tuples: (text, page_number)
         """
         file_ext = file_path.suffix.lower()
         

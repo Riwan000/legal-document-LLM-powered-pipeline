@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_DOC-0001_p4_faa7fb",
+  "title": "Free medical treatment",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 4,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "ne\n\n~\n\nFree medica! treaiment shall be provided by First\nParty as per Saud! Labour Law\n\nThe First",
+      "clean_text": "The First Party shall provide free medical treatment to the Second Party as per Saud! Labour Law."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": true,
+    "is_employer_cost": false
+  }
+}

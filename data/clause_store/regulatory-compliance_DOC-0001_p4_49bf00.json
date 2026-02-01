@@ -1,0 +1,29 @@
+{
+  "clause_id": "regulatory-compliance_DOC-0001_p4_49bf00",
+  "title": "Transportation costs",
+  "type": "regulatory_compliance",
+  "subtype": null,
+  "authority_level": "regulatory",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 4,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "ond Party from ie) py arr\n(economy class) for the latte’’s incomng Inp be-\nfore the effective dale of this Agreement and nis\nreturn aller ts termination accompamed by\n\nand\n\nThe First Party shal",
+      "clean_text": "The First Party shall bear all fees pertaining to residence, passport, entry and exit visas, as well as cost of transportation of the Second Party on four round trips at economy class air fare."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": true,
+    "is_employer_cost": true
+  }
+}

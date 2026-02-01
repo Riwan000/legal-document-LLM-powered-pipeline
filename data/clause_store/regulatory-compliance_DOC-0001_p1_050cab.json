@@ -1,0 +1,29 @@
+{
+  "clause_id": "regulatory-compliance_DOC-0001_p1_050cab",
+  "title": "Specimen Employment Contract",
+  "type": "regulatory_compliance",
+  "subtype": null,
+  "authority_level": "regulatory",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 1,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "e | July 2014\nTo\nAll Protectors of Emigrants\n\nSubject: Submission of Employment Contract signed by both Foreign Employer (FE)\nand intending emigrant* and countersigned by the Recruiting Agent (RA) —\nrevision of eWakala instructions for Saudi Arabia.\n\nSir,\n\nIn partial modification of the circular issued by Ministry of Labour vide No. C-\nNo.11011/25/2003-PGE-I, dated 14.11.2003, | am directed to inform t",
+      "clean_text": "the RAs shall submit Specimen Employment Contract/Agreement similar to other ECR countries as detailed below: (i) Copy of the specimen employment contract/agreement, as required under Sub Section 3 of Section 22 of the Emigration Act 1983, read with Rule 15(2) of the Emigration Rules 1983, the original of which has signature of FE, should be signed by the intending emigrant and counter signed by the RA"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

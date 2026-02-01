@@ -1,0 +1,19 @@
+contract_type: MSA
+
+expected_clauses:
+  - governing_law
+  - liability
+  - termination
+  - dispute_resolution
+  - confidentiality
+
+optional_clauses:
+  - indemnification
+  - limitation_of_liability
+
+risk_weights:
+  governing_law: high
+  liability: high
+  termination: high
+  dispute_resolution: medium
+  confidentiality: medium

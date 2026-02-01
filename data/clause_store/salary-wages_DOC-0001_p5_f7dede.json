@@ -1,0 +1,29 @@
+{
+  "clause_id": "salary-wages_DOC-0001_p5_f7dede",
+  "title": "Payment of Blood Money",
+  "type": "salary_wages",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "st three\nmonths which snal! be Considered 4 probation\nPeriod under the Provisions of the law in wh:ch\nCase Ihe First Party wilt bear thé ",
+      "clean_text": "The First Party shall pay to the next of kin of the deceased all blood money and other compensation due under the terms of this Agreement"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

@@ -31,6 +31,7 @@ transformers>=4.35.0
 python-dotenv==1.0.0
 pydantic==2.5.0
 pydantic-settings==2.1.0
+PyYAML>=6.0
 
 # Additional utilities
 numpy==1.24.3

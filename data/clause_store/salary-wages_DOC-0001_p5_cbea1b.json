@@ -1,0 +1,32 @@
+{
+  "clause_id": "salary-wages_DOC-0001_p5_cbea1b",
+  "title": "Termination by First Party",
+  "type": "salary_wages",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": null,
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "rty\nand the authort.es concerned\n\n15. This agreement may be terminateg n any of jne\nfollowing cases\n\n(a) Al any time Dy a 30 days written Nolce from\n\nC— _ either of the two parties or IMMedialely upon\n\n& SErving SUCH notice ",
+      "clean_text": "By the First Party. without need for any notice OF Cash payment :in terms of or awarg of compensation by reasons of any imfracuions Committed by the Second Party determ-neg by the Labour ane Workman Law in Article 83 thereof"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

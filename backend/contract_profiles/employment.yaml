@@ -1,0 +1,28 @@
+contract_type: Employment
+
+expected_clauses:
+  - termination
+  - notice
+  - compensation
+  - salary_wages
+  - benefits
+  - governing_law
+  - jurisdiction
+  - conduct_discipline
+
+optional_clauses:
+  - probation
+  - confidentiality
+  - dispute_resolution
+
+risk_weights:
+  termination: high
+  governing_law: high
+  liability: high
+  compensation: high
+  salary_wages: medium
+  benefits: medium
+  notice: medium
+  conduct_discipline: medium
+  jurisdiction: low
+  dispute_resolution: low

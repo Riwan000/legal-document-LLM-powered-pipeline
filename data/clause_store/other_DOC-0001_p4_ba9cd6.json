@@ -1,0 +1,29 @@
+{
+  "clause_id": "other_DOC-0001_p4_ba9cd6",
+  "title": "Non-commercial activities",
+  "type": "other",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 4,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "f the Second Party on 4\nround inp at economy Class air fare accompamed\nby and between ano\nwhere the Second Party snail speno his vacation\nonce alter each of one/two years of uninterrupted\nse*vice\n\n10 The ",
+      "clean_text": "The Second Party agrees not to depart from indirectly perform any job or service, or engage in any commercial activity except as assigned to him by the First Party, as long as this Agreement is in effect."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

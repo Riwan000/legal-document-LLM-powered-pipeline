@@ -1,0 +1,32 @@
+{
+  "clause_id": "governing-law_DOC-0001_p4_cbaaf8",
+  "title": "Working hours, sick leave, absence, disability, and death",
+  "type": "governing_law",
+  "subtype": null,
+  "authority_level": "supreme",
+  "jurisdiction": "Saudi Arabia",
+  "can_override_contract": true,
+  "overrides": [
+    "contractual",
+    "administrative"
+  ],
+  "evidence": [
+    {
+      "page": 4,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "latte’’s incomng Inp be-\nfore the effective dale of this Agreement and nis\nreturn aller ts termination accompamed by\n\nand\n\nThe First Party shall bear al! fees peraining 10 fesi-\ndence. passport. entry and ext visas as well as\ncost of transportation of the Second Party on 4\nround inp at economy Class air fare accompamed\nby and between ano\nwhere the Second Party snail speno his vacation\nonce alter e",
+      "clean_text": "The employment of the Second Party under the present agreement in respect of all matters relating to working hours, sick leave, cases of absence, injury, disability, and death, and as regard termination of services and compensation due to the Second Party in the form of an end-of-service award, shall be governed by provisions of the Labour and Workman's Law in force in the Kingdom of Saudi Arabia."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

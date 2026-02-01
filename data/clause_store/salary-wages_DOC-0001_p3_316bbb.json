@@ -1,0 +1,29 @@
+{
+  "clause_id": "salary-wages_DOC-0001_p3_316bbb",
+  "title": "Salary and Benefits",
+  "type": "salary_wages",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "ice under ims Ag'eeme~*\n",
+      "clean_text": "Salary for vacation sha "
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": true,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

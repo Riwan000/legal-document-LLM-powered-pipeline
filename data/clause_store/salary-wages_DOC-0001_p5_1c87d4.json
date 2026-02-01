@@ -1,0 +1,29 @@
+{
+  "clause_id": "salary-wages_DOC-0001_p5_1c87d4",
+  "title": "Payment of Wages",
+  "type": "salary_wages",
+  "subtype": null,
+  "authority_level": "contractual",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 5,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "acuions\nCommitted by the Secong Pany determ-neg\nby the Labour ane Workman Law in Articie 83\nthereof,\n\n(C) By the First Party: in the course of the first three\nmonths which snal! be Considered 4 proba",
+      "clean_text": "The First Party shall pay to the Second Party all wages due to it under the terms of this Agreement, including any accrued but unpaid wages, within thirty days after the termination of this Agreement"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": true,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}

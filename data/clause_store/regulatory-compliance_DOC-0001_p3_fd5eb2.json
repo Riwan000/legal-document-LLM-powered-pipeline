@@ -1,0 +1,29 @@
+{
+  "clause_id": "regulatory-compliance_DOC-0001_p3_fd5eb2",
+  "title": "Employment Agreement",
+  "type": "regulatory_compliance",
+  "subtype": null,
+  "authority_level": "regulatory",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 3,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "EMPLOYMENT AGREEMENT\n\nFyli Name & Address ot employer\n\nTelephone No\n\nVisa No.\n\nDate of Issue\n\nFIRST PARTY in ins agreemenanc'N”\n\nrefered to as\n\nar Incian Naona node! a! fassne\" Oo\n\n‘ssued al Dates\n\nano resident of\n\n-alerred 10 as SECOND PARTY Nave agreec AS 'O-\n\nows\n\n1 Ag ai tne effecivé ae et MS agrearrumt Ine\nSecond Party shai work for the First Party ©\naccordance with ine terms Of ins agreement anc\nol any suppiemenis thervic as\nal ine Head Otic? oF prancnes ci os\nany organizatior assoc.aloc at coopera’ with\n\n> This agreement! shal. become elective as of the\ngate on whicn the Second Paty arrives 19 Sauc\nArabia. stated ai ine room of ihe ast pace\nnereol and shai be 1 Iarce for a CeNOC OF\nGregoran/Huyran yea’ s renewarie fur aqme pe”\n100d of years uncer Ine same terms ars\nconditions unless ener pany eycresses ns ces-\nire in writing not Ig renew this agreement al ea\n\nG) \\2 days in advance at",
+      "clean_text": "EMPLOYMENT AGREEMENT Fyli Name & Address ot employer Telephone No Visa No. Date of Issue FIRST PARTY in ins agreemenanc'N” refered to as ar Incian Naona node! a! fassne Oo ‘ssued al Dates ano resident of -alerred 10 as SECOND PARTY Nave agreec AS 'Oows 1 Ag ai tne effecivé ae et MS agrearrumt Ine Second Party shai work for the First Party accordance with ine terms Of ins agreement anc ol any suppiemenis thervic as al ine Head Otic? oF prancnes ci os any organizatior assocaloc at coopera’ with > This agreement! shal. become elective as of the gate on whicn the Second Paty arrives 19 Sauc Arabia. stated ai ine room of ihe ast pace nereol and shai be 1 Iarce for a CeNOC OF Gregoran/Huyran yea’ s renewarie fur aqme pe” 100d of years uncer Ine same terms ars conditions unless ener pany eycresses ns cesire in writing not Ig renew this agreement al ea G) \\2 days in advance at the date of compieion"
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": true
+  }
+}

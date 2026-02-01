@@ -1,0 +1,29 @@
+{
+  "clause_id": "regulatory-compliance_DOC-0001_p1_c94ee3",
+  "title": "Submission of Specimen Employment Contract",
+  "type": "regulatory_compliance",
+  "subtype": null,
+  "authority_level": "regulatory",
+  "jurisdiction": null,
+  "can_override_contract": false,
+  "overrides": [],
+  "evidence": [
+    {
+      "page": 1,
+      "paragraph": 1,
+      "line_start": 1,
+      "line_end": 1,
+      "raw_text": "ect: Submission of Employment Contract signed by both Foreign Employer (FE)\nand intending emigrant* and ",
+      "clean_text": "the same should be made available by RA to the POE for obtaining emigration clearance (sample enclosed)."
+    }
+  ],
+  "explicitly_provided": true,
+  "linked_clause_id": null,
+  "consistency_flag": null,
+  "language": "en",
+  "metadata": {
+    "is_salary": false,
+    "is_allowance": false,
+    "is_employer_cost": false
+  }
+}
