@@ -12,8 +12,9 @@ import uuid
 from typing import Optional
 
 from backend.config import settings
-from backend.models.workflow import WorkflowContext, DocumentExplorerRequest
+from backend.models.workflow import WorkflowContext, DocumentExplorerRequest, EvidenceExplorerRequest
 from backend.services.document_explorer_service import DocumentExplorerService
+from backend.services.evidence_explorer_service import EvidenceExplorerService
 from backend.services.contract_review_service import ContractReviewService
 from backend.services.due_diligence_memo_service import DueDiligenceMemoService
 from backend.services.guardrails import GuardrailViolation, WORKFLOW_DISCLAIMER
@@ -54,10 +55,12 @@ class WorkflowOrchestrator:
         document_explorer_service: DocumentExplorerService,
         contract_review_service: ContractReviewService,
         due_diligence_memo_service: DueDiligenceMemoService,
+        evidence_explorer_service: Optional[EvidenceExplorerService] = None,
     ):
         self.document_explorer_service = document_explorer_service
         self.contract_review_service = contract_review_service
         self.due_diligence_memo_service = due_diligence_memo_service
+        self.evidence_explorer_service = evidence_explorer_service
 
     def run_contract_review(
         self,
@@ -116,18 +119,20 @@ class WorkflowOrchestrator:
         document_id: str,
         query: str,
         top_k: Optional[int] = None,
+        mode: Optional[str] = None,
     ) -> WorkflowContext:
         """Execute Document Explorer workflow. Returns context (success or failed)."""
         ctx = WorkflowContext(
             workflow_id=uuid.uuid4().hex,
             workflow_type="document_explorer",
             document_ids=[document_id],
-            metadata={"query": query, "top_k": top_k},
+            metadata={"query": query, "top_k": top_k, "mode": mode or "text"},
         )
         request = DocumentExplorerRequest(
             document_id=document_id,
             query=query,
             top_k=top_k,
+            mode=mode or "text",
         )
         try:
             return self.document_explorer_service.run(ctx, request)
@@ -171,4 +176,49 @@ class WorkflowOrchestrator:
                 details={"exception_type": type(e).__name__},
             )
             ctx.final_output = None
+            return ctx
+
+    def run_evidence_explorer(
+        self,
+        document_id: str,
+        query: str,
+        top_k: Optional[int] = None,
+        mode: Optional[str] = None,
+    ) -> WorkflowContext:
+        """Execute Evidence Explorer (evidence-only, no LLM). Returns context."""
+        if not self.evidence_explorer_service:
+            ctx = WorkflowContext(
+                workflow_id=uuid.uuid4().hex,
+                workflow_type="document_explorer",
+                document_ids=[document_id],
+                metadata={"query": query, "top_k": top_k, "mode": mode or "text"},
+            )
+            ctx.fail(
+                code="SERVICE_NOT_AVAILABLE",
+                message="Evidence Explorer service not initialized.",
+                step="evidence_explorer",
+                details={},
+            )
+            return ctx
+        ctx = WorkflowContext(
+            workflow_id=uuid.uuid4().hex,
+            workflow_type="document_explorer",
+            document_ids=[document_id],
+            metadata={"query": query, "top_k": top_k, "mode": mode or "text"},
+        )
+        request = EvidenceExplorerRequest(
+            document_id=document_id,
+            query=query,
+            top_k=top_k,
+            mode=(mode or "text") if mode in ("text", "clauses", "both") else "text",
+        )
+        try:
+            return self.evidence_explorer_service.run(ctx, request)
+        except Exception as e:
+            ctx.fail(
+                code="WORKFLOW_ERROR",
+                message=str(e),
+                step="evidence_explorer",
+                details={"exception_type": type(e).__name__},
+            )
             return ctx

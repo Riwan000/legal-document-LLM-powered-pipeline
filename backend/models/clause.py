@@ -2,7 +2,7 @@
 Legal clause data models.
 Structured representation of legal clauses with authority, hierarchy, and evidence.
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict, Any
 from enum import Enum
 
@@ -78,6 +78,5 @@ class StructuredClause(BaseModel):
         description="Normalized authority level for ranking (lowercase canonical form)"
     )
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 

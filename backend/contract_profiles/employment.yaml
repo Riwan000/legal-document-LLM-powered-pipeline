@@ -7,7 +7,6 @@ expected_clauses:
   - salary_wages
   - benefits
   - governing_law
-  - jurisdiction
   - conduct_discipline
 
 optional_clauses:
@@ -24,5 +23,4 @@ risk_weights:
   benefits: medium
   notice: medium
   conduct_discipline: medium
-  jurisdiction: low
   dispute_resolution: low

@@ -13,6 +13,7 @@ import hashlib
 from typing import Optional, List
 from datetime import datetime
 import os
+from contextlib import asynccontextmanager
 
 from backend.config import settings
 from backend.services.document_ingestion import DocumentIngestionService
@@ -28,8 +29,10 @@ from backend.models.document import DocumentUploadResponse, AnswerResponse
 from backend.models.document_list import DocumentListResponse, DocumentListItem, DocumentRenameRequest, DocumentRenameResponse
 from backend.models.clause import StructuredClause
 from backend.services.clause_store import ClauseStore
+from backend.services.extracted_clause_store import ExtractedClauseStore, EXTRACTION_VERSION
 from backend.services.clause_validator import ClauseValidator
 from backend.services.document_explorer_service import DocumentExplorerService
+from backend.services.evidence_explorer_service import EvidenceExplorerService
 from backend.services.contract_review_service import ContractReviewService
 from backend.services.workflow_orchestrator import WorkflowOrchestrator
 from backend.services.due_diligence_memo_service import DueDiligenceMemoService
@@ -37,11 +40,22 @@ from backend.models.workflow import WorkflowContext
 from backend.services.guardrails import WORKFLOW_DISCLAIMER
 
 
+# Lifespan handlers (replaces deprecated on_event startup/shutdown)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await _initialize_services()
+    try:
+        yield
+    finally:
+        await _shutdown_services()
+
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Legal Document Intelligence API",
     description="RAG-powered legal document analysis system",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan,
 )
 
 # CORS middleware (for Streamlit frontend)
@@ -74,22 +88,24 @@ vector_store: Optional[VectorStore] = None
 rag_service: Optional[RAGService] = None
 clause_extractor: Optional[ClauseExtractionService] = None
 clause_store: Optional[ClauseStore] = None
+extracted_clause_store: Optional[ExtractedClauseStore] = None
 clause_validator: Optional[ClauseValidator] = None
 comparison_service: Optional[ComparisonService] = None
 summarization_service: Optional[SummarizationService] = None
 translation_service: Optional[TranslationService] = None
 document_explorer_service: Optional[DocumentExplorerService] = None
+evidence_explorer_service: Optional[EvidenceExplorerService] = None
 contract_review_service: Optional[ContractReviewService] = None
 workflow_orchestrator: Optional[WorkflowOrchestrator] = None
 
 
-@app.on_event("startup")
-async def startup_event():
+async def _initialize_services():
     """Initialize services on application startup."""
     global document_registry, ingestion_service, embedding_service, vector_store
     global rag_service, clause_extractor, clause_store, clause_validator
     global comparison_service, summarization_service, translation_service
-    global document_explorer_service, contract_review_service, workflow_orchestrator
+    global document_explorer_service, evidence_explorer_service, contract_review_service, workflow_orchestrator
+    global extracted_clause_store
     
     print("Initializing services...")
     
@@ -122,6 +138,10 @@ async def startup_event():
     # Initialize clause store (before RAG service)
     clause_store = ClauseStore()
     print(f"Clause store initialized at {clause_store.store_path}")
+
+    # Initialize extracted clause store (source of truth for Document Explorer)
+    extracted_clause_store = ExtractedClauseStore()
+    print(f"Extracted clause store initialized at {extracted_clause_store.store_path}")
     
     # Initialize clause validator
     clause_validator = ClauseValidator()
@@ -146,16 +166,21 @@ async def startup_event():
     summarization_service = SummarizationService(rag_service)
     
     # Workflow services (v0.2)
-    document_explorer_service = DocumentExplorerService(embedding_service, vector_store)
+    document_explorer_service = DocumentExplorerService(rag_service, extracted_clause_store)
+    evidence_explorer_service = EvidenceExplorerService(rag_service, extracted_clause_store)
     contract_review_service = ContractReviewService(clause_store, clause_extractor)
     due_diligence_memo_service = DueDiligenceMemoService(rag_service)
-    workflow_orchestrator = WorkflowOrchestrator(document_explorer_service, contract_review_service, due_diligence_memo_service)
+    workflow_orchestrator = WorkflowOrchestrator(
+        document_explorer_service,
+        contract_review_service,
+        due_diligence_memo_service,
+        evidence_explorer_service=evidence_explorer_service,
+    )
 
     print("All services initialized successfully!")
 
 
-@app.on_event("shutdown")
-async def shutdown_event():
+async def _shutdown_services():
     """Save vector store on application shutdown."""
     global vector_store
     if vector_store:
@@ -205,17 +230,18 @@ async def extract_clauses(
         use_structured: Use deterministic structured extraction (default: True, always used)
         include_telemetry: Include extraction telemetry in response (default: False)
         
-    Returns:
+        Returns:
         Extraction-only schema:
         {
             "schema_version": "1.0",
             "document_id": "...",
+            "extraction_version": "v1.0",
             "extraction_mode": "structure_first_verbatim",
             "clauses": [...],
             "telemetry": {...}  # Optional, if include_telemetry=True
         }
     """
-    global clause_extractor
+    global clause_extractor, extracted_clause_store
 
     # Step 0 (API): Resolve the document file path.
     
@@ -249,6 +275,8 @@ async def extract_clauses(
     # This keeps missing-document behavior at 404 even if services were not started.
     if not clause_extractor:
         raise HTTPException(status_code=500, detail="Clause extractor not initialized")
+    if not extracted_clause_store:
+        raise HTTPException(status_code=500, detail="Extracted clause store not initialized")
     
     try:
         # Step 0.3 (API): Run extraction with timeout protection (thread pool).
@@ -285,9 +313,16 @@ async def extract_clauses(
         clauses = extraction_result.get("clauses", [])
         telemetry = extraction_result.get("telemetry")
         
+        # Persist extracted clauses as the source of truth for Explorer
+        try:
+            extracted_clause_store.save_document_clauses(document_id, clauses)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to persist extracted clauses: {str(e)}")
+
         response = {
             "schema_version": "1.0",
             "document_id": document_id,
+            "extraction_version": EXTRACTION_VERSION,
             "extraction_mode": "structure_first_verbatim",
             "clauses": clauses,
             "document_type": extraction_result.get("document_type")
@@ -737,11 +772,11 @@ async def document_explorer(
     document_id: str = Form(...),
     query: str = Form(...),
     top_k: Optional[int] = Form(None),
+    mode: str = Form("text"),
 ):
     """
-    Document Explorer: read-only semantic search within a single document.
-    Returns evidence snippets only (no synthesized answer). Interpretive
-    queries are rejected with INTERPRETIVE_QUERY error.
+    Document Explorer: RAG-backed search within a single document.
+    Returns both answer and evidence snippets.
     """
     global workflow_orchestrator
     if not workflow_orchestrator:
@@ -751,30 +786,23 @@ async def document_explorer(
             document_id=document_id,
             query=query,
             top_k=top_k,
+            mode=mode,
         )
         if ctx.status == "completed" and ctx.intermediate_results:
             explorer_result = ctx.intermediate_results.get("document_explorer", {})
             response_data = explorer_result.get("response", {})
             if response_data:
-                return {"results": response_data.get("results", []), "workflow_id": ctx.workflow_id}
-
-        # PRD behavior: fail-closed on missing evidence with explicit message.
-        if ctx.status == "failed" and ctx.error and ctx.error.code == "NO_EVIDENCE":
-            return {"results": [], "message": ctx.error.message, "workflow_id": ctx.workflow_id}
-
-        # Interpretive/advisory queries are rejected.
-        if ctx.status == "failed" and ctx.error and ctx.error.code == "INTERPRETIVE_QUERY":
-            raise HTTPException(
-                status_code=422,
-                detail={
-                    "error": {
-                        "code": ctx.error.code,
-                        "message": ctx.error.message,
-                        "step": ctx.error.step,
-                        "details": ctx.error.details,
-                    }
-                },
-            )
+                return {
+                    "answer": response_data.get("answer"),
+                    "results": response_data.get("results", []),
+                    "status": response_data.get("status"),
+                    "reason": response_data.get("reason"),
+                    "confidence": response_data.get("confidence"),
+                    "citation": response_data.get("citation"),
+                    "refusal_reason": response_data.get("refusal_reason"),
+                    "debug": response_data.get("debug"),
+                    "workflow_id": ctx.workflow_id,
+                }
 
         # Other failures: preserve structured error for UI/debugging.
         if ctx.status == "failed" and ctx.error:
@@ -795,6 +823,87 @@ async def document_explorer(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Document Explorer failed: {str(e)}")
+
+
+@app.post("/api/explore-evidence")
+async def explore_evidence(
+    document_id: str = Form(...),
+    query: str = Form(...),
+    top_k: Optional[int] = Form(None),
+    mode: str = Form("text"),
+):
+    """
+    Evidence Explorer: deterministic evidence retrieval within a single document.
+    No LLM. Returns snippets + metadata + debug only (no answer field).
+    Modes: text (chunks), clauses (extracted clauses), both (clauses first, then text fallback).
+    """
+    global workflow_orchestrator
+    if not workflow_orchestrator:
+        raise HTTPException(status_code=500, detail="Workflow orchestrator not initialized")
+    if mode not in ("text", "clauses", "both"):
+        mode = "text"
+    try:
+        ctx = workflow_orchestrator.run_evidence_explorer(
+            document_id=document_id,
+            query=query,
+            top_k=top_k,
+            mode=mode,
+        )
+        if ctx.status == "completed" and ctx.intermediate_results:
+            ev_result = ctx.intermediate_results.get("evidence_explorer", {})
+            response_data = ev_result.get("response", {})
+            if response_data:
+                return {
+                    "status": response_data.get("status"),
+                    "results": [r for r in response_data.get("results", [])],
+                    "reason": response_data.get("reason"),
+                    "debug": response_data.get("debug"),
+                    "workflow_id": ctx.workflow_id,
+                }
+        if ctx.status == "failed" and ctx.error:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": {
+                        "code": ctx.error.code,
+                        "message": ctx.error.message,
+                        "step": ctx.error.step,
+                        "details": ctx.error.details,
+                    }
+                },
+            )
+        return ctx.model_dump()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Evidence Explorer failed: {str(e)}")
+
+
+@app.post("/api/explore-answer")
+async def explore_answer(
+    document_id: str = Form(...),
+    query: str = Form(...),
+    top_k: Optional[int] = Form(None),
+    response_language: Optional[str] = Form(None),
+):
+    """
+    RAG Answer Explorer: single-document RAG answer + citations.
+    Uses RAGService.query with document_id_filter. Returns answer, status, confidence, sources, citation.
+    """
+    global rag_service
+    if not rag_service:
+        raise HTTPException(status_code=500, detail="RAG service not initialized")
+    try:
+        result = rag_service.query(
+            query=query,
+            top_k=top_k,
+            document_id_filter=document_id,
+            generate_response=True,
+            response_language=response_language,
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"RAG Answer Explorer failed: {str(e)}")
 
 
 @app.post("/api/summarize")

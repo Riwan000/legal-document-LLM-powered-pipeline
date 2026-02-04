@@ -298,29 +298,19 @@ def contract_review(contract_id: str, contract_type: str, jurisdiction: Optional
         return None
 
 
-def document_explore(document_id: str, query: str, top_k: Optional[int] = None) -> Optional[Dict]:
-    """Document Explorer: evidence-only search. Returns { results, workflow_id } or { error } for NO_EVIDENCE/422."""
+def explore_evidence(document_id: str, query: str, top_k: Optional[int] = None, mode: str = "both") -> Optional[Dict]:
+    """Evidence Explorer: deterministic evidence snippets only (no answer). Calls POST /api/explore-evidence."""
     try:
-        data = {"document_id": document_id, "query": query}
+        data = {"document_id": document_id, "query": query, "mode": mode}
         if top_k is not None:
             data["top_k"] = top_k
-        response = requests.post(f"{API_BASE_URL}/api/explore", data=data, timeout=60)
-        # Explorer returns:
-        # - 200 {results: [...], workflow_id: ...} on success
-        # - 200 {results: [], message: "Not specified ..."} on NO_EVIDENCE (fail-closed, but not 422)
-        # - 422 structured error for interpretive queries (and other structured failures)
+        response = requests.post(f"{API_BASE_URL}/api/explore-evidence", data=data, timeout=60)
         if response.status_code == 200:
-            payload = response.json()
-            if isinstance(payload, dict) and payload.get("results") == [] and payload.get("message"):
-                return {"results": [], "message": payload.get("message"), "workflow_id": payload.get("workflow_id")}
-            return payload
+            return response.json()
         if response.status_code == 422:
             detail = response.json().get("detail", {})
             err = detail.get("error", detail) if isinstance(detail, dict) else {}
-            code = err.get("code", "") if isinstance(err, dict) else ""
-            if code == "INTERPRETIVE_QUERY":
-                return {"error": {"code": "INTERPRETIVE_QUERY", "message": err.get("message", "Interpretive query rejected.")}}
-            st.error(f"Document Explorer: {err.get('message', str(detail)) if isinstance(err, dict) else detail}")
+            st.error(f"Evidence Explorer: {err.get('message', str(detail)) if isinstance(err, dict) else detail}")
             return None
         response.raise_for_status()
         return response.json()
@@ -328,9 +318,33 @@ def document_explore(document_id: str, query: str, top_k: Optional[int] = None) 
         if e.response is not None:
             try:
                 err = e.response.json().get("detail", e.response.text)
-                st.error(f"Document Explorer failed: {err}")
+                st.error(f"Evidence Explorer failed: {err}")
             except Exception:
-                st.error(f"Document Explorer failed: {e.response.text}")
+                st.error(f"Evidence Explorer failed: {e.response.text}")
+        return None
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
+        return None
+
+
+def explore_answer(document_id: str, query: str, top_k: Optional[int] = None, response_language: Optional[str] = None) -> Optional[Dict]:
+    """RAG Answer Explorer: answer + citations. Calls POST /api/explore-answer."""
+    try:
+        data = {"document_id": document_id, "query": query}
+        if top_k is not None:
+            data["top_k"] = top_k
+        if response_language:
+            data["response_language"] = response_language
+        response = requests.post(f"{API_BASE_URL}/api/explore-answer", data=data, timeout=60)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        if e.response is not None:
+            try:
+                err = e.response.json().get("detail", e.response.text)
+                st.error(f"Answer Explorer failed: {err}")
+            except Exception:
+                st.error(f"Answer Explorer failed: {e.response.text}")
         return None
     except Exception as e:
         st.error(f"Error: {str(e)}")
@@ -403,6 +417,10 @@ if page == "📋 Contract Review":
                     else:
                         st.success("Contract review completed.")
 
+                        doc_warning = (resp.get("document_classification_warning") or "").strip()
+                        if doc_warning:
+                            st.warning(f"⚠️ {doc_warning}")
+
                         # Metadata
                         meta_cols = st.columns(4)
                         meta_cols[0].metric("Workflow ID", str(resp.get("workflow_id", ""))[:12] + "…")
@@ -410,45 +428,83 @@ if page == "📋 Contract Review":
                         meta_cols[2].metric("Contract type", resp.get("contract_type", ""))
                         meta_cols[3].metric("Jurisdiction", resp.get("jurisdiction") or "—")
 
-                        # Risks table
+                        st.markdown("---")
+                        # Risks table (use display_status: Detected / Detected (Weak Evidence) / Not Detected)
                         risks = resp.get("risks", []) or []
                         st.subheader("Risk table")
                         if not risks:
                             st.info("No risks were identified for the selected profile and evidence.")
                         else:
+                            def _display_status(s):
+                                if s == "detected": return "Detected"
+                                if s == "uncertain": return "Detected (Weak Evidence)"
+                                if s == "detected_implicit": return "Detected (Implicit Reference)"
+                                if s == "detected_distributed": return "Detected (Distributed Provisions)"
+                                if s == "detected_weak": return "Detected (Limited Coverage)"
+                                return "Not Detected"
                             rows = []
                             for r in risks:
                                 if not isinstance(r, dict):
                                     continue
+                                display_names = r.get("display_names", []) or []
+                                clause_label = ", ".join(display_names) if display_names else ", ".join(r.get("clause_ids", []) or [])
                                 rows.append(
                                     {
                                         "severity": r.get("severity", ""),
-                                        "status": r.get("status", ""),
+                                        "evidence state": _display_status(r.get("status", "")),
                                         "description": r.get("description", ""),
                                         "clause_types": ", ".join(r.get("clause_types", []) or []),
-                                        "clause_ids": ", ".join(r.get("clause_ids", []) or []),
+                                        "clauses": clause_label,
                                         "pages": ", ".join([str(p) for p in (r.get("page_numbers", []) or [])]),
                                     }
                                 )
                             st.dataframe(rows, use_container_width=True, hide_index=True)
+                            st.caption("Weak evidence indicates that a clause was found but may lack commonly expected details.")
+
+                        st.markdown("")
+                        # Clauses Not Detected (explicit list)
+                        not_detected = resp.get("not_detected_clauses", []) or []
+                        contract_type_label = (resp.get("contract_type") or "Contract").strip()
+                        if contract_type_label and contract_type_label[0].islower():
+                            contract_type_label = contract_type_label[0].upper() + contract_type_label[1:]
+                        st.subheader("Clauses Not Detected (Based on " + contract_type_label + " Contract Profile)")
+                        st.caption("Global contracts may express obligations implicitly or across multiple provisions. This review surfaces such structures conservatively.")
+                        if not_detected:
+                            for name in not_detected:
+                                st.markdown(f"- {name}")
+                            st.caption("Not detected means no supporting evidence was found in the document. This does not confirm absence.")
+                        else:
+                            st.info("All expected clauses for this profile were detected or had weak evidence.")
+
+                        st.markdown("---")
 
                         # Evidence blocks
                         evidence = resp.get("evidence", []) or []
-                        st.subheader("Clause evidence blocks")
+                        st.markdown("")
+                        st.subheader("Evidence by clause")
                         if not evidence:
                             st.info("No clause evidence blocks were produced.")
                         else:
                             for ev in evidence:
                                 if not isinstance(ev, dict):
                                     continue
-                                with st.expander(f"Clause {ev.get('clause_id', '')} — Page {ev.get('page_number', 0)}"):
-                                    st.write("**Raw text:**")
-                                    st.write(ev.get("raw_text", ""))
+                                display_name = ev.get("display_name") or ev.get("clause_id", "")
+                                page_num = ev.get("page_number", 0)
+                                if ev.get("semantic_label"):
+                                    heading = f"Section: {ev['semantic_label']} — Page {page_num}"
+                                elif ev.get("is_non_contractual"):
+                                    heading = f"Section (Non-contractual): {display_name} — Page {page_num}"
+                                else:
+                                    heading = f"Section (Non-standard) — Page {page_num}"
+                                with st.expander(heading):
                                     st.write("**Cleaned text:**")
                                     st.write(ev.get("clean_text", ""))
+                                    st.write("**Raw text:**")
+                                    st.write(ev.get("raw_text", ""))
 
-                        # Executive summary
-                        st.subheader("Executive summary")
+                        st.markdown("")
+                        # Key Review Observations
+                        st.subheader("Key Review Observations")
                         exec_items = resp.get("executive_summary", []) or []
                         if not exec_items:
                             st.info("No executive summary items were produced.")
@@ -461,18 +517,20 @@ if page == "📋 Contract Review":
                                         st.markdown(f"- **{sev}**: {text}")
                                     else:
                                         st.markdown(f"- {text}")
+                        st.caption("This review prioritizes evidence recall and conservative interpretation; ambiguity is surfaced rather than resolved.")
 
+                        st.markdown("---")
                         st.caption(resp.get("disclaimer", WORKFLOW_DISCLAIMER))
 
                         with st.expander("Raw workflow output (JSON)"):
                             st.json(resp)
 
 # -----------------------------------------------------------------------------
-# Page: Document Explorer (read-only evidence search)
+# Page: Document Explorer (evidence snippets + RAG answer)
 # -----------------------------------------------------------------------------
 elif page == "🔍 Document Explorer":
     st.markdown('<div class="main-header">🔍 Document Explorer</div>', unsafe_allow_html=True)
-    st.markdown("Locate evidence in a single document. No interpretation or advice—evidence only.")
+    st.markdown("Locate evidence (snippets) and get a RAG answer with citations within a single document.")
     st.caption(WORKFLOW_DISCLAIMER)
     documents = get_documents()
     if not documents:
@@ -482,24 +540,54 @@ elif page == "🔍 Document Explorer":
         document_id = st.selectbox("Document", options=list(doc_options.keys()), format_func=lambda x: doc_options[x])
         query = st.text_input("Query (e.g. Where is termination notice?)", placeholder="Where is… / Show clauses related to…")
         top_k = st.slider("Max results", min_value=1, max_value=25, value=10)
-        if st.button("Search", type="primary"):
-            if not query or not query.strip():
-                st.warning("Enter a query.")
-            else:
-                with st.spinner("Searching..."):
-                    result = document_explore(document_id, query, top_k=top_k)
-                if result and result.get("error", {}).get("code") == "INTERPRETIVE_QUERY":
-                    st.warning(result.get("error", {}).get("message", "Interpretive query rejected."))
-                elif result and result.get("results") is not None:
-                    results = result.get("results", [])
-                    if not results:
-                        st.info(result.get("message") or "Not specified in the provided document.")
-                    else:
-                        for i, hit in enumerate(results, 1):
-                            with st.expander(f"Page {hit.get('page_number', 0)} — Score {hit.get('score', 0):.2f}"):
-                                st.write(hit.get("text_snippet", ""))
-                elif result and result.get("error", {}).get("code") == "NO_EVIDENCE":
-                    st.info(result.get("error", {}).get("message") or "Not specified in the provided document.")
+
+        tab_evidence, tab_answer = st.tabs(["Evidence (snippets)", "Answer (RAG)"])
+
+        with tab_evidence:
+            st.markdown("**Evidence Explorer**: deterministic snippets only (no LLM). Modes: text chunks, extracted clauses, or both.")
+            mode = st.radio("Mode", ["both", "text", "clauses"], format_func=lambda x: {"both": "Both (clauses first, then text)", "text": "Text chunks", "clauses": "Extracted clauses"}[x], horizontal=True)
+            if st.button("Search evidence", type="primary", key="btn_evidence"):
+                if not query or not query.strip():
+                    st.warning("Enter a query.")
+                else:
+                    with st.spinner("Searching evidence..."):
+                        result = explore_evidence(document_id, query, top_k=top_k, mode=mode)
+                    if result is not None:
+                        status = result.get("status")
+                        results = result.get("results", [])
+                        reason = result.get("reason")
+                        if status == "not_found":
+                            st.info(reason or "No relevant text or clauses found in the document.")
+                        elif results:
+                            for i, hit in enumerate(results, 1):
+                                src = hit.get("source_type", "chunk")
+                                label = f"Page {hit.get('page_number', 0)} — Score {hit.get('score', 0):.2f} — {src}"
+                                with st.expander(label):
+                                    st.write(hit.get("text_snippet", ""))
+                        else:
+                            st.info(reason or "No results.")
+                        with st.expander("Debug (QA)", expanded=False):
+                            st.json(result.get("debug") or {})
+
+        with tab_answer:
+            st.markdown("**RAG Answer Explorer**: LLM-generated answer with citations from the document.")
+            if st.button("Get answer", type="primary", key="btn_answer"):
+                if not query or not query.strip():
+                    st.warning("Enter a query.")
+                else:
+                    with st.spinner("Generating answer..."):
+                        result = explore_answer(document_id, query, top_k=top_k)
+                    if result is not None:
+                        st.subheader("Answer")
+                        st.write(result.get("answer") or "No answer generated.")
+                        st.caption(f"Status: {result.get('status', '—')} | Confidence: {result.get('confidence', '—')}")
+                        sources = result.get("sources", []) or []
+                        if sources:
+                            st.subheader("Sources / citations")
+                            for i, src in enumerate(sources[:10], 1):
+                                with st.expander(f"Source {i} — Page {src.get('page_number', 0)}"):
+                                    st.write(src.get("text", "")[:800] + ("..." if len(src.get("text", "")) > 800 else ""))
+                                    st.caption(f"Document: {src.get('display_name', src.get('document_id', '—'))}")
 
 # -----------------------------------------------------------------------------
 # Page: Upload Document
@@ -810,6 +898,10 @@ elif page == "📄 Due Diligence Memo":
                         st.error(f"**{error.get('code', 'ERROR')}**: {error.get('message', '')}")
                         if error.get("details"):
                             st.json(error.get("details"))
+                        readiness_output = (intermediate.get("due_diligence.readiness") or {}).get("output", {})
+                        if isinstance(readiness_output, dict) and readiness_output.get("case_spine_readiness"):
+                            st.info("Case spine readiness")
+                            st.json(readiness_output.get("case_spine_readiness"))
                         st.info("No memo content was generated.")
                         render_output = False
 
@@ -848,7 +940,9 @@ elif page == "📄 Due Diligence Memo":
                                 st.write((item or {}).get("text", ""))
                                 st.caption(f"Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}")
                         else:
-                            st.info("No executive summary items.")
+                            exec_meta = intermediate.get("due_diligence.executive_summary") or {}
+                            exec_warnings = exec_meta.get("warnings") if isinstance(exec_meta, dict) else []
+                            st.info(exec_warnings[0] if exec_warnings else "No executive summary items.")
 
                         st.subheader("Timeline of Events")
                         timeline = final_output.get("timeline") or []
@@ -865,7 +959,9 @@ elif page == "📄 Due Diligence Memo":
                                 )
                             st.table(table)
                         else:
-                            st.info("No timeline events.")
+                            timeline_meta = intermediate.get("due_diligence.timeline") or {}
+                            timeline_warnings = timeline_meta.get("warnings") if isinstance(timeline_meta, dict) else []
+                            st.info(timeline_warnings[0] if timeline_warnings else "No timeline events.")
 
                         st.subheader("Key Arguments")
                         args = final_output.get("key_arguments") or {}
@@ -884,7 +980,9 @@ elif page == "📄 Due Diligence Memo":
                                 st.write(f"- {(arg or {}).get('text', '')}")
                                 st.caption(f"Source: Page {source.get('page', 0)}, Chunk {(source.get('chunk_id', '') or '')[:12]}...")
                         if not claimant and not defendant:
-                            st.info("No arguments extracted.")
+                            args_meta = intermediate.get("due_diligence.key_arguments") or {}
+                            args_warnings = args_meta.get("warnings") if isinstance(args_meta, dict) else []
+                            st.info(args_warnings[0] if args_warnings else "No arguments extracted.")
 
                         st.subheader("Open Issues")
                         issues = final_output.get("open_issues") or []
@@ -894,7 +992,9 @@ elif page == "📄 Due Diligence Memo":
                                 st.write(f"- {(issue or {}).get('text', '')}")
                                 st.caption(f"Source: Page {source.get('page', 0)}, Chunk {(source.get('chunk_id', '') or '')[:12]}...")
                         else:
-                            st.info("No open issues.")
+                            issues_meta = intermediate.get("due_diligence.open_issues") or {}
+                            issues_warnings = issues_meta.get("warnings") if isinstance(issues_meta, dict) else []
+                            st.info(issues_warnings[0] if issues_warnings else "No open issues.")
 
                         citations = final_output.get("citations") or []
                         if citations:

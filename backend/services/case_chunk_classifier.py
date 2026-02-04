@@ -7,6 +7,7 @@ import ollama
 import re
 import json
 from backend.config import settings
+from backend.models.case_summary import CaseChunkRole
 
 
 class CaseChunkClassifier:
@@ -27,6 +28,110 @@ class CaseChunkClassifier:
     def __init__(self):
         """Initialize the classifier."""
         self.ollama_client = ollama.Client(host=settings.OLLAMA_BASE_URL)
+
+    def classify_role(
+        self,
+        chunk_text: str,
+        chunk_id: str
+    ) -> CaseChunkRole:
+        """
+        Classify a chunk into a case-level role used by Due Diligence.
+        Uses heuristics first, then LLM fallback.
+        """
+        heuristic_role = self._classify_role_by_heuristics(chunk_text)
+        if heuristic_role:
+            return heuristic_role
+        return self._classify_role_with_llm(chunk_text, chunk_id)
+
+    def _classify_role_by_heuristics(self, text: str) -> Optional[CaseChunkRole]:
+        text_lower = text.lower()
+
+        holding_keywords = [
+            "the court holds", "we hold", "it is held", "the court finds",
+            "the court concludes", "the court rules", "judgment is",
+            "the court grants", "the court denies", "the court affirms",
+            "the court reverses"
+        ]
+        if any(kw in text_lower for kw in holding_keywords):
+            return "holding"
+
+        issue_keywords = [
+            "issue", "question", "whether", "the court must determine",
+            "the central question", "the key issue", "the main issue",
+            "this case presents", "the dispute concerns"
+        ]
+        if any(kw in text_lower for kw in issue_keywords):
+            return "issue_framing"
+
+        procedural_keywords = [
+            "filed", "complaint", "motion", "order", "judgment", "appeal",
+            "hearing", "trial", "deposition", "discovery", "subpoena",
+            "petition", "response", "reply", "brief", "memorandum"
+        ]
+        if any(kw in text_lower for kw in procedural_keywords):
+            return "procedural"
+
+        reasoning_keywords = [
+            "because", "therefore", "thus", "consequently", "accordingly",
+            "the reason", "the rationale", "the basis", "in support",
+            "this conclusion", "this finding"
+        ]
+        if any(kw in text_lower for kw in reasoning_keywords):
+            return "reasoning"
+
+        background_keywords = [
+            "background", "facts", "the parties", "this case involves",
+            "the dispute arose", "the following facts", "the record shows"
+        ]
+        if any(kw in text_lower for kw in background_keywords):
+            return "background"
+
+        return None
+
+    def _classify_role_with_llm(self, chunk_text: str, chunk_id: str) -> CaseChunkRole:
+        prompt = f"""Classify the following legal text into one of these roles:
+- background
+- issue_framing
+- holding
+- reasoning
+- procedural
+- other
+
+Return ONLY the role.
+
+Text:
+{chunk_text[:2000]}
+"""
+        try:
+            response = self.ollama_client.generate(
+                model=settings.OLLAMA_MODEL,
+                prompt=prompt,
+                options={
+                    'temperature': settings.CASE_SUMMARY_TEMPERATURE,
+                    'seed': settings.CASE_SUMMARY_SEED,
+                }
+            )
+            response_text = (response.get('response') or "").strip().lower()
+            role = response_text.splitlines()[0].strip()
+            if role in {"background", "issue_framing", "holding", "reasoning", "procedural", "other"}:
+                return role  # type: ignore[return-value]
+            return "other"
+        except Exception as e:
+            print(f"Error in role classification for {chunk_id}: {e}")
+            return "other"
+
+    def _map_chunk_type_to_role(self, chunk_type: str) -> Optional[CaseChunkRole]:
+        mapping = {
+            "background": "background",
+            "issue_framing": "issue_framing",
+            "holding": "holding",
+            "reasoning": "reasoning",
+            "procedural_history": "procedural",
+            "citation": "other",
+            "argument_claimant": "reasoning",
+            "argument_defendant": "reasoning",
+        }
+        return mapping.get(chunk_type)
     
     def classify_chunk(
         self,
@@ -264,5 +369,29 @@ JSON response:"""
                 )
                 chunk['chunk_type'] = chunk_type
         
+        return chunks
+
+    def assign_roles_to_chunks(self, chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Assign case roles to chunks (adds role to chunk metadata).
+        """
+        for chunk in chunks:
+            existing_role = chunk.get("role")
+            if not existing_role and isinstance(chunk.get("metadata"), dict):
+                existing_role = chunk["metadata"].get("role")
+            if existing_role:
+                continue
+
+            mapped_role = None
+            chunk_type = chunk.get("chunk_type")
+            if chunk_type:
+                mapped_role = self._map_chunk_type_to_role(chunk_type)
+            role = mapped_role or self.classify_role(
+                chunk_text=chunk.get("text", ""),
+                chunk_id=chunk.get("chunk_id", "")
+            )
+            chunk["role"] = role
+            if isinstance(chunk.get("metadata"), dict):
+                chunk["metadata"]["role"] = role
         return chunks
 

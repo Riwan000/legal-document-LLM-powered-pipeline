@@ -3,7 +3,16 @@ Pydantic models for case summarization output schema.
 Strict JSON schema with mandatory citations.
 """
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Literal
+
+CaseChunkRole = Literal[
+    "background",
+    "issue_framing",
+    "holding",
+    "reasoning",
+    "procedural",
+    "other",
+]
 
 
 class SourceCitation(BaseModel):

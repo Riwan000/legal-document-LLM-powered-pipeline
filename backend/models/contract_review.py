@@ -46,6 +46,10 @@ class RiskItem(BaseModel):
         default_factory=list,
         description="List of page numbers where supporting evidence appears.",
     )
+    display_names: List[str] = Field(
+        default_factory=list,
+        description="Human-readable clause names for UI (one per clause_ids entry when available).",
+    )
 
 
 class ClauseEvidenceBlock(BaseModel):
@@ -56,12 +60,25 @@ class ClauseEvidenceBlock(BaseModel):
     - Original text
     - Cleaned text
     - Page reference
+    - Optional human-readable display name (no unknown_* or hashes in UI).
     """
 
     clause_id: str = Field(..., description="Unique clause identifier.")
     page_number: int = Field(..., description="Page number where this evidence appears.")
     raw_text: str = Field(..., description="Original verbatim text (e.g. OCR output).")
     clean_text: str = Field(..., description="Normalized/cleaned text used for analysis.")
+    display_name: Optional[str] = Field(
+        default=None,
+        description="Human-readable clause name for UI; derived from clause_id at render time.",
+    )
+    is_non_contractual: bool = Field(
+        default=False,
+        description="True if evidence looks like a section header or non-contractual text; UI may show 'Section (Non-contractual)'.",
+    )
+    semantic_label: Optional[str] = Field(
+        default=None,
+        description="G3: When set, UI uses 'Section: {semantic_label} — Page N'; else 'Section (Non-standard)'.",
+    )
 
 
 class ExecutiveSummaryItem(BaseModel):
@@ -105,6 +122,14 @@ class ContractReviewResponse(BaseModel):
     executive_summary: List[ExecutiveSummaryItem] = Field(
         default_factory=list,
         description="Executive summary items for senior review.",
+    )
+    not_detected_clauses: List[str] = Field(
+        default_factory=list,
+        description="Human-readable names of expected clauses for which no evidence was found (display list only).",
+    )
+    document_classification_warning: Optional[str] = Field(
+        default=None,
+        description="If set, document did not appear to be an operative contract; UI should show a non-blocking banner.",
     )
     disclaimer: str = Field(
         default=(

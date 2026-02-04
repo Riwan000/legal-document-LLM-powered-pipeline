@@ -9,6 +9,7 @@ go into ctx.intermediate_results. Failures set ctx.error and ctx.status="failed"
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import List, Dict, Any, Optional, Iterable, Tuple
 
 from backend.config import settings
@@ -23,6 +24,7 @@ from backend.services.contract_profile_loader import load_contract_profile
 from backend.services.clause_store import ClauseStore
 from backend.services.clause_extraction import ClauseExtractionService
 from backend.services.guardrails import enforce_non_prescriptive_language
+from backend.utils.file_parser import FileParser
 
 
 STEP_NAME = "contract_review"
@@ -56,6 +58,116 @@ EXPECTED_CLAUSE_PATTERNS: Dict[str, List[str]] = {
     "dispute_resolution": ["dispute resolution", "arbitration", "arbitral"],
 }
 
+# Human-readable display names for clause IDs (semantic slug -> display name).
+# Used at response-build time only; storage unchanged.
+# Profile clause key -> human-readable display name (for not_detected list and observations).
+EXPECTED_CLAUSE_DISPLAY_NAMES: Dict[str, str] = {
+    "termination": "Termination",
+    "notice": "Notice Period",
+    "salary_wages": "Salary and Wages",
+    "compensation": "Compensation",
+    "benefits": "Benefits",
+    "governing_law": "Governing Law",
+    "jurisdiction": "Jurisdiction",
+    "conduct_discipline": "Conduct and Discipline",
+    "confidentiality": "Confidentiality",
+    "term": "Term",
+    "liability": "Liability",
+    "remedies": "Remedies",
+    "dispute_resolution": "Dispute Resolution",
+    "probation": "Probation",
+}
+
+WEAK_EVIDENCE_RULES: Dict[str, List[str]] = {
+    "confidentiality": ["duration"],
+    "intellectual_property": ["post_employment_scope"],
+    "termination": ["notice_period"],
+    "non_compete": ["duration", "geographic_scope"],
+    # Governing law: presence of jurisdiction text is usually sufficient; no weak-evidence checks.
+    "governing_law": [],
+}
+
+CANONICAL_CLAUSE_GROUPS: Dict[str, List[str]] = {
+    # Compensation group: treat compensation / salary_wages / remuneration as one reviewer-facing concept.
+    "compensation": ["compensation", "salary_wages", "remuneration"],
+}
+
+# Implicit governing law: keywords that suggest law reference without a standalone "Governing Law" clause.
+IMPLICIT_GOV_LAW_KEYWORDS: List[str] = [
+    "labour law",
+    "labor law",
+    "workman law",
+    "laws in force",
+    "laws applicable in",
+    "as per the law",
+    "under the provisions of",
+]
+# Country/jurisdiction phrases used only to require a geographic reference alongside a keyword (no inference).
+GOV_LAW_COUNTRY_REFERENCES: List[str] = [
+    "saudi arabia",
+    "kingdom of saudi arabia",
+    "ksa",
+    "uae",
+    "emirates",
+    "gcc",
+    "bahrain",
+    "kuwait",
+    "oman",
+    "qatar",
+]
+
+# Benefits: composite detection across evidence (medical, housing, meals, transport, leave).
+BENEFITS_SIGNALS: Dict[str, List[str]] = {
+    "medical": ["medical treatment", "medical care", "health"],
+    "housing": ["accommodation", "housing", "lodging"],
+    "meals": ["meals", "food allowance"],
+    "transport": ["transportation", "airfare", "visa cost", "visa"],
+    "leave": ["vacation", "leave", "annual leave"],
+}
+
+DISPLAY_NAME_MAP: Dict[str, str] = {
+    "confidentialinformation": "Confidentiality",
+    "confidentialinformat": "Confidentiality",
+    "governinglaw": "Governing Law",
+    "intellectualproperty": "Intellectual Property",
+    "positionandduties": "Position and Duties",
+    "compensation": "Compensation",
+    "termination": "Termination",
+    "notice": "Notice Period",
+    "salarywages": "Salary and Wages",
+    "benefits": "Benefits",
+    "jurisdiction": "Jurisdiction",
+    "conductdiscipline": "Conduct and Discipline",
+    "disputeresolution": "Dispute Resolution",
+    "liability": "Liability",
+    "remedies": "Remedies",
+    "term": "Term",
+}
+
+
+def _resolve_clause_display_name(clause_id: str) -> str:
+    """
+    Resolve a clause_id to a human-readable display name for UI.
+    Parses semantic part from IDs like unknown_ConfidentialInformat_6bf9001f.
+    Fallback: title-case with spaces (no raw hash or unknown_).
+    """
+    if not clause_id or not clause_id.strip():
+        return "Clause"
+    parts = clause_id.strip().split("_")
+    # Format: section_slug_heading_slug_hash -> take middle segment (heading_slug)
+    if len(parts) >= 2:
+        semantic = parts[1]
+    else:
+        semantic = parts[0]
+    key = re.sub(r"[^a-z0-9]", "", semantic.lower())
+    if key in DISPLAY_NAME_MAP:
+        return DISPLAY_NAME_MAP[key]
+    # Fallback: insert space before capitals, then title-case first letter of each word
+    cleaned = re.sub(r"([a-z])([A-Z])", r"\1 \2", semantic)
+    if cleaned:
+        return cleaned.strip()
+    return "Clause"
+
 
 def _find_document_path(document_id: str) -> Optional[str]:
     """Resolve document file path from document_id."""
@@ -68,6 +180,52 @@ def _find_document_path(document_id: str) -> Optional[str]:
         if matches:
             return str(matches[0])
     return None
+
+
+# Document classification: heuristic to detect non-operative (e.g. academic) documents.
+DOC_CLASSIFY_OPERATIVE_PHRASES = (
+    "agreement", "employer", "employee", "shall pay", "shall terminate",
+)
+DOC_CLASSIFY_ACADEMIC_PATTERNS = [
+    re.compile(r"\bv\.\s", re.IGNORECASE),  # case citation
+    re.compile(r"\bF\.\s*2d\b", re.IGNORECASE),
+    re.compile(r"\bU\.\s*S\.\b", re.IGNORECASE),
+    re.compile(r"§\s*\d+", re.IGNORECASE),
+    re.compile(r"\bthe court held\b", re.IGNORECASE),
+    re.compile(r"\baccording to\b", re.IGNORECASE),
+    re.compile(r"\bfootnote\s+\d+", re.IGNORECASE),
+    re.compile(r"\b\d+\s+F\.\s*Supp", re.IGNORECASE),
+]
+DOC_CLASSIFY_ACADEMIC_DENSITY_THRESHOLD = 0.012  # hits per word above this -> academic
+DOC_CLASSIFY_LEAD_CHARS = 5000  # check parties/agreement in first N chars
+
+
+def _is_likely_operative_contract(full_doc_text: str) -> bool:
+    """
+    Rule-based heuristic: True if document looks like an operative contract (no warning).
+    False triggers the document_classification_warning banner.
+    """
+    if not (full_doc_text or "").strip():
+        return True  # no text -> do not warn
+    text = full_doc_text
+    t_lower = text.lower()
+    lead = text[:DOC_CLASSIFY_LEAD_CHARS].lower()
+
+    # No parties / no agreement in lead
+    if "agreement" not in lead and ("employer" not in lead and "employee" not in lead):
+        return False
+
+    # Must have at least one operative phrase
+    if not any(p in t_lower for p in DOC_CLASSIFY_OPERATIVE_PHRASES):
+        return False
+
+    # High density of academic/case-law signals
+    word_count = max(1, len(t_lower.split()))
+    hits = sum(1 for pat in DOC_CLASSIFY_ACADEMIC_PATTERNS if pat.search(text))
+    if (hits / word_count) >= DOC_CLASSIFY_ACADEMIC_DENSITY_THRESHOLD:
+        return False
+
+    return True
 
 
 def _normalize_clause_type_for_profile(t: str) -> str:
@@ -86,6 +244,177 @@ def _severity_rank(sev: str) -> int:
     if sev == "medium":
         return 1
     return 2
+
+
+def _display_status_for_internal(status: str) -> str:
+    """Map internal status to UI display status (FIX 4)."""
+    if status == "detected":
+        return "Detected"
+    if status == "uncertain":
+        return "Detected (Weak Evidence)"
+    return "Not Detected"
+
+
+CRITICAL_CLAUSES = {"termination", "governing_law", "compensation"}
+
+
+def _build_observation_item(
+    clause_key: str,
+    display_name: str,
+    status: str,
+    base_severity: str,
+) -> ExecutiveSummaryItem:
+    """
+    Build a single observation item with tuned severity:
+    - Missing critical clause: High
+    - Ambiguous termination/IP (uncertain): High
+    - Weak evidence (uncertain): Medium
+    - Implicit/distributed (G4): cap at Medium
+    - Present & standard (detected): Low or unlabeled
+    """
+    sev = (base_severity or "medium").lower()
+    if sev not in ("high", "medium", "low"):
+        sev = "medium"
+
+    # Severity tuning based on status and criticality
+    if status in ("detected_implicit", "detected_distributed", "detected_weak"):
+        final_sev = "medium"  # G4: never High for implicit/distributed
+    elif status == "not_detected" and clause_key in CRITICAL_CLAUSES:
+        final_sev = "high"
+    elif status == "uncertain" and clause_key in {"termination", "intellectual_property"}:
+        final_sev = "high"
+    elif status == "uncertain":
+        final_sev = "medium"
+    elif status == "detected":
+        final_sev = "low"
+    else:
+        final_sev = sev
+
+    tag = f"[{final_sev.capitalize()}] " if status not in ("detected",) else ""
+
+    if status == "detected":
+        text = f"A {display_name} clause is present."
+    elif status == "uncertain":
+        text = (
+            f"A {display_name} clause is present; commonly expected details "
+            f"(e.g. duration, scope) are not clearly specified."
+        )
+    elif status == "detected_implicit":
+        text = (
+            "Governing law appears to be referenced implicitly (e.g., by citation to local labor law), "
+            "though not stated in a standalone clause."
+        )
+    elif status == "detected_distributed":
+        text = "Benefits appear across multiple clauses (e.g., medical care, accommodation, transport, leave)."
+    elif status == "detected_weak":
+        text = "Benefits appear in limited form (single category detected)."
+    else:
+        text = f"No {display_name} clause was detected."
+
+    return ExecutiveSummaryItem(
+        text=(tag + text).strip(),
+        severity=final_sev if status != "detected" else None,
+        related_risk_indices=[],
+    )
+
+
+def _build_key_review_observations(
+    presence_map: Dict[str, Any],
+    risk_weights: Dict[str, Any],
+    expected: List[str],
+) -> List[ExecutiveSummaryItem]:
+    """
+    Build Key Review Observations from presence_map (template-based, no LLM).
+    Order: high severity first, then medium, then low; within same severity:
+    ambiguities/weak evidence first, then missing clauses, then present & standard.
+    """
+    items: List[ExecutiveSummaryItem] = []
+
+    # First, build grouped view for canonical clause groups (e.g. compensation vs salary_wages).
+    handled: set[str] = set()
+
+    def _aggregate_status(member_keys: List[str]) -> str:
+        statuses = [presence_map.get(k, {}).get("status", "not_detected") for k in member_keys]
+        if any(s == "detected" for s in statuses):
+            return "detected"
+        if any(s == "detected_implicit" for s in statuses):
+            return "detected_implicit"
+        if any(s == "detected_distributed" for s in statuses):
+            return "detected_distributed"
+        if any(s == "detected_weak" for s in statuses):
+            return "detected_weak"
+        if any(s == "uncertain" for s in statuses):
+            return "uncertain"
+        return "not_detected"
+
+    def _max_severity(member_keys: List[str]) -> str:
+        sev_values = []
+        for k in member_keys:
+            sev = (risk_weights.get(k) or "medium")
+            if isinstance(sev, str):
+                sev = sev.lower()
+            if sev not in ("high", "medium", "low"):
+                sev = "medium"
+            sev_values.append(sev)
+        if not sev_values:
+            return "medium"
+        # choose highest (high < medium < low in rank)
+        return min(sev_values, key=_severity_rank)
+
+    # Canonical groups
+    for canon_key, members in CANONICAL_CLAUSE_GROUPS.items():
+        member_keys = [m for m in members if m in expected]
+        if not member_keys:
+            continue
+        status = _aggregate_status(member_keys)
+        severity = _max_severity(member_keys)
+        display_name = EXPECTED_CLAUSE_DISPLAY_NAMES.get(canon_key, canon_key.replace("_", " ").title())
+        handled.update(member_keys)
+        items.append(
+            _build_observation_item(
+                clause_key=canon_key,
+                display_name=display_name,
+                status=status,
+                base_severity=severity,
+            )
+        )
+
+    # Standalone expected keys not covered by any canonical group
+    for clause_type in expected:
+        if clause_type in handled:
+            continue
+        entry = presence_map.get(clause_type, {})
+        status = entry.get("status", "not_detected")
+        display_name = EXPECTED_CLAUSE_DISPLAY_NAMES.get(clause_type, clause_type.replace("_", " ").title())
+        base_severity = (risk_weights.get(clause_type) or "medium")
+        if isinstance(base_severity, str):
+            base_severity = base_severity.lower()
+        if base_severity not in ("high", "medium", "low"):
+            base_severity = "medium"
+        items.append(
+            _build_observation_item(
+                clause_key=clause_type,
+                display_name=display_name,
+                status=status,
+                base_severity=base_severity,
+            )
+        )
+
+    # Sort: severity first (high > medium > low); then ambiguity → missing → present
+    def _order_key(item: ExecutiveSummaryItem) -> tuple:
+        sev_rank = _severity_rank(item.severity or "low")
+        t = (item.text or "").lower()
+        if "present; commonly expected details" in t:
+            status_rank = 0  # Ambiguities / weak evidence first
+        elif "no " in t and " clause was detected" in t:
+            status_rank = 1  # Missing clauses next
+        elif "referenced implicitly" in t or "appear across" in t or "limited form" in t:
+            status_rank = 2  # Implicit/distributed -> present group
+        else:
+            status_rank = 2  # Present & standard last
+        return (sev_rank, status_rank, t)
+    items.sort(key=_order_key)
+    return items
 
 
 def _clause_type_aliases(profile_key: str) -> List[str]:
@@ -189,6 +518,58 @@ def _looks_like_terminate(token: str) -> bool:
     return _levenshtein_distance(token, "terminate") <= TERMINATION_TOKEN_DISTANCE
 
 
+# Clause types for which non-contractual evidence must downgrade to not_detected.
+DOWNGRADE_IF_NON_CONTRACTUAL = frozenset({"compensation", "salary_wages", "termination", "notice"})
+NON_CONTRACTUAL_MAX_HEADER_LEN = 80
+NON_CONTRACTUAL_HEADER_PATTERNS = (
+    "introduction", "table of contents", "appendix", "index", "references",
+    "abstract", "executive summary", "preface",
+)
+
+
+def _is_non_contractual_snippet(text: str) -> bool:
+    """
+    True if the snippet looks like a section header or non-contractual text:
+    section header (very short or header-like), and/or lacks obligation verbs and parties.
+    """
+    if not (text or "").strip():
+        return True
+    t = text.strip()
+    t_lower = t.lower()
+    # Section header: very short or matches header patterns
+    is_short = len(t) < NON_CONTRACTUAL_MAX_HEADER_LEN
+    is_header_pattern = any(p in t_lower for p in NON_CONTRACTUAL_HEADER_PATTERNS)
+    if is_short and is_header_pattern:
+        return True
+    # Single line, mostly title-case, short -> likely header
+    lines = [ln.strip() for ln in t.splitlines() if ln.strip()]
+    if is_short and len(lines) <= 2 and not any(c in t for c in ".?!"):
+        return True
+    # Lacks obligation verbs and parties -> non-contractual
+    has_obligation = any(v in t_lower for v in ("shall", "must", "agrees", "agree"))
+    has_parties = any(
+        p in t_lower for p in ("employer", "employee", "party", "parties", "company", "contractor")
+    )
+    if not has_obligation and not has_parties:
+        return True
+    return False
+
+
+def _classify_evidence_label(text: str) -> Optional[str]:
+    """
+    G3: Deterministic semantic label for evidence block (display-only).
+    Returns None when no confident label; no legal interpretation.
+    """
+    if not (text or "").strip():
+        return None
+    t = (text or "").lower()
+    if "death" in t and "compensation" in t:
+        return "Death Compensation / Indemnity"
+    if "terminate" in t or "notice" in t:
+        return "Termination & Notice"
+    return None
+
+
 def _detect_clause_presence(
     evidence_candidates: List[Dict[str, Any]],
     keywords: List[str],
@@ -212,9 +593,16 @@ def _detect_clause_presence(
             continue
         tokens = normalized_text.split()
 
+        def _downgrade_if_non_contractual() -> bool:
+            if clause_type not in DOWNGRADE_IF_NON_CONTRACTUAL:
+                return False
+            return cand.get("is_non_contractual") is True
+
         # Hard rule for termination detection
         if clause_type == "termination":
             if "this agreement" in normalized_text and any(_looks_like_terminate(t) for t in tokens):
+                if _downgrade_if_non_contractual():
+                    continue
                 return {
                     "status": "detected",
                     "clause_id": cand.get("clause_id"),
@@ -223,11 +611,18 @@ def _detect_clause_presence(
                 }
         for kw in keywords:
             if kw and kw in normalized_text:
+                if _downgrade_if_non_contractual():
+                    continue
                 is_weak = len(raw_text) < MIN_SNIPPET_LENGTH or _alpha_ratio(raw_text) < MIN_ALPHA_RATIO
                 if len(normalized_text) > 200:
                     is_weak = False
+                rules = WEAK_EVIDENCE_RULES.get(clause_type or "", None)
+                if rules == []:
+                    status = "detected"
+                else:
+                    status = "uncertain" if is_weak else "detected"
                 return {
-                    "status": "uncertain" if is_weak else "detected",
+                    "status": status,
                     "clause_id": cand.get("clause_id"),
                     "page_number": cand.get("page_number"),
                     "matched_keyword": kw,
@@ -235,11 +630,18 @@ def _detect_clause_presence(
 
         # OCR-tolerant termination token scan (keyword-independent)
         if clause_type == "termination" and any(_looks_like_terminate(t) for t in tokens):
+            if _downgrade_if_non_contractual():
+                continue
             is_weak = len(raw_text) < MIN_SNIPPET_LENGTH or _alpha_ratio(raw_text) < MIN_ALPHA_RATIO
             if len(normalized_text) > 200:
                 is_weak = False
+            rules = WEAK_EVIDENCE_RULES.get("termination", None)
+            if rules == []:
+                status = "detected"
+            else:
+                status = "uncertain" if is_weak else "detected"
             return {
-                "status": "uncertain" if is_weak else "detected",
+                "status": status,
                 "clause_id": cand.get("clause_id"),
                 "page_number": cand.get("page_number"),
                 "matched_keyword": "terminate*",
@@ -359,6 +761,7 @@ class ContractReviewService:
                                 missing_clause=False,
                                 clause_ids=[clause_id] if clause_id else [],
                                 page_numbers=page_numbers,
+                                display_names=[_resolve_clause_display_name(clause_id)] if clause_id else [],
                             )
                         )
 
@@ -382,6 +785,7 @@ class ContractReviewService:
                                 missing_clause=False,
                                 clause_ids=[clause_id] if clause_id else [],
                                 page_numbers=page_numbers,
+                                display_names=[_resolve_clause_display_name(clause_id)] if clause_id else [],
                             )
                         )
 
@@ -405,6 +809,7 @@ class ContractReviewService:
                                 missing_clause=False,
                                 clause_ids=[clause_id] if clause_id else [],
                                 page_numbers=page_numbers,
+                                display_names=[_resolve_clause_display_name(clause_id)] if clause_id else [],
                             )
                         )
 
@@ -431,6 +836,7 @@ class ContractReviewService:
                                 missing_clause=False,
                                 clause_ids=[clause_id] if clause_id else [],
                                 page_numbers=page_numbers,
+                                display_names=[_resolve_clause_display_name(clause_id)] if clause_id else [],
                             )
                         )
 
@@ -488,14 +894,16 @@ class ContractReviewService:
             if sev not in ("high", "medium", "low"):
                 sev = "medium"
             desc = f"Governing law / jurisdiction references for '{canon}' were not explicitly found in the provided evidence."
+            cids = [cid for cid in clause_ids if cid]
             risks.append(
                 RiskItem(
                     description=desc,
                     severity=sev,
                     clause_types=["governing_law", "jurisdiction"],
                     missing_clause=False,
-                    clause_ids=[cid for cid in clause_ids if cid],
+                    clause_ids=cids,
                     page_numbers=sorted({p for p in page_numbers if p}),
+                    display_names=[_resolve_clause_display_name(cid) for cid in cids],
                 )
             )
         elif has_other:
@@ -504,14 +912,16 @@ class ContractReviewService:
                 f"Evidence includes references consistent with '{canon}' and also mentions other jurisdictions; "
                 "this may require consistency verification."
             )
+            cids = [cid for cid in clause_ids if cid]
             risks.append(
                 RiskItem(
                     description=desc,
                     severity="low",
                     clause_types=["governing_law", "jurisdiction"],
                     missing_clause=False,
-                    clause_ids=[cid for cid in clause_ids if cid],
+                    clause_ids=cids,
                     page_numbers=sorted({p for p in page_numbers if p}),
+                    display_names=[_resolve_clause_display_name(cid) for cid in cids],
                 )
             )
 
@@ -571,6 +981,21 @@ class ContractReviewService:
 
         ctx.add_result(f"{STEP_NAME}.profile", profile)
 
+        # 1b) Document classification (mandatory check before review)
+        document_classification_warning: Optional[str] = None
+        doc_path = _find_document_path(contract_id)
+        if doc_path:
+            try:
+                pages = FileParser.parse(Path(doc_path))
+                full_text = "\n".join((t or "") for t, _ in pages)
+                if not _is_likely_operative_contract(full_text):
+                    document_classification_warning = (
+                        "This document does not appear to be an operative employment contract. "
+                        "Results are based on the selected contract profile and may reflect profile mismatch rather than missing clauses."
+                    )
+            except Exception:
+                pass  # do not fail workflow; leave warning unset
+
         # 2) Get clauses (from store or extract)
         ctx.current_step = f"{STEP_NAME}.clauses"
         clauses_from_store = self.clause_store.get_clauses_by_document(contract_id)
@@ -588,19 +1013,25 @@ class ContractReviewService:
                 for alias in _clause_type_aliases(norm):
                     extracted_types.add(alias)
                 for ev in (c.evidence or []):
+                    ev_text = ev.clean_text or ev.raw_text or ""
+                    is_nc = _is_non_contractual_snippet(ev_text)
                     evidence_blocks.append(
                         ClauseEvidenceBlock(
                             clause_id=c.clause_id,
                             page_number=ev.page or 0,
                             raw_text=ev.raw_text or "",
                             clean_text=ev.clean_text or ev.raw_text or "",
+                            display_name=_resolve_clause_display_name(c.clause_id),
+                            is_non_contractual=is_nc,
+                            semantic_label=_classify_evidence_label(ev_text),
                         )
                     )
                     evidence_candidates.append(
                         {
                             "clause_id": c.clause_id,
                             "page_number": ev.page or 0,
-                            "text": ev.clean_text or ev.raw_text or "",
+                            "text": ev_text,
+                            "is_non_contractual": is_nc,
                         }
                     )
         else:
@@ -631,12 +1062,17 @@ class ContractReviewService:
                 for alias in _clause_type_aliases(doc_sec):
                     extracted_types.add(alias)
                 evidence_text = cl.get("normalized_text") or cl.get("verbatim_text", "")
+                cid = cl.get("clause_id", "")
+                is_nc = _is_non_contractual_snippet(evidence_text or "")
                 evidence_blocks.append(
                     ClauseEvidenceBlock(
-                        clause_id=cl.get("clause_id", ""),
+                        clause_id=cid,
                         page_number=cl.get("page_start", 0),
                         raw_text=cl.get("verbatim_text", ""),
                         clean_text=cl.get("normalized_text") or cl.get("verbatim_text", ""),
+                        display_name=_resolve_clause_display_name(cid),
+                        is_non_contractual=is_nc,
+                        semantic_label=_classify_evidence_label(evidence_text or ""),
                     )
                 )
                 evidence_candidates.append(
@@ -644,6 +1080,7 @@ class ContractReviewService:
                         "clause_id": cl.get("clause_id", ""),
                         "page_number": cl.get("page_start", 0),
                         "text": evidence_text or "",
+                        "is_non_contractual": is_nc,
                     }
                 )
             # Also add common types if verbatim text suggests them (simple keyword match)
@@ -676,19 +1113,66 @@ class ContractReviewService:
 
         risks: List[RiskItem] = []
         presence_map: Dict[str, Any] = {}
+
+        def _display_status_for(status: str) -> str:
+            if status == "detected":
+                return "Detected"
+            if status == "uncertain":
+                return "Detected (Weak Evidence)"
+            if status == "detected_implicit":
+                return "Detected (Implicit Reference)"
+            if status == "detected_distributed":
+                return "Detected (Distributed Provisions)"
+            if status == "detected_weak":
+                return "Detected (Limited Coverage)"
+            return "Not Detected"
+
         for clause_type in expected:
             keywords = EXPECTED_CLAUSE_PATTERNS.get(clause_type, [])
             result = _detect_clause_presence(evidence_candidates, keywords, clause_type=clause_type)
             status = result["status"]
             presence_map[clause_type] = {
                 "status": status,
+                "display_status": _display_status_for(status),
                 "clause_ids": [result["clause_id"]] if result.get("clause_id") else [],
                 "page_numbers": [result["page_number"]] if result.get("page_number") else [],
                 "matched_keyword": result.get("matched_keyword"),
             }
-            if status == "detected":
-                continue
 
+        # G1: Post-pass for implicit governing law
+        if "governing_law" in expected and presence_map.get("governing_law", {}).get("status") == "not_detected":
+            for cand in evidence_candidates:
+                t = (cand.get("text") or "").lower()
+                has_kw = any(kw in t for kw in IMPLICIT_GOV_LAW_KEYWORDS)
+                has_country = any(c in t for c in GOV_LAW_COUNTRY_REFERENCES)
+                if has_kw and has_country:
+                    presence_map["governing_law"]["status"] = "detected_implicit"
+                    presence_map["governing_law"]["display_status"] = "Detected (Implicit Reference)"
+                    break
+
+        # G2: Post-pass for benefits (composite)
+        if "benefits" in expected:
+            detected_categories: set = set()
+            for cand in evidence_candidates:
+                t = (cand.get("text") or "").lower()
+                for category, kws in BENEFITS_SIGNALS.items():
+                    if any(k in t for k in kws):
+                        detected_categories.add(category)
+            if len(detected_categories) >= 2:
+                presence_map["benefits"]["status"] = "detected_distributed"
+                presence_map["benefits"]["display_status"] = "Detected (Distributed Provisions)"
+            elif len(detected_categories) == 1:
+                presence_map["benefits"]["status"] = "detected_weak"
+                presence_map["benefits"]["display_status"] = "Detected (Limited Coverage)"
+
+        # Add risk rows only for clause_types that are not detected (any variant)
+        _skip_risk_statuses = ("detected", "detected_implicit", "detected_distributed", "detected_weak")
+        for clause_type in expected:
+            status = presence_map.get(clause_type, {}).get("status", "not_detected")
+            if status in _skip_risk_statuses:
+                continue
+            entry = presence_map[clause_type]
+            result = {"clause_id": (entry.get("clause_ids") or [None])[0], "page_number": (entry.get("page_numbers") or [None])[0]}
             severity = risk_weights.get(clause_type, "medium")
             if isinstance(severity, str):
                 severity = severity.lower()
@@ -696,18 +1180,17 @@ class ContractReviewService:
                 severity = "medium"
             if severity not in ("high", "medium", "low"):
                 severity = "medium"
-
             if status == "uncertain":
                 description = f"Clause detected with weak evidence signal: {clause_type.replace('_', ' ')}."
-                clause_ids = [result["clause_id"]] if result.get("clause_id") else []
-                page_numbers = [result["page_number"]] if result.get("page_number") else []
+                clause_ids = entry.get("clause_ids") or []
+                page_numbers = entry.get("page_numbers") or []
                 missing_clause = False
             else:
                 description = f"Clause not confidently detected: {clause_type.replace('_', ' ')}."
                 clause_ids = []
                 page_numbers = []
                 missing_clause = True
-
+            display_names = [_resolve_clause_display_name(cid) for cid in clause_ids] if clause_ids else []
             risks.append(
                 RiskItem(
                     description=description,
@@ -717,10 +1200,29 @@ class ContractReviewService:
                     missing_clause=missing_clause,
                     clause_ids=clause_ids,
                     page_numbers=page_numbers,
+                    display_names=display_names,
                 )
             )
 
         ctx.add_result(f"{STEP_NAME}.presence_map", presence_map)
+
+        # Build not_detected_clauses with canonical grouping (e.g. compensation vs salary_wages).
+        missing_keys = [ct for ct in expected if presence_map.get(ct, {}).get("status") == "not_detected"]
+        not_detected_clauses: List[str] = []
+        # Handle canonical groups first (only show one entry for each group)
+        for canon_key, members in CANONICAL_CLAUSE_GROUPS.items():
+            group_members = [m for m in members if m in missing_keys]
+            if group_members:
+                not_detected_clauses.append(
+                    EXPECTED_CLAUSE_DISPLAY_NAMES.get(canon_key, canon_key.replace("_", " ").title())
+                )
+                missing_keys = [ct for ct in missing_keys if ct not in group_members]
+
+        # Add remaining standalone missing keys
+        for ct in missing_keys:
+            not_detected_clauses.append(
+                EXPECTED_CLAUSE_DISPLAY_NAMES.get(ct, ct.replace("_", " ").title())
+            )
 
         # 3b) Problematic language detection (heuristic)
         if clauses_from_store:
@@ -754,62 +1256,12 @@ class ContractReviewService:
 
         ctx.add_result(f"{STEP_NAME}.risks", [r.model_dump() for r in risks])
 
-        # 4) Executive summary (structured, no LLM - avoid prescriptive language)
-        exec_items: List[ExecutiveSummaryItem] = []
-        high = [r for r in risks if r.severity == "high"]
-        medium = [r for r in risks if r.severity == "medium"]
-        low = [r for r in risks if r.severity == "low"]
-
-        if high:
-            exec_items.append(
-                ExecutiveSummaryItem(
-                    text=f"High-priority review flags identified: {len(high)} item(s).",
-                    severity="high",
-                    related_risk_indices=[i for i, r in enumerate(risks) if r.severity == "high"],
-                )
-            )
-        if medium:
-            exec_items.append(
-                ExecutiveSummaryItem(
-                    text=f"Medium-priority review flags identified: {len(medium)} item(s).",
-                    severity="medium",
-                    related_risk_indices=[i for i, r in enumerate(risks) if r.severity == "medium"],
-                )
-            )
-        if low and (review_depth or "standard").lower() != "quick":
-            exec_items.append(
-                ExecutiveSummaryItem(
-                    text=f"Low-priority review flags identified: {len(low)} item(s) (potential ambiguity/breadth markers).",
-                    severity="low",
-                    related_risk_indices=[i for i, r in enumerate(risks) if r.severity == "low"],
-                )
-            )
-        if not risks:
-            exec_items.append(
-                ExecutiveSummaryItem(
-                    text="No review flags were identified for the selected profile and evidence.",
-                    severity=None,
-                    related_risk_indices=[],
-                )
-            )
-        else:
-            not_detected_count = sum(1 for r in risks if r.status == "not_detected")
-            uncertain_count = sum(1 for r in risks if r.status == "uncertain")
-            other_flags = len(risks) - not_detected_count - uncertain_count
-            exec_items.append(
-                ExecutiveSummaryItem(
-                    text=(
-                        "Summary of review flags: "
-                        f"{not_detected_count} clause(s) not confidently detected, "
-                        f"{uncertain_count} clause(s) detected with weak evidence signals, "
-                        f"{other_flags} other evidence-linked flag(s)."
-                    ),
-                    severity=None,
-                    related_risk_indices=[],
-                )
-            )
-
-        # Guardrail enforcement for executive summary items
+        # 4) Key Review Observations (template-based, reviewer-grade; no raw counts)
+        exec_items = _build_key_review_observations(
+            presence_map=presence_map,
+            risk_weights=risk_weights,
+            expected=expected,
+        )
         for item in exec_items:
             item.text = enforce_non_prescriptive_language(item.text, step=f"{STEP_NAME}.executive_summary")
 
@@ -822,6 +1274,8 @@ class ContractReviewService:
             risks=risks,
             evidence=evidence_blocks,
             executive_summary=exec_items,
+            not_detected_clauses=not_detected_clauses,
+            document_classification_warning=document_classification_warning,
         )
         ctx.add_result(f"{STEP_NAME}.response", response.model_dump())
         ctx.status = "completed"

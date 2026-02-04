@@ -60,7 +60,8 @@ class RAGService:
         query: str,
         top_k: int = None,
         document_id_filter: Optional[str] = None,
-        priority_clause_types: Any = None
+        priority_clause_types: Any = None,
+        similarity_threshold: Optional[float] = None,
     ) -> List[Dict[str, Any]]:
         """
         Search for relevant document chunks with clause-aware priority boosting.
@@ -102,13 +103,15 @@ class RAGService:
                 query_embedding=query_embedding,
                 priority_weights=priority_weights,
                 top_k=top_k,
-                document_id_filter=document_id_filter
+                document_id_filter=document_id_filter,
+                similarity_threshold=similarity_threshold,
             )
         else:
             results = self.vector_store.search(
                 query_embedding=query_embedding,
                 top_k=top_k,
-                document_id_filter=document_id_filter
+                document_id_filter=document_id_filter,
+                similarity_threshold=similarity_threshold if similarity_threshold is not None else -1.0,
             )
         
         # 4) If semantic results are empty, lower the similarity threshold to be more permissive.
@@ -121,14 +124,14 @@ class RAGService:
                     priority_weights=priority_weights,
                     top_k=effective_top_k,
                     document_id_filter=document_id_filter,
-                    similarity_threshold=None
+                    similarity_threshold=None,
                 )
             else:
                 results = self.vector_store.search(
                     query_embedding=query_embedding,
                     top_k=effective_top_k,
                     document_id_filter=document_id_filter,
-                    similarity_threshold=None
+                    similarity_threshold=None,
                 )
         
         # 5) Final fallback: keyword match inside stored chunk text for a given document.
@@ -563,7 +566,8 @@ class RAGService:
         top_k: int = None,
         document_id_filter: Optional[str] = None,
         generate_response: bool = True,
-        response_language: Optional[str] = None
+        response_language: Optional[str] = None,
+        chunks_override: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """
         Answer a query using rule-guided RAG with legal hierarchy and citation enforcement.
@@ -615,39 +619,43 @@ class RAGService:
                 'query': query
             }
         
-        # Step 3: Try to retrieve structured clauses first (if clause store available)
         structured_clauses: List[Any] = []
-        if self.clause_store and document_id_filter:
-            try:
-                # RAG retrieval uses ranking-ready candidate clauses from ClauseStore.
-                # ClauseStore remains ranking-agnostic: it only returns data + normalized metadata.
-                candidate_dicts = self.clause_store.get_candidate_clauses(
-                    document_ids=[document_id_filter]
-                )
+        if chunks_override is None:
+            # Step 3: Try to retrieve structured clauses first (if clause store available)
+            if self.clause_store and document_id_filter:
+                try:
+                    # RAG retrieval uses ranking-ready candidate clauses from ClauseStore.
+                    # ClauseStore remains ranking-agnostic: it only returns data + normalized metadata.
+                    candidate_dicts = self.clause_store.get_candidate_clauses(
+                        document_ids=[document_id_filter]
+                    )
 
-                # If we have specific query_types, filter candidates by normalized clause_type.
-                filtered_candidates = candidate_dicts
-                if classification.query_types and classification.query_types[0] != "general":
-                    primary_type = classification.query_types[0].lower()
-                    filtered_candidates = [
-                        c for c in candidate_dicts
-                        if c.get("clause_type") == primary_type
-                    ]
+                    # If we have specific query_types, filter candidates by normalized clause_type.
+                    filtered_candidates = candidate_dicts
+                    if classification.query_types and classification.query_types[0] != "general":
+                        primary_type = classification.query_types[0].lower()
+                        filtered_candidates = [
+                            c for c in candidate_dicts
+                            if c.get("clause_type") == primary_type
+                        ]
 
-                # Use the underlying StructuredClause objects for hierarchy analysis.
-                structured_clauses = [c["clause"] for c in filtered_candidates]
-            except Exception as e:
-                print(f"Error querying clause store: {str(e)}")
-                structured_clauses = []
-        
-        # Step 4: Retrieve relevant chunks with priority boosting (weighted)
-        priority_weights = self._get_priority_clause_types(classification)
-        chunks = self.search(
-            query, 
-            top_k=top_k, 
-            document_id_filter=document_id_filter,
-            priority_clause_types=priority_weights
-        )
+                    # Use the underlying StructuredClause objects for hierarchy analysis.
+                    structured_clauses = [c["clause"] for c in filtered_candidates]
+                except Exception as e:
+                    print(f"Error querying clause store: {str(e)}")
+                    structured_clauses = []
+
+            # Step 4: Retrieve relevant chunks with priority boosting (weighted)
+            priority_weights = self._get_priority_clause_types(classification)
+            chunks = self.search(
+                query,
+                top_k=top_k,
+                document_id_filter=document_id_filter,
+                priority_clause_types=priority_weights,
+            )
+        else:
+            # Use provided chunks and skip retrieval/structured clause lookup
+            chunks = chunks_override
         
         # Step 5: Analyze legal hierarchy (use structured clauses if available)
         if structured_clauses:

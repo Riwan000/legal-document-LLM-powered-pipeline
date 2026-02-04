@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     
     # Clause Store Configuration
     CLAUSE_STORE_PATH: Path = Path("data/clause_store")
+    EXTRACTED_CLAUSES_PATH: Path = Path("data/extracted_clauses")
     
     # Chunking Configuration
     CHUNK_SIZE: int = 700
@@ -41,6 +42,10 @@ class Settings(BaseSettings):
     # RAG Configuration
     TOP_K_RESULTS: int = 5
     SIMILARITY_THRESHOLD: float = 0.65
+    SIMILARITY_THRESHOLDS: Dict[str, float] = {
+        "workflow": 0.75,
+        "explorer": 0.45,
+    }
     OCR_SIMILARITY_THRESHOLD: float = 0.4  # Lower threshold for OCR documents due to text quality issues
     MIN_SIMILARITY_THRESHOLD: float = 0.3  # Absolute minimum threshold for any search (fallback for very low scores)
     MIN_BASE_SIMILARITY_FOR_BOOST: float = 0.4  # Minimum base similarity required for priority boosting in weighted ranking

@@ -132,21 +132,57 @@ class DocumentExplorerRequest(BaseModel):
     """
 
     document_id: str = Field(..., description="Single document ID to search within.")
-    query: str = Field(..., description="Locational query for evidence (non-interpretive).")
+    query: str = Field(..., description="Query for evidence retrieval.")
+    mode: Literal["text", "clauses"] = Field(
+        default="text",
+        description="Search mode: raw text chunks or extracted clauses.",
+    )
     top_k: Optional[int] = Field(
         default=None,
         description="Optional limit for number of results (defaults to config).",
     )
 
 
+class EvidenceExplorerRequest(BaseModel):
+    """Request for Evidence Explorer (evidence-only, no LLM)."""
+
+    document_id: str = Field(..., description="Single document ID to search within.")
+    query: str = Field(..., description="Query for evidence retrieval.")
+    mode: Literal["text", "clauses", "both"] = Field(
+        default="text",
+        description="Search mode: text chunks, extracted clauses, or both (clauses first, then text fallback).",
+    )
+    top_k: Optional[int] = Field(
+        default=None,
+        description="Optional limit for number of results (defaults to config).",
+    )
+
+
+class EvidenceExplorerResult(BaseModel):
+    """Single evidence hit (chunk or clause)."""
+
+    document_id: str = Field(..., description="Source document ID.")
+    page_number: int = Field(..., description="Page number (chunk) or page_start (clause).")
+    chunk_index: int = Field(default=0, description="Chunk index (0 for clause results).")
+    text_snippet: str = Field(..., description="Relevant text snippet.")
+    score: float = Field(..., description="Relevance score.")
+    source_type: Literal["chunk", "clause"] = Field(..., description="Whether from chunk or clause.")
+    display_name: Optional[str] = Field(None, description="User-friendly document name.")
+    citation: Optional[str] = Field(None, description="Formatted citation if available.")
+    clause_id: Optional[str] = Field(None, description="Clause ID when source_type is clause.")
+    page_end: Optional[int] = Field(None, description="End page for clause span.")
+
+
 class DocumentExplorerResult(BaseModel):
-    """Single search hit for Document Explorer (evidence only, no synthesis)."""
+    """Single search hit for Document Explorer (evidence snippet)."""
 
     document_id: str = Field(..., description="Source document ID.")
     page_number: int = Field(..., description="Page number where the snippet appears.")
     chunk_index: int = Field(..., description="Chunk index within the document.")
     text_snippet: str = Field(..., description="Relevant text snippet.")
-    score: float = Field(..., description="Relevance score from vector search.")
+    score: float = Field(..., description="Relevance score from retrieval.")
+    display_name: Optional[str] = Field(None, description="User-friendly document display name.")
+    citation: Optional[str] = Field(None, description="Formatted citation if available.")
 
 
 class DocumentExplorerResponse(BaseModel):
@@ -162,6 +198,34 @@ class DocumentExplorerResponse(BaseModel):
     results: List[DocumentExplorerResult] = Field(
         default_factory=list,
         description="List of evidence results for the query.",
+    )
+    answer: Optional[str] = Field(None, description="RAG answer for the query.")
+    status: Optional[str] = Field(None, description="RAG status (explicitly_stated, not_specified, refused).")
+    confidence: Optional[str] = Field(None, description="RAG confidence level if available.")
+    citation: Optional[str] = Field(None, description="Primary citation if available.")
+    refusal_reason: Optional[str] = Field(None, description="Refusal reason if status is refused.")
+    reason: Optional[str] = Field(None, description="Reason for not_found responses.")
+    debug: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Debug metadata for QA and troubleshooting.",
+    )
+
+
+class EvidenceExplorerResponse(BaseModel):
+    """
+    Evidence-only response (no answer field).
+    Used by POST /api/explore-evidence.
+    """
+
+    status: Literal["ok", "not_found"] = Field(..., description="ok if any results, not_found otherwise.")
+    results: List[EvidenceExplorerResult] = Field(
+        default_factory=list,
+        description="Evidence snippets (chunks or clauses).",
+    )
+    reason: Optional[str] = Field(None, description="Reason when status is not_found.")
+    debug: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Debug metadata (mode, counts, expanded_keywords, etc.).",
     )
 
 

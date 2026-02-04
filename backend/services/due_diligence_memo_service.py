@@ -54,7 +54,10 @@ class DueDiligenceMemoService:
         # Layer 1: readiness and document type
         ctx.current_step = f"{STEP_NAME}.readiness"
         chunks = self._get_document_chunks(document_id)
+        chunks = self._backfill_chunk_ids(chunks, document_id)
+        chunks = self._assign_case_roles(chunks, document_id)
         readiness = self._classify_readiness(chunks)
+        readiness["case_spine_readiness"] = self._compute_case_spine_readiness(chunks)
         ctx.add_result(
             f"{STEP_NAME}.readiness",
             {"status": "completed", "output": readiness, "error": None, "warnings": []},
@@ -79,7 +82,7 @@ class DueDiligenceMemoService:
         try:
             case_spine_result = self._run_case_spine(document_id, allowed_mode)
             section_results["case_spine"] = case_spine_result
-            ctx.add_result(f"{STEP_NAME}.case_spine", case_spine_result)
+            ctx.add_result(f"{STEP_NAME}.case_spine", self._serialize_section(case_spine_result))
 
             # Use minimal spine in partial mode when case spine failed
             case_spine = case_spine_result.get("output") if case_spine_result["status"] == "completed" else None
@@ -95,19 +98,19 @@ class DueDiligenceMemoService:
 
             exec_result = self._run_executive_summary(document_id, case_spine, allowed_mode)
             section_results["executive_summary"] = exec_result
-            ctx.add_result(f"{STEP_NAME}.executive_summary", exec_result)
+            ctx.add_result(f"{STEP_NAME}.executive_summary", self._serialize_section(exec_result))
 
             timeline_result = self._run_timeline(document_id, case_spine, allowed_mode)
             section_results["timeline"] = timeline_result
-            ctx.add_result(f"{STEP_NAME}.timeline", timeline_result)
+            ctx.add_result(f"{STEP_NAME}.timeline", self._serialize_section(timeline_result))
 
             args_result = self._run_key_arguments(document_id, case_spine)
             section_results["key_arguments"] = args_result
-            ctx.add_result(f"{STEP_NAME}.key_arguments", args_result)
+            ctx.add_result(f"{STEP_NAME}.key_arguments", self._serialize_section(args_result))
 
             issues_result = self._run_open_issues(document_id, case_spine)
             section_results["open_issues"] = issues_result
-            ctx.add_result(f"{STEP_NAME}.open_issues", issues_result)
+            ctx.add_result(f"{STEP_NAME}.open_issues", self._serialize_section(issues_result))
 
             # Collect citations from completed sections
             citations = self._collect_citations_from_sections(section_results)
@@ -117,7 +120,7 @@ class DueDiligenceMemoService:
                 "error": None,
                 "warnings": [],
             }
-            ctx.add_result(f"{STEP_NAME}.citations", section_results["citations"])
+            ctx.add_result(f"{STEP_NAME}.citations", self._serialize_section(section_results["citations"]))
 
         except GuardrailViolation as e:
             ctx.fail(
@@ -148,6 +151,45 @@ class DueDiligenceMemoService:
         if hasattr(self.rag_service, "vector_store"):
             return self.rag_service.vector_store.get_chunks_by_document(document_id) or []
         return []
+
+    def _backfill_chunk_ids(self, chunks: List[Dict[str, Any]], document_id: str) -> List[Dict[str, Any]]:
+        for i, chunk in enumerate(chunks):
+            if not chunk.get("chunk_id"):
+                page = chunk.get("page_number", 0)
+                chunk_idx = chunk.get("chunk_index", i)
+                chunk["chunk_id"] = f"c_p{page:04d}_i{chunk_idx:04d}"
+            chunk["document_id"] = chunk.get("document_id", document_id)
+        return chunks
+
+    def _assign_case_roles(self, chunks: List[Dict[str, Any]], document_id: str) -> List[Dict[str, Any]]:
+        classified = self.chunk_classifier.assign_roles_to_chunks(chunks)
+        if hasattr(self.rag_service, "vector_store"):
+            updates: Dict[str, Dict[str, Any]] = {}
+            for chunk in classified:
+                chunk_id = chunk.get("chunk_id")
+                role = chunk.get("role")
+                if not role and isinstance(chunk.get("metadata"), dict):
+                    role = chunk["metadata"].get("role")
+                if chunk_id and role:
+                    updates[chunk_id] = {"role": role}
+            if updates:
+                self.rag_service.vector_store.update_chunk_metadata(document_id, updates)
+        return classified
+
+    def _compute_case_spine_readiness(self, chunks: List[Dict[str, Any]]) -> Dict[str, Any]:
+        roles = {c.get("role") for c in chunks}
+        background = "background" in roles
+        issue_framing = "issue_framing" in roles
+        holding = "holding" in roles
+        reasoning = "reasoning" in roles
+        ready = background and (holding or issue_framing)
+        return {
+            "background": background,
+            "issue_framing": issue_framing,
+            "holding": holding,
+            "reasoning": reasoning,
+            "ready": ready,
+        }
 
     def _classify_readiness(self, chunks: List[Dict[str, Any]]) -> Dict[str, Any]:
         text = "\n".join([(c.get("text") or "") for c in chunks]).lower()
@@ -220,21 +262,23 @@ class DueDiligenceMemoService:
     def _run_case_spine(self, document_id: str, allowed_mode: str) -> Dict[str, Any]:
         chunks = self._select_chunks_for_section(
             document_id=document_id,
-            chunk_types=["background", "holding", "issue_framing"],
+            chunk_roles=["background", "holding", "issue_framing"],
             top_k=settings.CASE_SUMMARY_SPINE_MAX_CHUNKS,
             query="case name court parties procedural posture core legal issues",
         )
-        if not chunks or not self._has_any_required_types(chunks, ["background", "issue_framing"]):
+        has_background = self._has_any_required_roles(chunks, ["background"])
+        has_holding_or_issue = self._has_any_required_roles(chunks, ["holding", "issue_framing"])
+        if not chunks or not (has_background and has_holding_or_issue):
             return self._section_failure(
                 "CASE_SPINE_FAILED",
-                "Insufficient evidence to establish factual background",
-                required_types=["background", "holding", "issue_framing"],
+                "Case spine requires background and holding or issue framing evidence.",
+                required_roles=["background", "holding", "issue_framing"],
                 allowed_mode=allowed_mode,
                 mandatory=True,
                 force_status="failed",
             )
         try:
-            spine_by_type = self._group_chunks_by_type(chunks)
+            spine_by_type = self._group_chunks_by_role(chunks)
             spine = self.spine_builder.build_case_spine(
                 background_chunks=spine_by_type.get("background", []),
                 holding_chunks=spine_by_type.get("holding", []),
@@ -258,7 +302,7 @@ class DueDiligenceMemoService:
             return self._section_failure(
                 "CASE_SPINE_FAILED",
                 str(e),
-                required_types=["background", "holding", "issue_framing"],
+                required_roles=["background", "holding", "issue_framing"],
                 allowed_mode=allowed_mode,
                 mandatory=True,
                 force_status="failed",
@@ -267,27 +311,13 @@ class DueDiligenceMemoService:
     def _run_executive_summary(self, document_id: str, case_spine: CaseSpine, allowed_mode: str) -> Dict[str, Any]:
         chunks = self._select_chunks_for_section(
             document_id=document_id,
-            chunk_types=["background", "holding"],
+            chunk_roles=["background", "holding"],
             top_k=settings.CASE_SUMMARY_EXEC_MAX_CHUNKS,
             query="case background facts parties dispute court decision holding",
             case_spine=case_spine,
         )
         if not chunks:
-            return self._section_failure(
-                "INSUFFICIENT_CONTEXT",
-                "Insufficient background or holding evidence for executive summary.",
-                required_types=["background", "holding"],
-                allowed_mode=allowed_mode,
-                mandatory=True,
-            )
-        if not self._has_any_required_types(chunks, ["background"]):
-            return self._section_failure(
-                "INSUFFICIENT_CONTEXT",
-                "Executive summary requires background evidence.",
-                required_types=["background"],
-                allowed_mode=allowed_mode,
-                mandatory=True,
-            )
+            return self._section_no_content([])
         items = self.section_summarizers.generate_executive_summary(case_spine, chunks)
         for item in items:
             item.text = enforce_non_prescriptive_language(item.text, step=f"{STEP_NAME}.executive_summary")
@@ -297,19 +327,13 @@ class DueDiligenceMemoService:
     def _run_timeline(self, document_id: str, case_spine: CaseSpine, allowed_mode: str) -> Dict[str, Any]:
         chunks = self._select_chunks_for_section(
             document_id=document_id,
-            chunk_types=["procedural_history"],
+            chunk_roles=["background", "procedural"],
             top_k=settings.CASE_SUMMARY_TIMELINE_MAX_CHUNKS,
             query="procedural history dates events filings orders hearings timeline chronology",
             case_spine=case_spine,
         )
         if not chunks:
-            return self._section_failure(
-                "INSUFFICIENT_CONTEXT",
-                "No procedural history found for timeline generation.",
-                required_types=["procedural_history"],
-                allowed_mode=allowed_mode,
-                mandatory=True,
-            )
+            return self._section_no_content([])
         events = self.section_summarizers.generate_timeline(case_spine, chunks)
         for ev in events:
             ev.date = enforce_non_prescriptive_language(ev.date, step=f"{STEP_NAME}.timeline.date")
@@ -318,41 +342,36 @@ class DueDiligenceMemoService:
         return {"status": "completed", "output": events, "error": None, "warnings": []}
 
     def _run_key_arguments(self, document_id: str, case_spine: CaseSpine) -> Dict[str, Any]:
-        claimant_chunks = self._select_chunks_for_section(
+        argument_chunks = self._select_chunks_for_section(
             document_id=document_id,
-            chunk_types=["argument_claimant"],
+            chunk_roles=["reasoning", "issue_framing"],
             top_k=settings.CASE_SUMMARY_ARGUMENTS_MAX_CHUNKS,
             query="plaintiff claimant appellant arguments contentions claims position",
             case_spine=case_spine,
         )
-        defendant_chunks = self._select_chunks_for_section(
-            document_id=document_id,
-            chunk_types=["argument_defendant"],
-            top_k=settings.CASE_SUMMARY_ARGUMENTS_MAX_CHUNKS,
-            query="defendant respondent appellee arguments contentions defense position",
-            case_spine=case_spine,
-        )
-        claimant_args = self.section_summarizers.generate_claimant_arguments(case_spine, claimant_chunks) if claimant_chunks else []
-        defendant_args = self.section_summarizers.generate_defendant_arguments(case_spine, defendant_chunks) if defendant_chunks else []
+        if not argument_chunks:
+            return self._section_no_content(KeyArguments())
+        claimant_args = self.section_summarizers.generate_claimant_arguments(case_spine, argument_chunks)
+        defendant_args = self.section_summarizers.generate_defendant_arguments(case_spine, argument_chunks)
         for arg in claimant_args:
             arg.text = enforce_non_prescriptive_language(arg.text, step=f"{STEP_NAME}.arguments.claimant")
         for arg in defendant_args:
             arg.text = enforce_non_prescriptive_language(arg.text, step=f"{STEP_NAME}.arguments.defendant")
-        claimant_args = self._filter_items_by_chunk_ids(claimant_args, claimant_chunks)
-        defendant_args = self._filter_items_by_chunk_ids(defendant_args, defendant_chunks)
+        claimant_args = self._filter_items_by_chunk_ids(claimant_args, argument_chunks)
+        defendant_args = self._filter_items_by_chunk_ids(defendant_args, argument_chunks)
         key_args = KeyArguments(claimant=claimant_args, defendant=defendant_args)
         return {"status": "completed", "output": key_args, "error": None, "warnings": []}
 
     def _run_open_issues(self, document_id: str, case_spine: CaseSpine) -> Dict[str, Any]:
         chunks = self._select_chunks_for_section(
             document_id=document_id,
-            chunk_types=["issue_framing"],
+            chunk_roles=["issue_framing", "reasoning"],
             top_k=settings.CASE_SUMMARY_ISSUES_MAX_CHUNKS,
             query="unresolved issues questions pending adjudication open issues",
             case_spine=case_spine,
         )
         if not chunks:
-            return {"status": "completed", "output": [], "error": None, "warnings": []}
+            return self._section_no_content([])
         issues = self.section_summarizers.generate_open_issues(case_spine, chunks)
         for issue in issues:
             issue.text = enforce_non_prescriptive_language(issue.text, step=f"{STEP_NAME}.open_issues")
@@ -366,7 +385,7 @@ class DueDiligenceMemoService:
         self,
         *,
         document_id: str,
-        chunk_types: List[str],
+        chunk_roles: List[str],
         top_k: int,
         query: str,
         case_spine: Optional[CaseSpine] = None,
@@ -387,28 +406,29 @@ class DueDiligenceMemoService:
             return []
 
         classified = self._backfill_and_classify_chunks(search_results, document_id)
-        filtered = [c for c in classified if c.get("chunk_type") in chunk_types]
+        filtered = [c for c in classified if c.get("role") in chunk_roles]
         filtered.sort(key=lambda c: c.get("score", 0), reverse=True)
         return filtered[: min(top_k, settings.CASE_SUMMARY_MAX_CHUNKS_PER_CALL)]
 
     def _backfill_and_classify_chunks(self, chunks: List[Dict[str, Any]], document_id: str) -> List[Dict[str, Any]]:
-        # Reuse deterministic classifier with backfill for chunk_id/chunk_type
+        # Reuse deterministic classifier with backfill for chunk_id/chunk_type/role
         for i, chunk in enumerate(chunks):
             if not chunk.get("chunk_id"):
                 page = chunk.get("page_number", 0)
                 chunk_idx = chunk.get("chunk_index", i)
                 chunk["chunk_id"] = f"c_p{page:04d}_i{chunk_idx:04d}"
             chunk["document_id"] = chunk.get("document_id", document_id)
-        return self.chunk_classifier.classify_chunks_batch(chunks)
+        classified = self.chunk_classifier.classify_chunks_batch(chunks)
+        return self.chunk_classifier.assign_roles_to_chunks(classified)
 
-    def _group_chunks_by_type(self, chunks: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    def _group_chunks_by_role(self, chunks: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
         grouped: Dict[str, List[Dict[str, Any]]] = {}
         for chunk in chunks:
-            grouped.setdefault(chunk.get("chunk_type", "background"), []).append(chunk)
+            grouped.setdefault(chunk.get("role", "other"), []).append(chunk)
         return grouped
 
-    def _has_any_required_types(self, chunks: List[Dict[str, Any]], required: List[str]) -> bool:
-        available = {c.get("chunk_type") for c in chunks}
+    def _has_any_required_roles(self, chunks: List[Dict[str, Any]], required: List[str]) -> bool:
+        available = {c.get("role") for c in chunks}
         return any(r in available for r in required)
 
     def _section_failure(
@@ -416,7 +436,7 @@ class DueDiligenceMemoService:
         code: str,
         message: str,
         *,
-        required_types: List[str],
+        required_roles: List[str],
         allowed_mode: str,
         mandatory: bool,
         force_status: Optional[str] = None,
@@ -431,9 +451,17 @@ class DueDiligenceMemoService:
             "error": {
                 "code": code,
                 "message": message,
-                "details": {"required_types": required_types},
+                "details": {"required_roles": required_roles},
             },
             "warnings": [] if status == "failed" else [message],
+        }
+
+    def _section_no_content(self, output: Any) -> Dict[str, Any]:
+        return {
+            "status": "completed",
+            "output": output,
+            "error": None,
+            "warnings": ["No sufficiently supported content identified for this section."],
         }
 
     def _filter_items_by_chunk_ids(self, items: List[Any], chunks: List[Dict[str, Any]]) -> List[Any]:
@@ -524,3 +552,17 @@ class DueDiligenceMemoService:
                 value = dict(value)
                 value["output"] = None
                 ctx.intermediate_results[key] = value
+
+    def _serialize_section(self, section: Dict[str, Any]) -> Dict[str, Any]:
+        """Ensure section output is JSON-safe for WorkflowContext serialization."""
+        if not isinstance(section, dict):
+            return section
+        output = section.get("output")
+        serialized = dict(section)
+        if hasattr(output, "model_dump"):
+            serialized["output"] = output.model_dump()
+        elif isinstance(output, list):
+            serialized["output"] = [o.model_dump() if hasattr(o, "model_dump") else o for o in output]
+        else:
+            serialized["output"] = output
+        return serialized

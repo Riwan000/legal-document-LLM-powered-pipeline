@@ -65,17 +65,6 @@ class EmbeddingService:
         """
         self.model_name = model_name or settings.EMBEDDING_MODEL
         # The embedding model is multilingual so queries in Arabic and English map into the same vector space.
-        # #region agent log
-        try:
-            import json
-            from pathlib import Path
-            _proj = Path(__file__).resolve().parents[2]
-            _log_path = _proj / ".cursor" / "debug.log"
-            with open(_log_path, "a", encoding="utf-8") as _f:
-                _f.write(json.dumps({"hypothesisId": "H1,H4", "location": "embedding_service.py:__init__", "message": "before SentenceTransformer", "data": {"model_name": self.model_name}, "timestamp": __import__("time").time() * 1000, "sessionId": "debug-session"}) + "\n")
-        except Exception:
-            pass
-        # #endregion
         # In unit tests (and in offline environments), importing/loading SentenceTransformers
         # can be slow or hang due to background downloads / HF hub calls.
         # We therefore support a lightweight deterministic embedding fallback.

@@ -9,25 +9,31 @@ from pathlib import Path
 
 def main():
     """Start the FastAPI backend server."""
+    host = os.getenv("BACKEND_HOST", "127.0.0.1")
     port = int(os.getenv("BACKEND_PORT", "8000"))
+    reload_enabled = os.getenv("BACKEND_RELOAD", "1").lower() in {"1", "true", "yes"}
     print("="*70)
     print("  Starting FastAPI Backend Server")
     print("="*70)
-    print(f"\nServer will start at: http://localhost:{port}")
-    print(f"API Documentation: http://localhost:{port}/docs")
+    print(f"\nServer will start at: http://{host}:{port}")
+    print(f"API Documentation: http://{host}:{port}/docs")
     print("\nPress CTRL+C to stop the server\n")
     print("="*70 + "\n")
     
     try:
         # Start uvicorn server
-        subprocess.run([
+        cmd = [
             sys.executable, "-m", "uvicorn",
             "backend.main:app",
-            "--reload",
-            "--reload-dir", "backend",
-            "--host", "0.0.0.0",
-            "--port", str(port)
-        ])
+            "--host", host,
+            "--port", str(port),
+        ]
+        if reload_enabled:
+            cmd += [
+                "--reload",
+                "--reload-dir", "backend",
+            ]
+        subprocess.run(cmd)
     except KeyboardInterrupt:
         print("\n\nServer stopped.")
     except Exception as e:
