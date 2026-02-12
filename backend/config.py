@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     
     # Ollama Configuration
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "llama3.2:latest"
+    OLLAMA_MODEL: str = "qwen2.5:3b"
     
     # Embedding Model Configuration
     EMBEDDING_MODEL: str = "paraphrase-multilingual-MiniLM-L12-v2"
@@ -64,7 +64,31 @@ class Settings(BaseSettings):
     LEGAL_HIERARCHY_KEYWORDS: Dict[str, List[str]] = {
         "law": ["law", "statute", "regulation", "governed by", "pursuant to", "in accordance with", "Saudi Labor Law", "Labor Law"],
         "supremacy": ["override", "supersede", "prevail", "notwithstanding", "subject to", "in compliance with"],
-        "contract": ["agreement", "contract", "clause", "provision", "term", "stipulation"]
+        "contract": ["agreement", "contract", "clause", "provision", "term", "stipulation"],
+        "policy": ["policy", "company policy", "employee handbook", "handbook", "internal policy", "company rules", "workplace policy", "hr policy"]
+    }
+    
+    # Jurisdiction patterns for legal document analysis
+    JURISDICTION_PATTERNS: Dict[str, List[str]] = {
+        "saudi arabia": ["saudi arabia", "saudi", "kingdom of saudi arabia", "ksa"],
+        "uae": ["united arab emirates", "uae", "emirates"],
+        "qatar": ["qatar"],
+        "kuwait": ["kuwait"],
+        "bahrain": ["bahrain"],
+        "oman": ["oman"]
+    }
+    
+    # Canonical clause topic keywords (shared across services for consistency)
+    CLAUSE_TOPIC_KEYWORDS: Dict[str, List[str]] = {
+        "termination": ["termination", "terminate", "dismissal", "dismiss", "end employment", "fire", "cancel contract"],
+        "compensation": ["compensation", "salary", "wage", "payment", "pay", "remuneration"],
+        "benefits": ["benefits", "allowance", "housing", "medical", "insurance", "benefit"],
+        "notice": ["notice", "notification", "advance notice", "inform", "intimation", "advance warning"],
+        "probation": ["probation", "probationary", "trial period"],
+        "governing law": ["governing law", "applicable law", "law", "statute"],
+        "dispute resolution": ["dispute", "arbitration", "mediation", "court", "dispute resolution"],
+        "confidentiality": ["confidential", "non-disclosure", "nda"],
+        "liability": ["liability", "responsible", "responsibility"]
     }
     
     # API Configuration

@@ -757,7 +757,7 @@ class RAGService:
         confidence = self.legal_reasoning.calculate_confidence(chunks, hierarchy_analysis, has_explicit_clause)
         
         # Step 11: Determine status
-        if hierarchy_analysis.get('has_governing_law', False) and hierarchy_analysis.get('has_conflict', False):
+        if hierarchy_analysis.get('has_governing_law', False) and hierarchy_analysis.get('has_potential_conflict', False):
             status = 'governed_by_law'
         elif has_explicit_clause:
             status = 'explicitly_stated'
@@ -980,7 +980,7 @@ class RAGService:
         if hierarchy_analysis:
             if hierarchy_analysis.get('has_governing_law', False):
                 hierarchy_context += "\nIMPORTANT: Governing law clauses are present. Law takes precedence over contract clauses.\n"
-            if hierarchy_analysis.get('has_conflict', False):
+            if hierarchy_analysis.get('has_potential_conflict', False):
                 hierarchy_context += "\nCONFLICT DETECTED: Law clauses override conflicting contract clauses.\n"
         
         # Build citation requirement (based on risk level)
