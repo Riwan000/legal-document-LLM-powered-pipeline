@@ -45,3 +45,7 @@ Thumbs.db
 # Logs
 *.log
 
+# Frontend build and dependencies
+frontend/young-counsel-ui/.next/
+frontend/young-counsel-ui/node_modules/
+
