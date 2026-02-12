@@ -1,6 +1,10 @@
 """
 Text chunking utilities with metadata preservation.
 Splits documents into overlapping chunks for embedding.
+
+Page invariant: every chunk belongs to exactly one page. page_number is immutable per chunk;
+chunk_index resets per page; no chunk may span pages. Use chunk_pages() so chunk_text() is
+called once per page only.
 """
 from typing import List, Dict, Any, Optional
 from backend.models.document import DocumentChunk
@@ -8,7 +12,7 @@ from backend.config import settings
 
 
 class TextChunker:
-    """Chunks text into overlapping segments with metadata."""
+    """Chunks text into overlapping segments with metadata. All chunks are page-scoped (one page per chunk)."""
     
     @staticmethod
     def chunk_text(
@@ -21,15 +25,18 @@ class TextChunker:
     ) -> List[DocumentChunk]:
         """
         Split text into chunks with overlap and metadata.
-        
+
+        chunk_text MUST NOT be called on concatenated multi-page text.
+        Call it once per page (e.g. via chunk_pages) so each chunk belongs to exactly one page.
+
         Args:
-            text: Text to chunk
+            text: Text to chunk (single page only)
             page_number: Page number where text appears
             document_id: Unique document identifier
             chunk_size: Maximum characters per chunk (defaults to config)
             chunk_overlap: Overlap between chunks (defaults to config)
             is_ocr: Whether this text was extracted using OCR
-            
+
         Returns:
             List of DocumentChunk objects
         """
@@ -67,7 +74,8 @@ class TextChunker:
                         metadata={
                             "char_length": len(chunk_text),
                             "is_ocr": is_ocr,
-                            "chunk_id": chunk_id
+                            "chunk_id": chunk_id,
+                            "chunk_type": "sentence",
                         }
                     ))
                     chunk_index += 1
@@ -96,19 +104,24 @@ class TextChunker:
                 metadata={
                     "char_length": len(current_chunk),
                     "is_ocr": is_ocr,
-                    "chunk_id": chunk_id
+                    "chunk_id": chunk_id,
+                    "chunk_type": "sentence",
                 }
             ))
         elif current_chunk:  # Even if only whitespace, preserve minimal content
-            # This handles edge cases where text might be mostly whitespace but still valuable
             stripped = current_chunk.strip()
-            if stripped or len(current_chunk) > 10:  # Preserve if substantial whitespace
+            if stripped or len(current_chunk) > 10:
                 chunks.append(DocumentChunk(
-                    text=stripped if stripped else current_chunk[:100],  # Limit if truly empty
+                    text=stripped if stripped else current_chunk[:100],
                     page_number=page_number,
                     chunk_index=chunk_index,
                     document_id=document_id,
-                    metadata={"char_length": len(current_chunk), "is_ocr": is_ocr, "minimal_content": True}
+                    metadata={
+                        "char_length": len(current_chunk),
+                        "is_ocr": is_ocr,
+                        "minimal_content": True,
+                        "chunk_type": "sentence",
+                    }
                 ))
         
         # Verification: Ensure all input text is accounted for
@@ -298,7 +311,8 @@ class TextChunker:
                     "hierarchy_level": hierarchy_level,
                     "legal_supremacy": has_supremacy,
                     "topics": list(set(chunk_topics)) if chunk_topics else [],
-                    "chunk_id": chunk_id
+                    "chunk_id": chunk_id,
+                    "chunk_type": "clause",
                 }
                 
                 chunks.append(DocumentChunk(
@@ -324,13 +338,13 @@ class TextChunker:
     def chunk_pages(
         pages: List[tuple],
         document_id: str,
-        clauses_by_page: Dict[int, List[Dict[str, Any]]] = None
+        clauses_by_page: Dict[int, List[Dict[str, Any]]] = None,
     ) -> List[DocumentChunk]:
         """
         Chunk multiple pages of text, optionally preserving clause boundaries.
         
         Args:
-            pages: List of (text, page_number, is_ocr) tuples
+            pages: List of (text, page_number), (text, page_number, is_ocr), or PageInfo-like (has .text, .page_number, .is_ocr)
             document_id: Unique document identifier
             clauses_by_page: Optional dict mapping page_number to list of clauses
             
@@ -341,11 +355,14 @@ class TextChunker:
         clauses_by_page = clauses_by_page or {}
         
         for page_data in pages:
-            # Handle both old format (text, page_number) and new format (text, page_number, is_ocr)
-            if len(page_data) == 3:
+            # Support PageInfo and tuple formats
+            if hasattr(page_data, "text"):
+                text = page_data.text
+                page_number = page_data.page_number
+                is_ocr = getattr(page_data, "is_ocr", False)
+            elif len(page_data) == 3:
                 text, page_number, is_ocr = page_data
             else:
-                # Backward compatibility: assume not OCR if not specified
                 text, page_number = page_data
                 is_ocr = False
             

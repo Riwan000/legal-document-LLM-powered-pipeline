@@ -43,7 +43,8 @@ This repository is designed for local, auditable workflows where documents are r
 
 ## Architecture (high level)
 
-- **Frontend**: Streamlit (`frontend/app.py`) on `http://localhost:8501`
+- **Frontend (Streamlit)**: `frontend/app.py` on `http://localhost:8501`
+- **Frontend (Young Counsel UI)**: Next.js + React + Tailwind in `frontend/young-counsel-ui` on `http://localhost:3000`
 - **Backend**: FastAPI (`backend/main.py`) on `http://localhost:8000`
 - **Storage**
   - Raw files: `data/documents/` and `data/templates/`
@@ -140,7 +141,19 @@ In a second terminal:
 streamlit run frontend/app.py
 ```
 
-UI: `http://localhost:8501`
+UI (Streamlit): `http://localhost:8501`
+
+### Start the Young Counsel Next.js frontend
+
+In a separate terminal:
+
+```bash
+cd frontend/young-counsel-ui
+npm install
+npm run dev
+```
+
+By default the Young Counsel UI will be available at `http://localhost:3000` and will talk to the FastAPI backend at `http://localhost:8000` (configurable via `NEXT_PUBLIC_API_BASE_URL` in `frontend/young-counsel-ui/.env`).
 
 ---
 

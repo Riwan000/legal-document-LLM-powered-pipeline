@@ -8,12 +8,14 @@ go into ctx.intermediate_results. Failures set ctx.error and ctx.status="failed"
 """
 from __future__ import annotations
 
+import logging
 import re
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Iterable, Tuple
+from typing import List, Dict, Any, Optional, Iterable, Tuple, Literal
 
 from backend.config import settings
 from backend.models.workflow import WorkflowContext
+from backend.workflow_stages import StageStatus
 from backend.models.contract_review import (
     ContractReviewResponse,
     RiskItem,
@@ -92,15 +94,21 @@ CANONICAL_CLAUSE_GROUPS: Dict[str, List[str]] = {
     "compensation": ["compensation", "salary_wages", "remuneration"],
 }
 
-# Implicit governing law: keywords that suggest law reference without a standalone "Governing Law" clause.
+# Implicit governing law: contract references an applicable legal regime without a standalone "Governing Law" clause.
+# Do not require country/jurisdiction phrase; do not infer country.
 IMPLICIT_GOV_LAW_KEYWORDS: List[str] = [
     "labour law",
     "labor law",
     "workman law",
+    "law in force",
     "laws in force",
     "laws applicable in",
     "as per the law",
+    "as per the law of",
+    "as per the provisions of",
     "under the provisions of",
+    "according to article",
+    "determined by the law",
 ]
 # Country/jurisdiction phrases used only to require a geographic reference alongside a keyword (no inference).
 GOV_LAW_COUNTRY_REFERENCES: List[str] = [
@@ -116,13 +124,25 @@ GOV_LAW_COUNTRY_REFERENCES: List[str] = [
     "qatar",
 ]
 
-# Benefits: composite detection across evidence (medical, housing, meals, transport, leave).
+# Implicit coverage: clause types that can be "implicitly_covered" when evidence suggests related obligations elsewhere.
+# e.g. conduct_discipline when termination text mentions discipline/misconduct/breach.
+IMPLICIT_COVERAGE_RULES: Dict[str, Dict[str, List[str]]] = {
+    "conduct_discipline": {
+        "primary": ["terminate", "termination", "terminated"],
+        "secondary": ["discipline", "misconduct", "breach", "code of conduct"],
+        "coverage_note": "Disciplinary logic appears within termination provisions and statutory references.",
+    },
+}
+
+# Benefits: composite detection across evidence (medical, housing, meals, transport, leave, indemnity).
+# Spec-aligned: single-word and phrase signals for GCC/distributed benefit phrasing.
 BENEFITS_SIGNALS: Dict[str, List[str]] = {
-    "medical": ["medical treatment", "medical care", "health"],
+    "medical": ["medical", "treatment", "health", "medical treatment", "medical care"],
     "housing": ["accommodation", "housing", "lodging"],
-    "meals": ["meals", "food allowance"],
-    "transport": ["transportation", "airfare", "visa cost", "visa"],
-    "leave": ["vacation", "leave", "annual leave"],
+    "meals": ["meals", "food", "food allowance"],
+    "transport": ["transport", "transportation", "airfare", "visa", "visa cost"],
+    "leave": ["leave", "vacation", "annual leave"],
+    "indemnity": ["compensation", "blood money", "death"],
 }
 
 DISPLAY_NAME_MAP: Dict[str, str] = {
@@ -143,6 +163,26 @@ DISPLAY_NAME_MAP: Dict[str, str] = {
     "remedies": "Remedies",
     "term": "Term",
 }
+
+
+def _evidence_block_display_name(
+    semantic_label: Optional[str],
+    clause_type_key: Optional[str],
+    page_number: int,
+) -> str:
+    """
+    Sanitized display name for evidence block: never use raw OCR/title.
+    Priority: semantic_label -> clause-type display name -> "Clause (Page N)".
+    """
+    if semantic_label and (semantic_label or "").strip():
+        return semantic_label.strip()
+    if clause_type_key:
+        display = EXPECTED_CLAUSE_DISPLAY_NAMES.get(
+            clause_type_key, clause_type_key.replace("_", " ").title()
+        )
+        if display and display.strip():
+            return display.strip()
+    return f"Clause (Page {page_number})"
 
 
 def _resolve_clause_display_name(clause_id: str) -> str:
@@ -263,26 +303,30 @@ def _build_observation_item(
     display_name: str,
     status: str,
     base_severity: str,
+    document_confidence_high: bool = False,
+    coverage_note: Optional[str] = None,
+    observation_text_override: Optional[str] = None,
 ) -> ExecutiveSummaryItem:
     """
     Build a single observation item with tuned severity:
-    - Missing critical clause: High
-    - Ambiguous termination/IP (uncertain): High
-    - Weak evidence (uncertain): Medium
-    - Implicit/distributed (G4): cap at Medium
-    - Present & standard (detected): Low or unlabeled
+    - Missing critical clause: High only if document_confidence_high, else Medium
+    - Ambiguous termination/notice: Medium
+    - Implicit/distributed: cap at Medium
+    - Present & standard (detected): no label (severity=None)
     """
     sev = (base_severity or "medium").lower()
     if sev not in ("high", "medium", "low"):
         sev = "medium"
 
     # Severity tuning based on status and criticality
-    if status in ("detected_implicit", "detected_distributed", "detected_weak"):
-        final_sev = "medium"  # G4: never High for implicit/distributed
+    if status in ("detected_implicit", "detected_distributed"):
+        final_sev = "medium"  # not displayed; severity=None and no tag for these statuses
+    elif status == "detected_weak":
+        final_sev = "medium"  # never High for implicit/distributed
     elif status == "not_detected" and clause_key in CRITICAL_CLAUSES:
-        final_sev = "high"
+        final_sev = "high" if document_confidence_high else "medium"
     elif status == "uncertain" and clause_key in {"termination", "intellectual_property"}:
-        final_sev = "high"
+        final_sev = "medium"  # ambiguous notice/termination
     elif status == "uncertain":
         final_sev = "medium"
     elif status == "detected":
@@ -290,30 +334,50 @@ def _build_observation_item(
     else:
         final_sev = sev
 
-    tag = f"[{final_sev.capitalize()}] " if status not in ("detected",) else ""
+    # No severity badge or tag for implicit governing law, distributed benefits, or implicitly_covered (spec)
+    tag = ""
+    if status not in ("detected", "detected_implicit", "detected_distributed", "implicitly_covered"):
+        tag = f"[{final_sev.capitalize()}] "
 
     if status == "detected":
         text = f"A {display_name} clause is present."
     elif status == "uncertain":
-        text = (
-            f"A {display_name} clause is present; commonly expected details "
-            f"(e.g. duration, scope) are not clearly specified."
-        )
+        if clause_key == "notice":
+            text = "A Notice Period clause is present; commonly expected details are not clearly specified."
+        else:
+            text = (
+                f"A {display_name} clause is present; commonly expected details "
+                f"(e.g. duration, scope) are not clearly specified."
+            )
     elif status == "detected_implicit":
-        text = (
-            "Governing law appears to be referenced implicitly (e.g., by citation to local labor law), "
-            "though not stated in a standalone clause."
-        )
+        text = observation_text_override or "A Governing Law reference is present implicitly through citation to local labor law."
     elif status == "detected_distributed":
-        text = "Benefits appear across multiple clauses (e.g., medical care, accommodation, transport, leave)."
+        text = "Benefits provisions appear to be present across multiple clauses."
     elif status == "detected_weak":
         text = "Benefits appear in limited form (single category detected)."
+    elif status == "implicitly_covered":
+        text = "No standalone clause detected. Related obligations appear implicitly across other provisions."
+        if coverage_note:
+            text += f" {coverage_note}"
     else:
         text = f"No {display_name} clause was detected."
 
+    out_severity: Optional[str] = None
+    if status not in ("detected", "detected_implicit", "detected_distributed", "implicitly_covered"):
+        out_severity = final_sev
+
+    category: Optional[Literal["risk", "finding", "confirmation"]] = None
+    if status == "not_detected":
+        category = "risk"
+    elif status in ("uncertain", "detected_weak", "detected_implicit", "detected_distributed", "implicitly_covered"):
+        category = "finding"
+    elif status == "detected":
+        category = "confirmation"
+
     return ExecutiveSummaryItem(
         text=(tag + text).strip(),
-        severity=final_sev if status != "detected" else None,
+        severity=out_severity,
+        category=category,
         related_risk_indices=[],
     )
 
@@ -322,11 +386,13 @@ def _build_key_review_observations(
     presence_map: Dict[str, Any],
     risk_weights: Dict[str, Any],
     expected: List[str],
+    document_confidence_high: bool = False,
+    jurisdiction: Optional[str] = None,
 ) -> List[ExecutiveSummaryItem]:
     """
     Build Key Review Observations from presence_map (template-based, no LLM).
-    Order: high severity first, then medium, then low; within same severity:
-    ambiguities/weak evidence first, then missing clauses, then present & standard.
+    Order: (1) Ambiguities / Weak Evidence, (2) Missing Clauses, (3) Present & Standard;
+    within each group, higher severity first. High severity only when critical missing and document_confidence_high.
     """
     items: List[ExecutiveSummaryItem] = []
 
@@ -345,6 +411,8 @@ def _build_key_review_observations(
             return "detected_weak"
         if any(s == "uncertain" for s in statuses):
             return "uncertain"
+        if any(s == "implicitly_covered" for s in statuses):
+            return "implicitly_covered"
         return "not_detected"
 
     def _max_severity(member_keys: List[str]) -> str:
@@ -370,12 +438,20 @@ def _build_key_review_observations(
         severity = _max_severity(member_keys)
         display_name = EXPECTED_CLAUSE_DISPLAY_NAMES.get(canon_key, canon_key.replace("_", " ").title())
         handled.update(member_keys)
+        coverage_note_canon = None
+        if status == "implicitly_covered":
+            for m in member_keys:
+                if presence_map.get(m, {}).get("coverage_note"):
+                    coverage_note_canon = presence_map[m]["coverage_note"]
+                    break
         items.append(
             _build_observation_item(
                 clause_key=canon_key,
                 display_name=display_name,
                 status=status,
                 base_severity=severity,
+                document_confidence_high=document_confidence_high,
+                coverage_note=coverage_note_canon,
             )
         )
 
@@ -391,28 +467,29 @@ def _build_key_review_observations(
             base_severity = base_severity.lower()
         if base_severity not in ("high", "medium", "low"):
             base_severity = "medium"
+        obs_override: Optional[str] = None
+        if clause_type == "governing_law" and status == "detected_implicit":
+            if not (jurisdiction or "").strip():
+                obs_override = "Reference to labor law provisions detected; jurisdiction not specified."
+            elif not entry.get("implicit_evidence"):
+                obs_override = "A possible implicit governing law reference was observed through statutory citations; no explicit governing law clause was detected."
         items.append(
             _build_observation_item(
                 clause_key=clause_type,
                 display_name=display_name,
                 status=status,
                 base_severity=base_severity,
+                document_confidence_high=document_confidence_high,
+                coverage_note=entry.get("coverage_note"),
+                observation_text_override=obs_override,
             )
         )
 
-    # Sort: severity first (high > medium > low); then ambiguity → missing → present
+    # Sort: risk → finding → confirmation, then severity within group
     def _order_key(item: ExecutiveSummaryItem) -> tuple:
+        cat_rank = {"risk": 0, "finding": 1, "confirmation": 2}.get(item.category or "", 1)
         sev_rank = _severity_rank(item.severity or "low")
-        t = (item.text or "").lower()
-        if "present; commonly expected details" in t:
-            status_rank = 0  # Ambiguities / weak evidence first
-        elif "no " in t and " clause was detected" in t:
-            status_rank = 1  # Missing clauses next
-        elif "referenced implicitly" in t or "appear across" in t or "limited form" in t:
-            status_rank = 2  # Implicit/distributed -> present group
-        else:
-            status_rank = 2  # Present & standard last
-        return (sev_rank, status_rank, t)
+        return (cat_rank, sev_rank, (item.text or "").lower())
     items.sort(key=_order_key)
     return items
 
@@ -487,6 +564,29 @@ def _alpha_ratio(text: str) -> float:
         return 0.0
     alpha = sum(1 for ch in text if ch.isalpha())
     return alpha / max(len(text), 1)
+
+
+OCR_NOISE_THRESHOLD = 0.35  # Above this (1 - alpha_ratio) -> treat as OCR-noisy for structure classification
+
+
+def _classify_structure_confidence(
+    heading: str,
+    text: str,
+    ocr_noise_score: float,
+) -> Literal["clause", "provision", "section_non_standard"]:
+    """
+    Deterministic structure confidence for evidence block (display-only).
+    Clause = clear heading + contract language + low OCR noise; Provision = contract language only; else section_non_standard.
+    """
+    has_heading = bool((heading or "").strip())
+    t_lower = (text or "").lower()
+    contract_language = ["shall", "may", "agrees", "terminate", "governed by"]
+    has_contract_language = any(v in t_lower for v in contract_language)
+    if has_heading and has_contract_language and ocr_noise_score < OCR_NOISE_THRESHOLD:
+        return "clause"
+    if has_contract_language:
+        return "provision"
+    return "section_non_standard"
 
 
 def _normalize_text(text: str) -> str:
@@ -564,6 +664,8 @@ def _classify_evidence_label(text: str) -> Optional[str]:
         return None
     t = (text or "").lower()
     if "death" in t and "compensation" in t:
+        return "Death Compensation / Indemnity"
+    if "blood money" in t:
         return "Death Compensation / Indemnity"
     if "terminate" in t or "notice" in t:
         return "Termination & Notice"
@@ -937,6 +1039,7 @@ class ContractReviewService:
 
         contract_id = (ctx.document_ids or [None])[0]
         if not contract_id:
+            ctx.workflow_state.legal_analysis = StageStatus.FAILED
             ctx.fail(
                 code="MISSING_INPUT",
                 message="Contract Review requires document_ids[0] (contract_id).",
@@ -955,6 +1058,7 @@ class ContractReviewService:
         try:
             profile = load_contract_profile(contract_type_key)
         except FileNotFoundError as e:
+            ctx.workflow_state.legal_analysis = StageStatus.FAILED
             ctx.fail(
                 code="PROFILE_NOT_FOUND",
                 message=f"Contract profile not found for type '{contract_type_key}'.",
@@ -963,6 +1067,7 @@ class ContractReviewService:
             )
             return ctx
         except ValueError as e:
+            ctx.workflow_state.legal_analysis = StageStatus.FAILED
             ctx.fail(
                 code="INVALID_PROFILE",
                 message=f"Invalid contract profile: {e}",
@@ -971,6 +1076,7 @@ class ContractReviewService:
             )
             return ctx
         except Exception as e:
+            ctx.workflow_state.legal_analysis = StageStatus.FAILED
             ctx.fail(
                 code="PROFILE_LOAD_ERROR",
                 message=f"Failed to load contract profile: {e}",
@@ -1015,15 +1121,22 @@ class ContractReviewService:
                 for ev in (c.evidence or []):
                     ev_text = ev.clean_text or ev.raw_text or ""
                     is_nc = _is_non_contractual_snippet(ev_text)
+                    heading = (getattr(c, "title", None) or "").strip() or _resolve_clause_display_name(c.clause_id)
+                    raw = getattr(ev, "raw_text", None) or ""
+                    ocr_noise_score = 1.0 - _alpha_ratio(raw) if raw else 0.0
+                    structure_class = _classify_structure_confidence(heading, ev_text, ocr_noise_score)
+                    sem_label = _classify_evidence_label(ev_text)
+                    page_num = ev.page or 0
                     evidence_blocks.append(
                         ClauseEvidenceBlock(
                             clause_id=c.clause_id,
-                            page_number=ev.page or 0,
+                            page_number=page_num,
                             raw_text=ev.raw_text or "",
                             clean_text=ev.clean_text or ev.raw_text or "",
-                            display_name=_resolve_clause_display_name(c.clause_id),
+                            display_name=_evidence_block_display_name(sem_label, norm, page_num),
                             is_non_contractual=is_nc,
-                            semantic_label=_classify_evidence_label(ev_text),
+                            semantic_label=sem_label,
+                            structure_class=structure_class,
                         )
                     )
                     evidence_candidates.append(
@@ -1037,6 +1150,7 @@ class ContractReviewService:
         else:
             file_path = _find_document_path(contract_id)
             if not file_path:
+                ctx.workflow_state.legal_analysis = StageStatus.FAILED
                 ctx.fail(
                     code="DOCUMENT_NOT_FOUND",
                     message="Contract document file not found.",
@@ -1046,6 +1160,7 @@ class ContractReviewService:
                 return ctx
             raw_clauses = self.clause_extractor.extract_clauses(file_path, contract_id, use_structured=True)
             if not raw_clauses:
+                ctx.workflow_state.legal_analysis = StageStatus.FAILED
                 ctx.fail(
                     code="NO_CLAUSES",
                     message="No clauses could be extracted from the document.",
@@ -1064,15 +1179,27 @@ class ContractReviewService:
                 evidence_text = cl.get("normalized_text") or cl.get("verbatim_text", "")
                 cid = cl.get("clause_id", "")
                 is_nc = _is_non_contractual_snippet(evidence_text or "")
+                verbatim = cl.get("verbatim_text", "") or ""
+                heading = (cl.get("document_section") or cl.get("heading") or "").strip()
+                if not heading and verbatim:
+                    first_line = (verbatim.split("\n")[0] or "").strip()
+                    if len(first_line) <= 80:
+                        heading = first_line
+                ocr_noise_score = 1.0 - _alpha_ratio(verbatim) if verbatim else 0.0
+                structure_class = _classify_structure_confidence(heading, evidence_text or "", ocr_noise_score)
+                doc_sec_norm = _normalize_clause_type_for_profile(doc_sec)
+                sem_label = _classify_evidence_label(evidence_text or "")
+                page_start = cl.get("page_start", 0)
                 evidence_blocks.append(
                     ClauseEvidenceBlock(
                         clause_id=cid,
-                        page_number=cl.get("page_start", 0),
+                        page_number=page_start,
                         raw_text=cl.get("verbatim_text", ""),
                         clean_text=cl.get("normalized_text") or cl.get("verbatim_text", ""),
-                        display_name=_resolve_clause_display_name(cid),
+                        display_name=_evidence_block_display_name(sem_label, doc_sec_norm, page_start),
                         is_non_contractual=is_nc,
-                        semantic_label=_classify_evidence_label(evidence_text or ""),
+                        semantic_label=sem_label,
+                        structure_class=structure_class,
                     )
                 )
                 evidence_candidates.append(
@@ -1098,6 +1225,7 @@ class ContractReviewService:
         # Fail closed: Contract Review requires evidence text to support any output.
         # If evidence blocks are empty, we cannot provide an evidence-backed review.
         if not evidence_blocks:
+            ctx.workflow_state.legal_analysis = StageStatus.FAILED
             ctx.fail(
                 code="NO_EVIDENCE",
                 message="No extractable evidence was found in the provided document.",
@@ -1125,6 +1253,8 @@ class ContractReviewService:
                 return "Detected (Distributed Provisions)"
             if status == "detected_weak":
                 return "Detected (Limited Coverage)"
+            if status == "implicitly_covered":
+                return "Implicitly Covered"
             return "Not Detected"
 
         for clause_type in expected:
@@ -1139,18 +1269,21 @@ class ContractReviewService:
                 "matched_keyword": result.get("matched_keyword"),
             }
 
-        # G1: Post-pass for implicit governing law
+        # G1: Post-pass for implicit governing law (no country requirement; do not infer country)
+        # Store the matching candidate so we can attach evidence (synthetic block) and avoid "present" without evidence.
         if "governing_law" in expected and presence_map.get("governing_law", {}).get("status") == "not_detected":
             for cand in evidence_candidates:
                 t = (cand.get("text") or "").lower()
-                has_kw = any(kw in t for kw in IMPLICIT_GOV_LAW_KEYWORDS)
-                has_country = any(c in t for c in GOV_LAW_COUNTRY_REFERENCES)
-                if has_kw and has_country:
+                if any(kw in t for kw in IMPLICIT_GOV_LAW_KEYWORDS):
                     presence_map["governing_law"]["status"] = "detected_implicit"
                     presence_map["governing_law"]["display_status"] = "Detected (Implicit Reference)"
+                    presence_map["governing_law"]["implicit_evidence"] = {
+                        "page_number": cand.get("page_number", 0),
+                        "text": (cand.get("text") or "")[:500],
+                    }
                     break
 
-        # G2: Post-pass for benefits (composite)
+        # G2: Post-pass for benefits (composite). 0 categories must remain not_detected (no overwrite).
         if "benefits" in expected:
             detected_categories: set = set()
             for cand in evidence_candidates:
@@ -1164,9 +1297,28 @@ class ContractReviewService:
             elif len(detected_categories) == 1:
                 presence_map["benefits"]["status"] = "detected_weak"
                 presence_map["benefits"]["display_status"] = "Detected (Limited Coverage)"
+            # len(detected_categories) == 0: leave status as not_detected (regression guard for employment profile)
+
+        # G3: Post-pass for implicitly_covered (e.g. conduct_discipline when termination text mentions discipline)
+        for clause_type, rule in IMPLICIT_COVERAGE_RULES.items():
+            if clause_type not in expected:
+                continue
+            entry = presence_map.get(clause_type, {})
+            if entry.get("status") != "not_detected":
+                continue
+            primary = rule.get("primary") or []
+            secondary = rule.get("secondary") or []
+            note = rule.get("coverage_note") or ""
+            for cand in evidence_candidates:
+                t = (cand.get("text") or "").lower()
+                if any(p in t for p in primary) and any(s in t for s in secondary):
+                    presence_map[clause_type]["status"] = "implicitly_covered"
+                    presence_map[clause_type]["display_status"] = "Implicitly Covered"
+                    presence_map[clause_type]["coverage_note"] = note
+                    break
 
         # Add risk rows only for clause_types that are not detected (any variant)
-        _skip_risk_statuses = ("detected", "detected_implicit", "detected_distributed", "detected_weak")
+        _skip_risk_statuses = ("detected", "detected_implicit", "detected_distributed", "detected_weak", "implicitly_covered")
         for clause_type in expected:
             status = presence_map.get(clause_type, {}).get("status", "not_detected")
             if status in _skip_risk_statuses:
@@ -1256,16 +1408,81 @@ class ContractReviewService:
 
         ctx.add_result(f"{STEP_NAME}.risks", [r.model_dump() for r in risks])
 
-        # 4) Key Review Observations (template-based, reviewer-grade; no raw counts)
+        # 4) Document confidence (for severity cap and guardrail)
+        section_non_standard_count = sum(1 for b in evidence_blocks if getattr(b, "structure_class", None) == "section_non_standard")
+        total_blocks = max(len(evidence_blocks), 1)
+        document_confidence = "high" if (
+            not document_classification_warning
+            and (section_non_standard_count / total_blocks) < 0.2
+        ) else ("medium" if not document_classification_warning else "low")
+
+        # 5) Final output guardrail: on clean documents, do not show section_non_standard
+        if document_confidence == "high" and section_non_standard_count > 0:
+            for block in evidence_blocks:
+                if getattr(block, "structure_class", None) == "section_non_standard":
+                    block.structure_class = "provision"  # downgrade; no heading on block to prefer clause
+                    logging.debug(
+                        "contract_review: downgraded evidence block structure_class to provision (document_confidence=high)"
+                    )
+
+        # 6) used_implicit_or_distributed_logic: after guardrail so downgraded blocks do not count
+        # OCR confidence below threshold: significant fraction of blocks have high OCR noise
+        noisy_count = sum(
+            1 for b in evidence_blocks
+            if (1.0 - _alpha_ratio(getattr(b, "raw_text", "") or "")) >= OCR_NOISE_THRESHOLD
+        )
+        ocr_confidence_below_threshold = (noisy_count / total_blocks) > 0.5
+        used_implicit_or_distributed_logic = (
+            presence_map.get("governing_law", {}).get("status") == "detected_implicit"
+            or presence_map.get("benefits", {}).get("status") == "detected_distributed"
+            or any(presence_map.get(ct, {}).get("status") == "implicitly_covered" for ct in expected)
+            or any(getattr(b, "structure_class", None) == "section_non_standard" for b in evidence_blocks)
+            or ocr_confidence_below_threshold
+        )
+
+        # 7) Key Review Observations (template-based, reviewer-grade; no raw counts)
         exec_items = _build_key_review_observations(
             presence_map=presence_map,
             risk_weights=risk_weights,
             expected=expected,
+            document_confidence_high=(document_confidence == "high"),
+            jurisdiction=jurisdiction,
         )
         for item in exec_items:
             item.text = enforce_non_prescriptive_language(item.text, step=f"{STEP_NAME}.executive_summary")
 
-        # 5) Build deliverable and store in context
+        # 8) Synthetic evidence block for implicit governing law so "present" has visible evidence
+        gov_entry = presence_map.get("governing_law", {})
+        if gov_entry.get("status") == "detected_implicit" and gov_entry.get("implicit_evidence"):
+            ie = gov_entry["implicit_evidence"]
+            evidence_blocks.append(
+                ClauseEvidenceBlock(
+                    clause_id="governing_law_implicit",
+                    page_number=ie.get("page_number", 0),
+                    raw_text=ie.get("text", ""),
+                    clean_text=ie.get("text", ""),
+                    display_name="Governing Law (implicit)",
+                    is_non_contractual=False,
+                    semantic_label=None,
+                    structure_class="provision",
+                )
+            )
+
+        # 9) Implicitly covered clauses (display names + notes for UI)
+        implicitly_covered_clauses: List[str] = []
+        implicit_coverage_notes: Optional[Dict[str, str]] = None
+        for ct in expected:
+            if presence_map.get(ct, {}).get("status") != "implicitly_covered":
+                continue
+            display = EXPECTED_CLAUSE_DISPLAY_NAMES.get(ct, ct.replace("_", " ").title())
+            implicitly_covered_clauses.append(display)
+            note = presence_map.get(ct, {}).get("coverage_note")
+            if note:
+                if implicit_coverage_notes is None:
+                    implicit_coverage_notes = {}
+                implicit_coverage_notes[display] = note
+
+        # 10) Build deliverable and store in context
         response = ContractReviewResponse(
             workflow_id=ctx.workflow_id,
             document_id=contract_id,
@@ -1275,8 +1492,12 @@ class ContractReviewService:
             evidence=evidence_blocks,
             executive_summary=exec_items,
             not_detected_clauses=not_detected_clauses,
+            implicitly_covered_clauses=implicitly_covered_clauses,
+            implicit_coverage_notes=implicit_coverage_notes,
             document_classification_warning=document_classification_warning,
+            used_implicit_or_distributed_logic=used_implicit_or_distributed_logic,
         )
         ctx.add_result(f"{STEP_NAME}.response", response.model_dump())
+        ctx.workflow_state.legal_analysis = StageStatus.COMPLETE
         ctx.status = "completed"
         return ctx

@@ -6,8 +6,9 @@ Uses batched OCR and configurable DPI to avoid MemoryError in subprocess reader.
 """
 import os
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Union
 import pypdf
+from backend.models.document_structure import PageInfo
 from docx import Document
 from backend.config import settings
 
@@ -26,68 +27,61 @@ class FileParser:
     
     @staticmethod
     def parse_pdf(file_path: Path) -> List[Tuple[str, int]]:
+        """Parse PDF and return (text, page_number) tuples. Use parse_pdf_pages() for PageInfo with is_ocr."""
+        pages = FileParser.parse_pdf_pages(file_path)
+        return [(p.text, p.page_number) for p in pages]
+
+    @staticmethod
+    def parse_pdf_pages(file_path: Path) -> List[PageInfo]:
         """
-        Parse PDF file and extract text with page numbers.
+        Parse PDF file and extract text with page numbers and OCR flag.
         Falls back to OCR if text extraction fails (for scanned PDFs).
         
         Args:
             file_path: Path to PDF file
             
         Returns:
-            List of tuples: (text, page_number)
+            List of PageInfo (text, page_number, is_ocr)
         """
-        text_pages = []
+        text_pages: List[PageInfo] = []
+        pages_needing_ocr: List[int] = []
         
         try:
             with open(file_path, 'rb') as file:
                 pdf_reader = pypdf.PdfReader(file)
                 total_pages = len(pdf_reader.pages)
                 
-                # Extract text from each page
-                pages_needing_ocr = []
                 for page_num in range(total_pages):
                     page = pdf_reader.pages[page_num]
                     text = page.extract_text()
-                    
-                    # Always add the page, even if text is minimal
-                    # This ensures we don't lose any content
                     text = text.strip() if text else ""
                     
                     if text:
-                        # Page has text, add it
-                        text_pages.append((text, page_num + 1))  # 1-indexed pages
+                        text_pages.append(PageInfo(text=text, page_number=page_num + 1, is_ocr=False))
                     else:
-                        # Page has no text - might be image-based, mark for OCR
                         pages_needing_ocr.append(page_num + 1)
                         
         except Exception as e:
             raise ValueError(f"Error parsing PDF {file_path}: {str(e)}")
         
-        # Try OCR for pages that had no text (per-page OCR fallback)
         if pages_needing_ocr and OCR_AVAILABLE:
             try:
-                # Try OCR for specific pages that failed text extraction
                 ocr_results = FileParser._parse_pdf_with_ocr_selective(file_path, pages_needing_ocr)
                 for text, page_num in ocr_results:
-                    if text:  # Only add if OCR found text
-                        text_pages.append((text, page_num))
-            except Exception as ocr_error:
-                # If selective OCR fails, try full document OCR
-                if not text_pages:  # Only if we have NO text at all
+                    if text:
+                        text_pages.append(PageInfo(text=text, page_number=page_num, is_ocr=True))
+            except Exception:
+                if not text_pages:
                     try:
                         ocr_pages = FileParser._parse_pdf_with_ocr(file_path)
-                        text_pages = [(text, page_num) for text, page_num in ocr_pages]
+                        for text, page_num in ocr_pages:
+                            text_pages.append(PageInfo(text=text.strip(), page_number=page_num, is_ocr=True))
                     except Exception as full_ocr_error:
                         print(f"Warning: OCR extraction failed: {str(full_ocr_error)}")
                         print("Note: Install Tesseract OCR for scanned PDF support.")
         
-        # Ensure we have at least some pages - if not, it's likely a problem
         if not text_pages:
             print(f"Warning: No text extracted from PDF {file_path}")
-            print("This might indicate:")
-            print("  1. PDF is image-based and OCR is not available")
-            print("  2. PDF is corrupted or encrypted")
-            print("  3. PDF has no extractable text content")
         
         return text_pages
     
@@ -193,50 +187,46 @@ class FileParser:
     
     @staticmethod
     def parse_docx(file_path: Path) -> List[Tuple[str, int]]:
+        """Parse DOCX and return (text, page_number) tuples. Use parse_docx_pages() for PageInfo."""
+        pages = FileParser.parse_docx_pages(file_path)
+        return [(p.text, p.page_number) for p in pages]
+
+    @staticmethod
+    def parse_docx_pages(file_path: Path) -> List[PageInfo]:
         """
-        Parse DOCX file and extract text.
-        Note: DOCX doesn't have native page numbers, so we estimate based on content.
+        Parse DOCX file and extract text with estimated page numbers.
+        DOCX has no native page numbers; is_ocr is always False.
         
-        Args:
-            file_path: Path to DOCX file
-            
         Returns:
-            List of tuples: (text, estimated_page_number)
+            List of PageInfo (text, estimated_page_number, is_ocr=False)
         """
-        text_pages = []
+        text_pages: List[PageInfo] = []
         
         try:
             doc = Document(file_path)
-            
-            # Estimate pages: ~500 words per page
             words_per_page = 500
             current_text = ""
             current_page = 1
             word_count = 0
             
-            # Extract text from paragraphs
             for paragraph in doc.paragraphs:
                 para_text = paragraph.text.strip()
                 if para_text:
                     current_text += para_text + "\n"
                     word_count += len(para_text.split())
-                    
-                    # Estimate new page every ~500 words
                     if word_count >= words_per_page:
-                        text_pages.append((current_text.strip(), current_page))
+                        text_pages.append(PageInfo(text=current_text.strip(), page_number=current_page, is_ocr=False))
                         current_text = ""
                         word_count = 0
                         current_page += 1
             
-            # Add remaining text
             if current_text.strip():
-                text_pages.append((current_text.strip(), current_page))
+                text_pages.append(PageInfo(text=current_text.strip(), page_number=current_page, is_ocr=False))
             
-            # If no pages created, create at least one
             if not text_pages:
                 full_text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
                 if full_text:
-                    text_pages.append((full_text, 1))
+                    text_pages.append(PageInfo(text=full_text, page_number=1, is_ocr=False))
                     
         except Exception as e:
             raise ValueError(f"Error parsing DOCX {file_path}: {str(e)}")
@@ -247,19 +237,21 @@ class FileParser:
     def parse_file(file_path: Path) -> List[Tuple[str, int]]:
         """
         Parse file based on extension (PDF or DOCX).
-        
-        Args:
-            file_path: Path to file
-            
-        Returns:
-            List of tuples: (text, page_number)
+        Returns (text, page_number) for backward compatibility.
+        """
+        pages = FileParser.parse_file_to_pages(file_path)
+        return [(p.text, p.page_number) for p in pages]
+
+    @staticmethod
+    def parse_file_to_pages(file_path: Path) -> List[PageInfo]:
+        """
+        Parse file and return list of PageInfo (text, page_number, is_ocr).
+        Use this when OCR flag is needed (e.g. ingestion pipeline).
         """
         file_ext = file_path.suffix.lower()
-        
         if file_ext == '.pdf':
-            return FileParser.parse_pdf(file_path)
-        elif file_ext in ['.docx', '.doc']:
-            return FileParser.parse_docx(file_path)
-        else:
-            raise ValueError(f"Unsupported file type: {file_ext}. Supported: .pdf, .docx")
+            return FileParser.parse_pdf_pages(file_path)
+        if file_ext in ['.docx', '.doc']:
+            return FileParser.parse_docx_pages(file_path)
+        raise ValueError(f"Unsupported file type: {file_ext}. Supported: .pdf, .docx")
 

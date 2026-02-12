@@ -71,5 +71,26 @@ class ExtractedClauseStore:
             return []
         return clauses
 
+    def delete_document_clauses(self, document_id: str) -> int:
+        """
+        Delete extracted clauses for a document.
+
+        Args:
+            document_id: Document identifier
+
+        Returns:
+            Number of payload files deleted (0 or 1).
+        """
+        path = self._document_path(document_id)
+        if not path.exists():
+            return 0
+        try:
+            path.unlink()
+            return 1
+        except OSError:
+            # Best-effort delete; the caller should not fail the entire workflow
+            # because of a missing or locked JSON file.
+            return 0
+
     def _document_path(self, document_id: str) -> Path:
         return self.store_path / f"{document_id}.json"

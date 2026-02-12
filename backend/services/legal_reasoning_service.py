@@ -2,7 +2,8 @@
 Legal reasoning service.
 
 Implements rule-based reasoning for legal hierarchy, citation requirements,
-and not-specified detection.
+and not-specified detection. All legal conclusions are page-local unless
+explicitly marked as cross-page inference.
 
 IMPORTANT DISCLAIMER:
 This service provides heuristic, best-effort legal reasoning. It does NOT

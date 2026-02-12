@@ -95,7 +95,7 @@ class VectorStore:
         # Opt into FAISS explicitly via USE_FAISS=1.
         self._faiss = None
         if os.environ.get("USE_FAISS", "").lower() in {"1", "true", "yes"}:
-            import faiss as _faiss
+            import faiss as _faiss  # type: ignore[import-untyped]
             self._faiss = _faiss
             self.index = _faiss.IndexFlatL2(embedding_dim)
         else:
@@ -103,16 +103,45 @@ class VectorStore:
         
         # Per-vector metadata aligned by index position (self.metadata[i] describes vector i).
         self.metadata: List[Dict[str, Any]] = []
+
+        # Track whether we've attempted to load from disk.
+        # This lets us defer disk I/O until the first real use.
+        self._loaded: bool = False
         
         # Ensure vector store directory exists for persistence.
         settings.VECTOR_STORE_PATH.mkdir(parents=True, exist_ok=True)
+
+    def _ensure_loaded(self) -> None:
+        """
+        Lazily load the persisted index + metadata from disk on first real use.
+
+        - If the index file does not exist, we mark the store as loaded and
+          continue with an empty in-memory index.
+        - If already loaded (or load attempted), this is a no-op.
+        """
+        if self._loaded:
+            return
+
+        filepath = settings.VECTOR_STORE_PATH / settings.FAISS_INDEX_NAME
+        if not filepath.exists():
+            # Nothing to load yet – treat as an empty, initialized store.
+            self._loaded = True
+            return
+
+        try:
+            self.load(filepath)
+        finally:
+            # Even if load() fails loudly, we don't want to repeatedly hammer disk.
+            self._loaded = True
     
     def add_chunks(
         self,
         embeddings: np.ndarray,
         chunks: List[DocumentChunk],
         display_name: Optional[str] = None,
-        document_hash: Optional[str] = None
+        document_hash: Optional[str] = None,
+        chunking_strategy: Optional[str] = None,
+        embedding_model_version: Optional[str] = None,
     ) -> None:
         """
         Add document chunks with their embeddings to the vector store.
@@ -122,7 +151,11 @@ class VectorStore:
             chunks: List of DocumentChunk objects corresponding to embeddings
             display_name: User-friendly display name for citations (internal)
             document_hash: SHA-256 hash of document content (internal, never exposed)
+            chunking_strategy: Optional "clause_aware" | "sentence" for ingestion metadata
+            embedding_model_version: Optional embedding model name/version for debugging
         """
+        # Ensure any existing persisted index/metadata are loaded before appending.
+        self._ensure_loaded()
         if len(embeddings) != len(chunks):
             raise ValueError(f"Mismatch: {len(embeddings)} embeddings but {len(chunks)} chunks")
         
@@ -148,22 +181,25 @@ class VectorStore:
             chunk_metadata = chunk.metadata.copy() if chunk.metadata else {}
             if chunk.clause_id:
                 chunk_metadata['clause_id'] = chunk.clause_id
+            # chunk_type (clause | sentence) may already be in chunk.metadata from chunker
+            if 'chunk_type' not in chunk_metadata:
+                chunk_metadata['chunk_type'] = 'sentence'
             
-            # Store internal metadata (document_hash, display_name) for versioning and citations
-            # These are used internally but never exposed in API responses
             metadata_entry = {
                 'document_id': chunk.document_id,
                 'page_number': chunk.page_number,
                 'chunk_index': chunk.chunk_index,
                 'text': chunk.text,
-                **chunk_metadata  # Include any additional metadata (hierarchy_level, clause_types, etc.)
+                **chunk_metadata
             }
-            
-            # Add internal-only fields (never exposed to clients)
             if display_name:
                 metadata_entry['display_name'] = display_name
             if document_hash:
                 metadata_entry['document_hash'] = document_hash
+            if chunking_strategy:
+                metadata_entry['chunking_strategy'] = chunking_strategy
+            if embedding_model_version:
+                metadata_entry['embedding_model_version'] = embedding_model_version
             
             self.metadata.append(metadata_entry)
     
@@ -186,6 +222,9 @@ class VectorStore:
         Returns:
             List of dicts with keys: text, page_number, document_id, chunk_index, score
         """
+        # Load any existing index/metadata on first real search.
+        self._ensure_loaded()
+
         if self.index.ntotal == 0:
             return []
 
@@ -402,6 +441,9 @@ class VectorStore:
         Returns:
             List of chunk metadata dicts
         """
+        # Ensure persisted metadata are visible.
+        self._ensure_loaded()
+
         return [
             metadata for metadata in self.metadata
             if metadata['document_id'] == document_id
@@ -423,6 +465,8 @@ class VectorStore:
         Returns:
             Number of chunks updated
         """
+        # Ensure persisted metadata are loaded before updating.
+        self._ensure_loaded()
         updated_count = 0
         for metadata in self.metadata:
             if metadata['document_id'] == document_id:
@@ -438,21 +482,78 @@ class VectorStore:
         """
         Delete all chunks for a document.
         
-        Deletion is not safely supported with IndexFlatL2.
-        In production, use ID-mapped indices (e.g., IndexIDMap) or rebuild the entire
-        index with a controlled pipeline.
-        
         Args:
             document_id: Document ID to delete
             
         Returns:
-            Number of chunks deleted (raises NotImplementedError)
+            Number of chunks deleted
         """
-        raise NotImplementedError(
-            "Vector deletion is not safely supported with IndexFlatL2. "
-            "Use FAISS ID-mapped indices (IndexIDMap) or rebuild the index in a "
-            "controlled pipeline."
-        )
+        # Ensure persisted index/metadata are loaded before modifying.
+        self._ensure_loaded()
+
+        if not self.metadata or self.index.ntotal == 0:
+            return 0
+
+        # Collect indices belonging to this document_id
+        indices_to_delete = [
+            idx for idx, m in enumerate(self.metadata)
+            if m.get("document_id") == document_id
+        ]
+
+        if not indices_to_delete:
+            # No-op if the document has no chunks in the current index.
+            return 0
+
+        deleted_count = len(indices_to_delete)
+
+        # Build kept indices (in original order) and corresponding metadata.
+        total = len(self.metadata)
+        to_delete_set = set(indices_to_delete)
+        kept_indices = [i for i in range(total) if i not in to_delete_set]
+        kept_metadata = [self.metadata[i] for i in kept_indices]
+
+        # Rebuild the underlying index with kept vectors only.
+        if self._faiss is not None:
+            # FAISS IndexFlatL2 supports reconstruct() to retrieve stored vectors by index.
+            import numpy as _np
+
+            if kept_indices:
+                vectors = _np.stack(
+                    [self.index.reconstruct(i) for i in kept_indices],
+                    axis=0,
+                ).astype("float32", copy=False)
+            else:
+                vectors = _np.empty((0, self.embedding_dim), dtype="float32")
+
+            new_index = self._faiss.IndexFlatL2(self.embedding_dim)
+            if vectors.shape[0] > 0:
+                new_index.add(vectors)
+            self.index = new_index
+        else:
+            # Numpy index: we can dump raw vectors and filter them.
+            import numpy as _np
+
+            all_vectors = self.index.dump_vectors()
+            if kept_indices:
+                mask = _np.zeros(all_vectors.shape[0], dtype=bool)
+                mask[kept_indices] = True
+                kept_vectors = all_vectors[mask]
+            else:
+                kept_vectors = _np.empty((0, self.embedding_dim), dtype="float32")
+
+            new_index = _NumpyIndex(self.embedding_dim)
+            if kept_vectors.shape[0] > 0:
+                new_index.load_vectors(kept_vectors)
+            self.index = new_index
+
+        # Swap in filtered metadata and persist to disk.
+        self.metadata = kept_metadata
+        try:
+            self.save()
+        except Exception as e:
+            logging.error("Failed to save vector store after delete_document(%s): %s", document_id, e)
+
+        return deleted_count
     
     def save(self, filepath: Path = None) -> None:
         """
@@ -564,6 +665,10 @@ class VectorStore:
         Returns:
             Dict with statistics
         """
+        # NOTE: We intentionally do NOT call `_ensure_loaded()` here so that
+        # lightweight health/stats checks do not trigger disk I/O. Stats will
+        # reflect the in-memory view (which may be empty) until the first
+        # real search/ingest operation loads persisted data.
         return {
             'total_vectors': self.index.ntotal,
             # Number of vectors in index

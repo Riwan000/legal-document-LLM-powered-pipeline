@@ -8,13 +8,15 @@ workflow as specified in the PRD:
 - Executive summary items
 """
 
-from typing import List, Optional, Literal
+from typing import Dict, List, Optional, Literal
 
 from pydantic import BaseModel, Field
 
+StructureClass = Literal["clause", "provision", "section_non_standard"]
+
 
 RiskSeverity = Literal["high", "medium", "low"]
-RiskStatus = Literal["detected", "not_detected", "uncertain"]
+RiskStatus = Literal["detected", "not_detected", "uncertain", "implicitly_covered"]
 
 
 class RiskItem(BaseModel):
@@ -50,6 +52,10 @@ class RiskItem(BaseModel):
         default_factory=list,
         description="Human-readable clause names for UI (one per clause_ids entry when available).",
     )
+    coverage_note: Optional[str] = Field(
+        default=None,
+        description="When status is implicitly_covered, optional note describing where related obligations appear.",
+    )
 
 
 class ClauseEvidenceBlock(BaseModel):
@@ -79,6 +85,13 @@ class ClauseEvidenceBlock(BaseModel):
         default=None,
         description="G3: When set, UI uses 'Section: {semantic_label} — Page N'; else 'Section (Non-standard)'.",
     )
+    structure_class: Optional[StructureClass] = Field(
+        default=None,
+        description="Display-level structure confidence: clause (heading + obligations + low OCR noise), provision (obligations only), section_non_standard.",
+    )
+
+
+ExecutiveSummaryCategory = Literal["risk", "finding", "confirmation"]
 
 
 class ExecutiveSummaryItem(BaseModel):
@@ -88,6 +101,10 @@ class ExecutiveSummaryItem(BaseModel):
     severity: Optional[RiskSeverity] = Field(
         default=None,
         description="Optional associated severity, if this item is tied to a key risk.",
+    )
+    category: Optional[ExecutiveSummaryCategory] = Field(
+        default=None,
+        description="Bucket for UI: risk (missing clause), finding (non-standard/limited), confirmation (present).",
     )
     related_risk_indices: List[int] = Field(
         default_factory=list,
@@ -127,9 +144,21 @@ class ContractReviewResponse(BaseModel):
         default_factory=list,
         description="Human-readable names of expected clauses for which no evidence was found (display list only).",
     )
+    implicitly_covered_clauses: List[str] = Field(
+        default_factory=list,
+        description="Human-readable names of expected clauses that appear implicitly across other provisions.",
+    )
+    implicit_coverage_notes: Optional[Dict[str, str]] = Field(
+        default=None,
+        description="Optional map from clause display name to coverage note for implicitly_covered clauses.",
+    )
     document_classification_warning: Optional[str] = Field(
         default=None,
         description="If set, document did not appear to be an operative contract; UI should show a non-blocking banner.",
+    )
+    used_implicit_or_distributed_logic: bool = Field(
+        default=False,
+        description="True if governing law was detected implicit, benefits distributed, or any evidence is section_non_standard; UI shows global disclaimer only when True.",
     )
     disclaimer: str = Field(
         default=(

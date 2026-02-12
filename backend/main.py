@@ -2,6 +2,7 @@
 FastAPI backend for Legal Document Intelligence MVP.
 Provides REST API endpoints for all system features.
 """
+import logging
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -13,11 +14,12 @@ import hashlib
 from typing import Optional, List
 from datetime import datetime
 import os
+import threading
 from contextlib import asynccontextmanager
 
 from backend.config import settings
 from backend.services.document_ingestion import DocumentIngestionService
-from backend.services.embedding_service import EmbeddingService
+from backend.services.embedding_service import EmbeddingService, get_embedding_model
 from backend.services.vector_store import VectorStore
 from backend.services.rag_service import RAGService
 from backend.services.clause_extraction import ClauseExtractionService
@@ -36,14 +38,19 @@ from backend.services.evidence_explorer_service import EvidenceExplorerService
 from backend.services.contract_review_service import ContractReviewService
 from backend.services.workflow_orchestrator import WorkflowOrchestrator
 from backend.services.due_diligence_memo_service import DueDiligenceMemoService
+from backend.services.ingestion_metadata_store import IngestionMetadataStore
+from backend.models.document_structure import IngestionMetadata
 from backend.models.workflow import WorkflowContext
 from backend.services.guardrails import WORKFLOW_DISCLAIMER
+from backend import workflow_store
 
 
 # Lifespan handlers (replaces deprecated on_event startup/shutdown)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await _initialize_services()
+    # Optional background warm-up: load heavy AI models without blocking startup.
+    threading.Thread(target=_warmup_ai, daemon=True).start()
     try:
         yield
     finally:
@@ -97,6 +104,7 @@ document_explorer_service: Optional[DocumentExplorerService] = None
 evidence_explorer_service: Optional[EvidenceExplorerService] = None
 contract_review_service: Optional[ContractReviewService] = None
 workflow_orchestrator: Optional[WorkflowOrchestrator] = None
+ingestion_metadata_store: Optional[IngestionMetadataStore] = None
 
 
 async def _initialize_services():
@@ -105,7 +113,7 @@ async def _initialize_services():
     global rag_service, clause_extractor, clause_store, clause_validator
     global comparison_service, summarization_service, translation_service
     global document_explorer_service, evidence_explorer_service, contract_review_service, workflow_orchestrator
-    global extracted_clause_store
+    global extracted_clause_store, ingestion_metadata_store
     
     print("Initializing services...")
     
@@ -113,27 +121,17 @@ async def _initialize_services():
     document_registry = DocumentRegistry()
     print("Document registry initialized")
     
-    # Initialize embedding service
+    # Initialize embedding service (lazy model loading).
     embedding_service = EmbeddingService()
-    print(f"Embedding service initialized (dimension: {embedding_service.get_embedding_dimension()})")
+    print(f"Embedding service initialized (dimension (config): {embedding_service.get_embedding_dimension()})")
     
-    # Initialize vector store
-    embedding_dim = embedding_service.get_embedding_dimension()
-    vector_store = VectorStore(embedding_dim)
-    
-    # Try to load existing vector store
-    vector_store_path = settings.VECTOR_STORE_PATH / settings.FAISS_INDEX_NAME
-    if vector_store_path.exists():
-        try:
-            vector_store.load()
-            print(f"Loaded existing vector store ({vector_store.get_stats()['total_vectors']} vectors)")
-        except Exception as e:
-            print(f"Could not load vector store: {e}. Starting fresh.")
-    else:
-        print("No existing vector store found. Starting fresh.")
+    # Initialize vector store with configured embedding dimension.
+    embedding_dim = getattr(settings, "EMBEDDING_DIM", embedding_service.get_embedding_dimension())
+    vector_store = VectorStore(int(embedding_dim))
     
     # Initialize ingestion service
     ingestion_service = DocumentIngestionService()
+    ingestion_metadata_store = IngestionMetadataStore()
     
     # Initialize clause store (before RAG service)
     clause_store = ClauseStore()
@@ -159,8 +157,8 @@ async def _initialize_services():
     # Initialize clause extractor
     clause_extractor = ClauseExtractionService()
     
-    # Initialize comparison service
-    comparison_service = ComparisonService()
+    # Initialize comparison service (reuse global embedding service)
+    comparison_service = ComparisonService(embedding_service)
     
     # Initialize summarization service
     summarization_service = SummarizationService(rag_service)
@@ -201,6 +199,19 @@ async def _shutdown_services():
                 print(f"Error saving vector store during cancellation: {e}")
         except Exception as e:
             print(f"Error saving vector store: {e}")
+
+
+def _warmup_ai() -> None:
+    """
+    Background warm-up for heavy AI models.
+
+    This runs in a daemon thread so it never blocks server readiness.
+    """
+    try:
+        # Trigger lazy embedding model load (SentenceTransformers path).
+        get_embedding_model()
+    except Exception as e:  # pragma: no cover - best-effort warmup
+        print(f"AI warm-up failed (non-fatal): {e}")
 
 
 @app.get("/api/extract-clauses")
@@ -450,17 +461,34 @@ async def query_clauses(
 
 @app.get("/api/health")
 async def health_check():
-    """Health check endpoint."""
-    global vector_store, clause_store
-    clause_stats = clause_store.get_stats() if clause_store else {}
-    stats = vector_store.get_stats() if vector_store else {}
-    
+    """Lightweight health check endpoint (server readiness only)."""
     return {
-        "status": "healthy",
-        "vector_store": stats,
-        "ollama_url": settings.OLLAMA_BASE_URL,
-        "ollama_model": settings.OLLAMA_MODEL
+        "status": "ok",
+        "server": "ready",
+        "ai_models": "lazy",
     }
+
+
+@app.get("/api/health/ai")
+async def ai_health_check():
+    """
+    AI readiness endpoint.
+
+    This explicitly checks that embedding models can be loaded.
+    """
+    try:
+        # This will lazily load the heavy embedding model if available.
+        get_embedding_model()
+        return {"ai_models": "ready"}
+    except Exception as e:
+        # Do not leak internal errors; just report not_ready with minimal detail.
+        return JSONResponse(
+            status_code=503,
+            content={
+                "ai_models": "not_ready",
+                "reason": str(e),
+            },
+        )
 
 
 @app.post("/api/upload", response_model=DocumentUploadResponse)
@@ -483,7 +511,7 @@ async def upload_document(
     Returns:
         DocumentUploadResponse with ingestion results (never includes document_hash)
     """
-    global document_registry, ingestion_service, embedding_service, vector_store
+    global document_registry, ingestion_service, embedding_service, vector_store, ingestion_metadata_store
 
     # Validate file type
     file_ext = Path(file.filename).suffix.lower()
@@ -559,10 +587,11 @@ async def upload_document(
             [str(file_path), document_id, version]
         )
     
-    # Ingest document
+    # Ingest document (new pipeline: parse -> heuristic -> strategy -> chunk)
     try:
-        # Get chunks for embedding
-        chunks = ingestion_service.get_chunks_from_document(file_path, document_id)
+        chunks, ingest_ctx = ingestion_service.ingest_document(
+            file_path, document_id, document_type_hint=document_type
+        )
         
         if not chunks:
             raise ValueError("No chunks created from document")
@@ -571,39 +600,52 @@ async def upload_document(
         if version > 1 and vector_store:
             old_chunks = vector_store.get_chunks_by_document(document_id)
             if old_chunks:
-                # Delete old version chunks (by document_hash if available, otherwise by document_id)
-                # For now, we'll delete all chunks for this document_id and re-add
                 vector_store.delete_document(document_id)
         
         # Generate embeddings
         texts = [chunk.text for chunk in chunks]
         embeddings = embedding_service.embed_batch(texts)
         
-        # Add to vector store with display_name and document_hash (internal)
+        # Embedding model version for metadata (from config; service may use fallback)
+        embedding_model_version = getattr(
+            embedding_service, "model_name", None
+        ) or settings.EMBEDDING_MODEL
+        
+        # Add to vector store with display_name, document_hash, chunking_strategy, embedding_model_version
         vector_store.add_chunks(
-            embeddings, 
+            embeddings,
             chunks,
             display_name=doc_record['display_name'],
-            document_hash=document_hash
+            document_hash=document_hash,
+            chunking_strategy=ingest_ctx.strategy,
+            embedding_model_version=embedding_model_version,
         )
         
         # Save vector store
         vector_store.save()
         
-        # Count OCR chunks
-        ocr_chunks = sum(1 for chunk in chunks if chunk.metadata.get('is_ocr', False))
+        ocr_chunks = sum(1 for chunk in chunks if (chunk.metadata or {}).get('is_ocr', False))
         uses_ocr = ocr_chunks > 0
         
         # Update registry with page/chunk counts
-        pages = ingestion_service.parser.parse_file(file_path)
-        total_pages = len(pages) if pages else 0
-        
         with document_registry._get_connection() as conn:
             conn.execute("""
                 UPDATE documents 
                 SET total_pages = ?, total_chunks = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE document_id = ? AND version = ?
-            """, [total_pages, len(chunks), document_id, version])
+            """, [ingest_ctx.pages_processed, len(chunks), document_id, version])
+        
+        # Persist ingestion metadata for this document/version
+        if ingestion_metadata_store:
+            ingestion_metadata_store.save(IngestionMetadata(
+                document_id=document_id,
+                ingestion_version=version,
+                chunking_strategy=ingest_ctx.strategy,
+                structure_detected=ingest_ctx.structure_detected,
+                estimated_clause_count=ingest_ctx.estimated_clause_count,
+                embedding_model_version=embedding_model_version,
+                created_at=datetime.now(),
+            ))
         
         # Build response (never include document_hash)
         return DocumentUploadResponse(
@@ -612,10 +654,10 @@ async def upload_document(
             original_filename=doc_record['original_filename'],
             version=version,
             status="success",
-            message=f"Document ingested and indexed successfully. {len(chunks)} chunks created." + 
-                   (f" ({ocr_chunks} from OCR)." if uses_ocr else "."),
+            message=f"Document ingested and indexed successfully. {len(chunks)} chunks created." +
+                    (f" ({ocr_chunks} from OCR)." if uses_ocr else "."),
             chunks_created=len(chunks),
-            pages_processed=total_pages,
+            pages_processed=ingest_ctx.pages_processed,
             uses_ocr=uses_ocr,
             ocr_chunks=ocr_chunks if uses_ocr else 0,
             created_at=datetime.fromisoformat(doc_record['created_at']) if isinstance(doc_record['created_at'], str) else doc_record['created_at'],
@@ -785,6 +827,18 @@ async def contract_review(
         raise HTTPException(status_code=500, detail=f"Contract review failed: {str(e)}")
 
 
+@app.get("/api/workflow/{workflow_id}/state")
+async def get_workflow_state(workflow_id: str):
+    """
+    Return workflow state for the given workflow_id. Fast, non-blocking.
+    Returns 404 if workflow_id is unknown (UI should treat as Indeterminate).
+    """
+    state = workflow_store.get(workflow_id)
+    if state is None:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+    return state
+
+
 @app.post("/api/explore")
 async def document_explorer(
     document_id: str = Form(...),
@@ -849,11 +903,13 @@ async def explore_evidence(
     query: str = Form(...),
     top_k: Optional[int] = Form(None),
     mode: str = Form("text"),
+    debug: bool = Form(False),
 ):
     """
     Evidence Explorer: deterministic evidence retrieval within a single document.
     No LLM. Returns snippets + metadata + debug only (no answer field).
     Modes: text (chunks), clauses (extracted clauses), both (clauses first, then text fallback).
+    If debug=True, includes retrieval_debug in debug block.
     """
     global workflow_orchestrator
     if not workflow_orchestrator:
@@ -866,18 +922,21 @@ async def explore_evidence(
             query=query,
             top_k=top_k,
             mode=mode,
+            debug=debug,
         )
         if ctx.status == "completed" and ctx.intermediate_results:
             ev_result = ctx.intermediate_results.get("evidence_explorer", {})
             response_data = ev_result.get("response", {})
             if response_data:
-                return {
+                out = {
+                    "mode": "explorer",
                     "status": response_data.get("status"),
                     "results": [r for r in response_data.get("results", [])],
                     "reason": response_data.get("reason"),
                     "debug": response_data.get("debug"),
                     "workflow_id": ctx.workflow_id,
                 }
+                return out
         if ctx.status == "failed" and ctx.error:
             raise HTTPException(
                 status_code=422,
@@ -903,10 +962,12 @@ async def explore_answer(
     query: str = Form(...),
     top_k: Optional[int] = Form(None),
     response_language: Optional[str] = Form(None),
+    debug: bool = Form(False),
 ):
     """
     RAG Answer Explorer: single-document RAG answer + citations.
     Uses RAGService.query with document_id_filter. Returns answer, status, confidence, sources, citation.
+    If debug=True, includes retrieval_debug and optional answer_style in response.
     """
     global rag_service
     if not rag_service:
@@ -918,7 +979,9 @@ async def explore_answer(
             document_id_filter=document_id,
             generate_response=True,
             response_language=response_language,
+            debug=debug,
         )
+        result["mode"] = "rag_qa"
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"RAG Answer Explorer failed: {str(e)}")
@@ -1150,6 +1213,82 @@ async def rename_document(
         display_name=doc['display_name'],
         success=True
     )
+
+
+@app.delete("/api/documents/{document_id}")
+async def delete_document_endpoint(document_id: str):
+    """
+    Permanently delete a document and its artifacts.
+
+    This endpoint coordinates cleanup across:
+    - Vector store (embeddings/chunks)
+    - Clause store (structured clauses)
+    - Extracted clause store (explorer JSON payloads)
+    - Document registry (all versions)
+    - On-disk files recorded in the registry
+    """
+    global document_registry, vector_store, clause_store, extracted_clause_store
+
+    if not document_registry:
+        raise HTTPException(status_code=500, detail="Document registry not initialized")
+
+    # Pre-read all versions so we know which files to remove even after registry deletion.
+    versions = document_registry.get_versions(document_id)
+    if not versions:
+        raise HTTPException(status_code=404, detail=f"Document {document_id} not found")
+
+    deleted_chunks = 0
+    deleted_clauses = 0
+    deleted_extracted = 0
+
+    # Vector store deletion (best-effort; logs on failure).
+    if vector_store:
+        try:
+            deleted_chunks = vector_store.delete_document(document_id)
+        except Exception as e:
+            logging.error("Failed to delete vectors for %s: %s", document_id, e)
+
+    # Structured clause deletion (best-effort).
+    if clause_store:
+        try:
+            deleted_clauses = clause_store.delete_document(document_id)
+        except Exception as e:
+            logging.error("Failed to delete structured clauses for %s: %s", document_id, e)
+
+    # Extracted clause JSON payloads (best-effort).
+    if extracted_clause_store:
+        try:
+            deleted_extracted = extracted_clause_store.delete_document_clauses(document_id)
+        except Exception as e:
+            logging.error("Failed to delete extracted clauses for %s: %s", document_id, e)
+
+    # Delete all registry records (all versions).
+    try:
+        deleted_registry = document_registry.delete_document(document_id)
+    except Exception as e:
+        logging.error("Failed to delete registry records for %s: %s", document_id, e)
+        raise HTTPException(status_code=500, detail=f"Failed to delete registry records for {document_id}")
+
+    # Remove physical files on disk for each version, if paths are available.
+    for rec in versions:
+        file_path = rec.get("file_path")
+        if not file_path:
+            continue
+        try:
+            p = Path(file_path)
+            if p.exists():
+                p.unlink()
+        except Exception as e:
+            logging.warning("Failed to delete file for %s at %s: %s", document_id, file_path, e)
+
+    return {
+        "status": "deleted",
+        "document_id": document_id,
+        "deleted_chunks": deleted_chunks,
+        "deleted_clauses": deleted_clauses,
+        "deleted_extracted_payloads": deleted_extracted,
+        "deleted_registry_records": deleted_registry,
+    }
 
 
 @app.get("/api/stats")

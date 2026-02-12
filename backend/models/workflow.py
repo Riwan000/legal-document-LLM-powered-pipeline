@@ -13,6 +13,8 @@ from typing import Literal, Optional, Dict, List, Any
 
 from pydantic import BaseModel, Field
 
+from backend.workflow_stages import WorkflowState
+
 
 class WorkflowError(BaseModel):
     """
@@ -81,6 +83,10 @@ class WorkflowContext(BaseModel):
     )
 
     # Execution state
+    workflow_state: WorkflowState = Field(
+        default_factory=WorkflowState,
+        description="Per-stage status (upload_extraction, legal_analysis, report_generation). UI reads this only.",
+    )
     intermediate_results: Dict[str, Any] = Field(
         default_factory=dict,
         description="Per-step intermediate outputs, keyed by step name.",
@@ -143,6 +149,10 @@ class DocumentExplorerRequest(BaseModel):
     )
 
 
+# Standardized reason enum for Explorer (machine-readable)
+EvidenceExplorerReason = Literal["not_found", "ambiguous", "filtered", "error", "ok"]
+
+
 class EvidenceExplorerRequest(BaseModel):
     """Request for Evidence Explorer (evidence-only, no LLM)."""
 
@@ -156,6 +166,7 @@ class EvidenceExplorerRequest(BaseModel):
         default=None,
         description="Optional limit for number of results (defaults to config).",
     )
+    debug: bool = Field(default=False, description="If True, include retrieval_debug in response.")
 
 
 class EvidenceExplorerResult(BaseModel):
@@ -200,10 +211,25 @@ class DocumentExplorerResponse(BaseModel):
         description="List of evidence results for the query.",
     )
     answer: Optional[str] = Field(None, description="RAG answer for the query.")
-    status: Optional[str] = Field(None, description="RAG status (explicitly_stated, not_specified, refused).")
+    status: Optional[str] = Field(
+        None,
+        description=(
+            "RAG answer status. New taxonomy prefers: "
+            "explicit_yes, explicit_no, conditional, partial, absent, extraction_failed, refused. "
+            "Older values like explicitly_stated / not_specified may still appear for backward compatibility."
+        ),
+    )
     confidence: Optional[str] = Field(None, description="RAG confidence level if available.")
-    citation: Optional[str] = Field(None, description="Primary citation if available.")
+    citation: Optional[str] = Field(None, description="Primary citation if available (e.g. first clause/page).")
+    citations: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="Optional list of clause/page citations contributing to the answer.",
+    )
     refusal_reason: Optional[str] = Field(None, description="Refusal reason if status is refused.")
+    status_reason: Optional[str] = Field(
+        default=None,
+        description="Short machine-readable reason for the chosen status (e.g. reasoned_absence, ocr_failure, policy_refusal).",
+    )
     reason: Optional[str] = Field(None, description="Reason for not_found responses.")
     debug: Optional[Dict[str, Any]] = Field(
         default=None,
@@ -222,7 +248,7 @@ class EvidenceExplorerResponse(BaseModel):
         default_factory=list,
         description="Evidence snippets (chunks or clauses).",
     )
-    reason: Optional[str] = Field(None, description="Reason when status is not_found.")
+    reason: Optional[EvidenceExplorerReason] = Field(None, description="Machine-readable reason: not_found, ambiguous, filtered, error, ok.")
     debug: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Debug metadata (mode, counts, expanded_keywords, etc.).",

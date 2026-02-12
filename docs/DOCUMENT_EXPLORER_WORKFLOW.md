@@ -269,3 +269,161 @@ flowchart TB
 - **Retrieval:** `backend/services/rag_service.py` — search, query; `backend/services/vector_store.py` — search, get_chunks_by_document
 - **Clauses:** `backend/services/extracted_clause_store.py` — get_document_clauses
 - **Normalization:** `backend/services/text_normalizer.py` — normalize_for_match, detect_ocr_noise
+
+---
+
+## Frontend → Backend → Frontend Flow (Document Explorer UI)
+
+This diagram focuses specifically on how the **Document Explorer dashboard page** in the Next.js UI
+collects inputs, calls the backend, and renders outputs for both **Evidence** and **Answer** tabs.
+
+```mermaid
+flowchart LR
+    %% UI LAYER
+    subgraph UI["Next.js UI – Document Explorer page (/document-explorer)"]
+        U1["User selects document from list (Document picker)"]
+        U2["User types query (e.g. 'Where are the payment terms?')"]
+        U3["User chooses tab:
+        • Evidence (snippets only)
+        • Answer (RAG answer + citations)"]
+        U4["Click 'Search' / 'Run'"]
+    end
+
+    %% FRONTEND API HELPERS
+    subgraph FEAPI["Frontend API helpers (frontend/young-counsel-ui/src/lib/api.ts)"]
+        FE_EVID["exploreEvidence({ document_id, query, top_k?, mode })"]
+        FE_ANS["exploreAnswer({ document_id, query, top_k?, response_language? })"]
+
+        FE_EVID_BODY["Build URLSearchParams:
+        • document_id
+        • query
+        • top_k (optional)
+        • mode ('text' | 'clauses' | 'both')"]
+
+        FE_ANS_BODY["Build URLSearchParams:
+        • document_id
+        • query
+        • top_k (optional)
+        • response_language (optional)"]
+
+        FE_EVID_HTTP["POST
+        ${API_BASE_URL}/api/explore-evidence
+        Content-Type: application/x-www-form-urlencoded"]
+
+        FE_ANS_HTTP["POST
+        ${API_BASE_URL}/api/explore-answer
+        Content-Type: application/x-www-form-urlencoded"]
+    end
+
+    %% BACKEND FASTAPI
+    subgraph API["FastAPI endpoints (backend/main.py)"]
+        BE_EVID["explore_evidence()
+        @app.post('/api/explore-evidence')"]
+        BE_ANS["explore_answer()
+        @app.post('/api/explore-answer')"]
+    end
+
+    %% WORKFLOW / SERVICES
+    subgraph SVC["Backend services"]
+        subgraph WF["WorkflowOrchestrator (backend/services/workflow_orchestrator.py)"]
+            WF_EVID["run_evidence_explorer(document_id, query, top_k, mode, debug)"]
+            WF_CTX["Create WorkflowContext
+            • workflow_id
+            • workflow_type='document_explorer'
+            • document_ids=[document_id]
+            • metadata={query, top_k, mode}"]
+        end
+
+        subgraph EVS["EvidenceExplorerService (evidence only)"]
+            EV_RUN["run(ctx, EvidenceExplorerRequest)"]
+            EV_EXP["expand_query_terms(query)
+            • normalize_for_match
+            • add related terms"]
+            EV_MODE["Branch by mode:
+            • text
+            • clauses
+            • both"]
+            EV_TEXT["_run_text():
+            • RAGService.search(...)
+            • vector_store.get_chunks_by_document(...)
+            • lexical fallback
+            • combined EvidenceExplorerResult[]"]
+            EV_CLAUSES["_run_clauses():
+            • ExtractedClauseStore.get_document_clauses(...)
+            • score_clause(...)
+            • EvidenceExplorerResult[]"]
+            EV_RESP["EvidenceExplorerResponse:
+            • status, results[], reason, debug"]
+        end
+
+        subgraph RAG["RAG answer path"]
+            RAG_Q["RAGService.query(
+            query,
+            document_id_filter=document_id,
+            generate_response=True
+            )"]
+            RAG_SEARCH["RAGService.search:
+            • embed_text(query)
+            • vector_store.search / search_with_priority
+            • optional keyword fallback
+            • authority ranking"]
+            RAG_CTX["Build context from retrieved chunks/clauses"]
+            RAG_LLM["Ollama LLM:
+            • generate legal-style answer
+            • consider legal hierarchy + reasoning"]
+            RAG_OUT["AnswerResponse:
+            • answer
+            • status, confidence
+            • sources[] with citations"]
+        end
+    end
+
+    %% FRONTEND RENDERING
+    subgraph UI_OUT["UI rendering"]
+        OUT_EVID["Render Evidence tab:
+        • For each result:
+          – page_number
+          – score
+          – source_type (chunk/clause)
+          – text_snippet
+        • Show 'not found' / reason if status=not_found"]
+
+        OUT_ANS["Render Answer tab:
+        • Show answer text
+        • Show status + confidence
+        • Show primary citation (e.g. 'Page 4, Clause 7')
+        • Show list of sources with page + snippet"]
+    end
+
+    %% WIRING: UI → FRONTEND HELPERS
+    U1 --> U2 --> U3 --> U4
+    U4 -->|Evidence tab active| FE_EVID
+    U4 -->|Answer tab active| FE_ANS
+
+    FE_EVID --> FE_EVID_BODY --> FE_EVID_HTTP --> BE_EVID
+    FE_ANS --> FE_ANS_BODY --> FE_ANS_HTTP --> BE_ANS
+
+    %% BACKEND WIRING
+    BE_EVID --> WF_EVID --> WF_CTX --> EV_RUN
+    EV_RUN --> EV_EXP --> EV_MODE
+    EV_MODE --> EV_TEXT
+    EV_MODE --> EV_CLAUSES
+    EV_TEXT --> EV_RESP
+    EV_CLAUSES --> EV_RESP
+
+    BE_ANS --> RAG_Q
+    RAG_Q --> RAG_SEARCH --> RAG_CTX --> RAG_LLM --> RAG_OUT
+
+    %% RESPONSES BACK TO UI
+    EV_RESP -->|JSON: {status, results[], reason, debug, workflow_id}| OUT_EVID
+    RAG_OUT -->|JSON: {answer, status, confidence, sources[], citation}| OUT_ANS
+```
+
+### Frontend-to-backend narrative
+
+- **Input collection (UI):** The user chooses a document in the Document Explorer page, types a question, and selects either the **Evidence** or **Answer** tab before submitting.
+- **Frontend request building:** The page calls `exploreEvidence` or `exploreAnswer` in `src/lib/api.ts`, which serialize the inputs into `application/x-www-form-urlencoded` form data and POST to the appropriate `/api/...` endpoint.
+- **Backend processing:** FastAPI endpoints either:
+  - Route to `WorkflowOrchestrator.run_evidence_explorer` → `EvidenceExplorerService` (evidence-only, no LLM), or
+  - Call `RAGService.query` directly (answer + citations), both using the document’s chunks/clauses plus query.
+- **Output rendering:** The JSON responses are used by the UI to render either a list of **evidence snippets with page numbers and scores** (Evidence tab) or a **natural-language answer with citations and supporting snippets** (Answer tab).

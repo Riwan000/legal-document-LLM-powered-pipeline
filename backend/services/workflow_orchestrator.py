@@ -13,6 +13,8 @@ from typing import Optional
 
 from backend.config import settings
 from backend.models.workflow import WorkflowContext, DocumentExplorerRequest, EvidenceExplorerRequest
+from backend.workflow_stages import StageStatus
+from backend import workflow_store
 from backend.services.document_explorer_service import DocumentExplorerService
 from backend.services.evidence_explorer_service import EvidenceExplorerService
 from backend.services.contract_review_service import ContractReviewService
@@ -84,6 +86,12 @@ class WorkflowOrchestrator:
                 "temperature": settings.CONTRACT_REVIEW_TEMPERATURE,
             },
         )
+        # Canonical stage state: upload already done for this document; legal analysis in progress.
+        ctx.workflow_state.upload_extraction = StageStatus.COMPLETE
+        ctx.workflow_state.legal_analysis = StageStatus.IN_PROGRESS
+        ctx.workflow_state.report_generation = StageStatus.PENDING
+        workflow_store.put(ctx.workflow_id, ctx.workflow_state)
+
         try:
             ctx = self.contract_review_service.run(ctx)
 
@@ -96,22 +104,27 @@ class WorkflowOrchestrator:
                     resp["disclaimer"] = WORKFLOW_DISCLAIMER
                     ctx.intermediate_results[resp_key] = resp
 
+            workflow_store.put(ctx.workflow_id, ctx.workflow_state)
             return ctx
         except GuardrailViolation as e:
+            ctx.workflow_state.legal_analysis = StageStatus.FAILED
             ctx.fail(
                 code=e.code,
                 message=e.message,
                 step=e.step,
                 details=e.details,
             )
+            workflow_store.put(ctx.workflow_id, ctx.workflow_state)
             return ctx
         except Exception as e:
+            ctx.workflow_state.legal_analysis = StageStatus.FAILED
             ctx.fail(
                 code="WORKFLOW_ERROR",
                 message=str(e),
                 step="contract_review",
                 details={"exception_type": type(e).__name__},
             )
+            workflow_store.put(ctx.workflow_id, ctx.workflow_state)
             return ctx
 
     def run_document_explorer(
@@ -184,6 +197,7 @@ class WorkflowOrchestrator:
         query: str,
         top_k: Optional[int] = None,
         mode: Optional[str] = None,
+        debug: bool = False,
     ) -> WorkflowContext:
         """Execute Evidence Explorer (evidence-only, no LLM). Returns context."""
         if not self.evidence_explorer_service:
@@ -211,6 +225,7 @@ class WorkflowOrchestrator:
             query=query,
             top_k=top_k,
             mode=(mode or "text") if mode in ("text", "clauses", "both") else "text",
+            debug=debug,
         )
         try:
             return self.evidence_explorer_service.run(ctx, request)

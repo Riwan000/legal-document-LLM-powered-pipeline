@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL_FALLBACK: str = "paraphrase-multilingual-MiniLM-L6-v2"
     # Second fallback (smaller, English-only) if first fallback also fails
     EMBEDDING_MODEL_FALLBACK_2: str = "all-MiniLM-L6-v2"
+    # Expected embedding dimension for the configured model.
+    # Used to initialize vector stores without forcing model load at startup.
+    EMBEDDING_DIM: int = 384
     
     # Vector Store Configuration
     VECTOR_STORE_PATH: Path = Path("data/vector_store")
@@ -38,6 +41,10 @@ class Settings(BaseSettings):
     # Chunking Configuration
     CHUNK_SIZE: int = 700
     CHUNK_OVERLAP: int = 100
+    # Clause-aware ingestion (feature flag); when False, always use sentence chunking
+    USE_CLAUSE_AWARE_INGESTION: bool = False
+    # Safety: fall back to sentence chunking if chunks per page exceed this
+    MAX_REASONABLE_CHUNKS_PER_PAGE: int = 200
     
     # RAG Configuration
     TOP_K_RESULTS: int = 5

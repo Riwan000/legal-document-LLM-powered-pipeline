@@ -1,0 +1,18 @@
+benefit_categories:
+  monetary:
+    - salary
+    - wage
+    - allowance
+  housing:
+    - accommodation
+    - furnished
+  food:
+    - meals
+    - food
+  medical:
+    - medical
+    - healthcare
+  travel:
+    - airfare
+    - transportation
+    - return ticket

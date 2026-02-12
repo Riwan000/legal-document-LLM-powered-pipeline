@@ -63,6 +63,7 @@ class StructuredClause(BaseModel):
     can_override_contract: bool = Field(False, description="Whether this clause can override contract terms")
     overrides: List[str] = Field(default_factory=list, description="List of authority levels this overrides")
     evidence: List[EvidenceBlock] = Field(default_factory=list, description="Evidence blocks (page references)")
+    page_number: Optional[int] = Field(None, description="PDF page number this clause aligns to (for page-consistent RAG)")
     explicitly_provided: bool = Field(True, description="Whether explicitly stated (vs implied)")
     linked_clause_id: Optional[str] = Field(None, description="Linked clause ID for bilingual versions")
     consistency_flag: Optional[str] = Field(None, description="Consistency flag if mismatch detected")

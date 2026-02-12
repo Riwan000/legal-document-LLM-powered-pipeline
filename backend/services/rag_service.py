@@ -2,7 +2,7 @@
 RAG (Retrieval-Augmented Generation) service.
 Retrieves relevant document chunks and generates responses using Ollama LLM.
 """
-from typing import List, Dict, Any, Optional, TYPE_CHECKING
+from typing import List, Dict, Any, Optional, Tuple, TYPE_CHECKING
 import ollama
 from backend.services.embedding_service import EmbeddingService
 from backend.services.vector_store import VectorStore
@@ -527,6 +527,25 @@ class RAGService:
         
         return matching_chunks[:top_k]
     
+    def _group_results_by_page(self, results: List[Dict[str, Any]]) -> Dict[Tuple[str, int], List[Dict[str, Any]]]:
+        """Group flat chunk results by (document_id, page_number)."""
+        pages: Dict[Tuple[str, int], List[Dict[str, Any]]] = {}
+        for r in results:
+            doc_id = r.get("document_id")
+            page_no = r.get("page_number")
+            if doc_id is None or page_no is None:
+                continue
+            key = (doc_id, int(page_no))
+            pages.setdefault(key, []).append(r)
+        return pages
+    
+    def _score_pages(self, pages: Dict[Tuple[str, int], List[Dict[str, Any]]]) -> Dict[Tuple[str, int], float]:
+        """Score pages by summing chunk scores (after all boosting)."""
+        return {
+            page_key: sum(chunk.get("score", 0.0) for chunk in chunks)
+            for page_key, chunks in pages.items()
+        }
+    
     def _get_priority_clause_types(self, classification) -> Dict[str, float]:
         """
         Determine priority clause types with weights based on query classification.
@@ -560,6 +579,46 @@ class RAGService:
         
         return priority_weights
     
+    def _clause_page(self, clause: Any) -> Optional[int]:
+        """Return the page number for a StructuredClause (page_number or first evidence block)."""
+        p = getattr(clause, "page_number", None)
+        if p is not None:
+            return int(p)
+        ev = getattr(clause, "evidence", None) or []
+        if ev:
+            return getattr(ev[0], "page", None)
+        return None
+    
+    def _analyze_hierarchy_from_clauses(self, clauses: List[Any]) -> Dict[str, Any]:
+        """Build hierarchy analysis dict from structured clauses (same shape as analyze_legal_hierarchy)."""
+        law_clauses = []
+        contract_clauses = []
+        policy_clauses = []
+        for c in clauses:
+            level = getattr(c, "authority_level", None)
+            level_str = level.value if hasattr(level, "value") else str(level) if level else "contractual"
+            d = {"text": getattr(c, "title", "") or getattr(c, "raw_text", ""), "hierarchy_level": "contract"}
+            if level_str in ("supreme", "regulatory"):
+                d["hierarchy_level"] = "law"
+                law_clauses.append(d)
+            elif level_str == "administrative":
+                d["hierarchy_level"] = "policy"
+                policy_clauses.append(d)
+            else:
+                contract_clauses.append(d)
+        has_conflict = bool(law_clauses and contract_clauses)
+        precedence = "law" if has_conflict else "contract"
+        return {
+            "has_governing_law": len(law_clauses) > 0,
+            "has_contract_clauses": len(contract_clauses) > 0,
+            "has_policy_clauses": len(policy_clauses) > 0,
+            "has_conflict": has_conflict,
+            "precedence": precedence,
+            "law_clauses": law_clauses,
+            "contract_clauses": contract_clauses,
+            "policy_clauses": policy_clauses,
+        }
+    
     def query(
         self,
         query: str,
@@ -568,9 +627,13 @@ class RAGService:
         generate_response: bool = True,
         response_language: Optional[str] = None,
         chunks_override: Optional[List[Dict[str, Any]]] = None,
+        debug: bool = False,
     ) -> Dict[str, Any]:
         """
         Answer a query using rule-guided RAG with legal hierarchy and citation enforcement.
+
+        Page invariant: retrieval and reasoning are page-aware. Every vector is from one page;
+        answers cite page numbers; no step may silently merge content across pages.
         
         Args:
             query: User query (can be Arabic or English)
@@ -583,11 +646,11 @@ class RAGService:
             Dict with AnswerResponse structure:
                 - status: explicitly_stated, governed_by_law, not_specified, refused
                 - answer: Direct answer
-                - citation: Citation reference
+                - citation: Citation reference (includes page number)
                 - confidence: high, medium, low
                 - refusal_reason: Optional refusal reason
                 - hierarchy_analysis: Optional hierarchy analysis
-                - sources: List of source chunks
+                - sources: List of source chunks (each with document_id and page_number)
         """
         # Edge case: explicitly request zero retrieval. Return a safe "not specified"
         # response with no sources.
@@ -645,11 +708,13 @@ class RAGService:
                     print(f"Error querying clause store: {str(e)}")
                     structured_clauses = []
 
-            # Step 4: Retrieve relevant chunks with priority boosting (weighted)
+            # Step 4: Retrieve relevant chunks with priority boosting (weighted).
+            # Over-fetch for page coverage: use top_k * 4; page grouping will select top pages.
             priority_weights = self._get_priority_clause_types(classification)
+            effective_top_k = (top_k or settings.TOP_K_RESULTS) * 4
             chunks = self.search(
                 query,
-                top_k=top_k,
+                top_k=effective_top_k,
                 document_id_filter=document_id_filter,
                 priority_clause_types=priority_weights,
             )
@@ -657,15 +722,40 @@ class RAGService:
             # Use provided chunks and skip retrieval/structured clause lookup
             chunks = chunks_override
         
-        # Step 5: Analyze legal hierarchy (use structured clauses if available)
+        # Page-index: group by (document_id, page_number), score pages, select top N pages.
+        page_buckets = self._group_results_by_page(chunks) if chunks else {}
+        retrieved_pages: List[Dict[str, Any]] = []
+        if page_buckets:
+            page_scores = self._score_pages(page_buckets)
+            max_pages = 2
+            top_page_keys = sorted(page_scores, key=page_scores.get, reverse=True)[:max_pages]
+            retrieved_pages = [
+                {
+                    "document_id": doc_id,
+                    "page_number": page_no,
+                    "chunks": page_buckets[(doc_id, page_no)],
+                }
+                for (doc_id, page_no) in top_page_keys
+            ]
+        # For downstream: use top page's chunks for hierarchy/not_specified; keep flat chunks from retrieved_pages for context/sources.
+        top_chunks = retrieved_pages[0]["chunks"] if retrieved_pages else (chunks or [])
+        flat_chunks_for_context = [c for p in retrieved_pages for c in p["chunks"]] if retrieved_pages else (chunks or [])
+        
+        # Step 5: Analyze legal hierarchy (use structured clauses if available; else page-local chunks)
         if structured_clauses:
-            # Use structured clauses for hierarchy analysis
-            hierarchy_analysis = self._analyze_hierarchy_from_clauses(structured_clauses)
+            # Prefer clauses whose page matches the top retrieval page; set cross_page_inference if best clauses are on another page.
+            top_page_number = retrieved_pages[0]["page_number"] if retrieved_pages else None
+            same_page = [c for c in structured_clauses if self._clause_page(c) == top_page_number]
+            other_page = [c for c in structured_clauses if self._clause_page(c) != top_page_number]
+            ordered_clauses = same_page + other_page
+            hierarchy_analysis = self._analyze_hierarchy_from_clauses(ordered_clauses)
+            if top_page_number is not None and not same_page and other_page:
+                hierarchy_analysis["cross_page_inference"] = True
         else:
-            hierarchy_analysis = self.legal_reasoning.analyze_legal_hierarchy(query, chunks) if chunks else {}
+            hierarchy_analysis = self.legal_reasoning.analyze_legal_hierarchy(query, top_chunks) if top_chunks else {}
         
         # Step 6: Detect document type for appropriate messaging
-        document_type = self._detect_document_type(chunks, document_id_filter) if chunks else 'contract'
+        document_type = self._detect_document_type(flat_chunks_for_context, document_id_filter) if flat_chunks_for_context else 'contract'
         
         # Step 7: Check if topic is not specified
         # Only return "not_specified" if we truly have no chunks AND no structured clauses
@@ -680,9 +770,21 @@ class RAGService:
                 )
                 if keyword_results:
                     chunks = keyword_results
-                    # Update hierarchy analysis and document type with keyword results
-                    hierarchy_analysis = self.legal_reasoning.analyze_legal_hierarchy(query, chunks) if chunks else {}
-                    document_type = self._detect_document_type(chunks, document_id_filter)
+                    # Re-run page grouping for keyword results
+                    page_buckets = self._group_results_by_page(chunks)
+                    retrieved_pages = []
+                    if page_buckets:
+                        page_scores = self._score_pages(page_buckets)
+                        max_pages = 2
+                        top_page_keys = sorted(page_scores, key=page_scores.get, reverse=True)[:max_pages]
+                        retrieved_pages = [
+                            {"document_id": doc_id, "page_number": page_no, "chunks": page_buckets[(doc_id, page_no)]}
+                            for (doc_id, page_no) in top_page_keys
+                        ]
+                    top_chunks = retrieved_pages[0]["chunks"] if retrieved_pages else chunks
+                    flat_chunks_for_context = [c for p in retrieved_pages for c in p["chunks"]] if retrieved_pages else chunks
+                    hierarchy_analysis = self.legal_reasoning.analyze_legal_hierarchy(query, top_chunks) if top_chunks else {}
+                    document_type = self._detect_document_type(flat_chunks_for_context, document_id_filter)
                 else:
                     # Truly no results found - use document-type aware message
                     not_specified_msg = self._get_not_specified_message(document_type)
@@ -710,20 +812,15 @@ class RAGService:
                     'query': query
                 }
         
-        # Only check detect_not_specified if we have chunks but they might not be relevant
+        # Only check detect_not_specified if we have chunks but they might not be relevant (page-local: use top_chunks).
         # FIX 1: Disable contract fallback logic for statutes
-        if chunks and not structured_clauses:
-            # For statutes, don't use detect_not_specified (contract fallback logic)
+        if (chunks or flat_chunks_for_context) and not structured_clauses:
             if document_type == 'statute':
-                # For statutes, if we have chunks, use them (no fallback to "not specified")
                 pass  # Continue with chunks
             else:
-                # For contracts, use existing detect_not_specified logic
-                # Check if we have keyword matches - if so, content exists
-                has_keyword_matches = any(c.get('keyword_match', False) for c in chunks)
-                if not has_keyword_matches:
-                    # Only check detect_not_specified if no keyword matches
-                    if self.legal_reasoning.detect_not_specified(chunks, query, classification):
+                has_keyword_matches = any(c.get('keyword_match', False) for c in (top_chunks or []))
+                if not has_keyword_matches and top_chunks:
+                    if self.legal_reasoning.detect_not_specified(top_chunks, query, classification):
                         not_specified_msg = self._get_not_specified_message(document_type)
                         return {
                             'status': 'not_specified',
@@ -750,11 +847,14 @@ class RAGService:
                 'query': query
             }
         
-        # Step 9: Determine if explicit clause found
-        has_explicit_clause = (len(structured_clauses) > 0) or (len(chunks) > 0 and chunks[0].get('score', 0.0) >= 0.6)
+        # Step 9: Determine if explicit clause found (page-local: use top_chunks)
+        has_explicit_clause = (len(structured_clauses) > 0) or (len(top_chunks) > 0 and top_chunks[0].get('score', 0.0) >= 0.6)
         
-        # Step 10: Calculate confidence
-        confidence = self.legal_reasoning.calculate_confidence(chunks, hierarchy_analysis, has_explicit_clause)
+        # Step 10: Calculate confidence (page-local chunks for consistency)
+        confidence = self.legal_reasoning.calculate_confidence(top_chunks, hierarchy_analysis, has_explicit_clause)
+        # If answering uses multiple pages, cap confidence at medium (cross-page inference).
+        if len(retrieved_pages) > 1 and confidence == "high":
+            confidence = "medium"
         
         # Step 11: Determine status
         if hierarchy_analysis.get('has_governing_law', False) and hierarchy_analysis.get('has_potential_conflict', False):
@@ -766,13 +866,12 @@ class RAGService:
         
         if not generate_response:
             # Return chunks/clauses only (no LLM generation)
-            # Use structured clauses if available, otherwise chunks
-            sources = self._format_clauses_as_sources(structured_clauses) if structured_clauses else chunks
+            sources = self._format_clauses_as_sources(structured_clauses) if structured_clauses else (flat_chunks_for_context or chunks)
             citation = None
             if structured_clauses and structured_clauses[0].evidence:
                 citation = self._format_clause_citation(structured_clauses[0])
-            elif chunks:
-                citation = self.legal_reasoning.format_citation(chunks[0])
+            elif top_chunks:
+                citation = self.legal_reasoning.format_citation(top_chunks[0])
             
             return {
                 'status': status,
@@ -785,11 +884,11 @@ class RAGService:
                 'query': query
             }
         
-        # Step 12: Build context from retrieved chunks/clauses
+        # Step 12: Build context from retrieved chunks/clauses (page-scoped: use flat_chunks_for_context)
         if structured_clauses:
             context = self._build_context_from_clauses(structured_clauses)
         else:
-            context = self._build_context(chunks)
+            context = self._build_context(flat_chunks_for_context)
         # Combine chunks into a single context string
         
         # Step 13: Generate prompt for LLM with legal-safe template (document-type aware)
@@ -846,12 +945,10 @@ class RAGService:
                     answer = answer_clean[:-len('\n' + statute_phrase)].strip()
             
             # FIX 3: Validate citation-answer semantic support
-            if answer and chunks:
-                # Extract cited chunks from answer
-                cited_chunks = chunks  # All chunks in context are potentially cited
+            if answer and flat_chunks_for_context:
+                cited_chunks = flat_chunks_for_context
                 citation_valid = self._validate_citation_support(answer, cited_chunks, query)
                 if not citation_valid:
-                    # Citations don't directly support the answer - refuse
                     print("Warning: Citations do not directly support the answer claim. Refusing answer.")
                     return {
                         'status': 'refused',
@@ -860,7 +957,7 @@ class RAGService:
                         'confidence': 'low',
                         'refusal_reason': 'invalid_citation',
                         'hierarchy_analysis': hierarchy_analysis,
-                        'sources': chunks[:3] if chunks else [],  # Include some sources for context
+                        'sources': flat_chunks_for_context[:3],
                         'query': query
                     }
             
@@ -872,8 +969,7 @@ class RAGService:
             ]
             if answer and any(indicator.lower() in answer.lower() for indicator in translation_error_indicators):
                 print(f"Warning: LLM answer contains translation error message. This suggests translation may have failed.")
-                # If we have chunks, try to generate answer without translation
-                if chunks:
+                if flat_chunks_for_context:
                     # Rebuild prompt with original query (no translation)
                     prompt_original = self._build_legal_prompt(query, context, classification, hierarchy_analysis, response_language)
                     try:
@@ -895,15 +991,15 @@ class RAGService:
             # Handle Ollama errors (server not running, model not found, etc.)
             answer = f"Error generating response: {str(e)}. Please ensure Ollama is running and the model is available."
         
-        # Step 15: Format sources with enhanced citations
+        # Step 15: Format sources with enhanced citations (page-aware: use flat_chunks_for_context; citation from top page)
         if structured_clauses:
             sources = self._format_clauses_as_sources(structured_clauses)
             citation = self._format_clause_citation(structured_clauses[0]) if structured_clauses else None
         else:
-            sources = self._format_sources_enhanced(chunks)
-            citation = self.legal_reasoning.format_citation(chunks[0]) if chunks else None
+            sources = self._format_sources_enhanced(flat_chunks_for_context)
+            citation = self.legal_reasoning.format_citation(top_chunks[0]) if top_chunks else None
         
-        return {
+        out = {
             'status': status,
             'answer': answer,
             'citation': citation,
@@ -913,32 +1009,45 @@ class RAGService:
             'sources': sources,
             'query': query
         }
+        if debug and flat_chunks_for_context:
+            pages_used = list(dict.fromkeys(s.get("page_number", 0) for s in (sources or [])))
+            out["retrieval_debug"] = {
+                "candidate_clause_ids": [f"{c.get('document_id', '')}:{c.get('chunk_index', 0)}" for c in flat_chunks_for_context],
+                "candidate_pages": list(dict.fromkeys(c.get("page_number", 0) for c in flat_chunks_for_context)),
+                "used_clause_ids": [f"{s.get('document_id', '')}:{s.get('chunk_index', s.get('page_number', 0))}" for s in (sources or [])],
+                "query_normalized": query.strip()[:200],
+            }
+        if debug and answer:
+            out["answer_style"] = "synthesized" if len(flat_chunks_for_context or []) > 2 else ("paraphrased" if (flat_chunks_for_context or []) else "extractive")
+        return out
     
     def _build_context(self, chunks: List[Dict[str, Any]]) -> str:
         """
-        Build context string from retrieved chunks.
-        
-        Args:
-            chunks: List of chunk dictionaries
-            
-        Returns:
-            Formatted context string
+        Build context string from retrieved chunks with page-labelled sections.
+        Groups by (document_id, page_number) so the model sees clear page boundaries.
         """
+        if not chunks:
+            return ""
+        # Group by (document_id, page_number) for page-scoped context
+        pages: Dict[Tuple[str, int], List[Dict[str, Any]]] = {}
+        for c in chunks:
+            doc_id = c.get("document_id") or ""
+            page_no = c.get("page_number")
+            if page_no is None:
+                page_no = 0
+            key = (doc_id, int(page_no))
+            pages.setdefault(key, []).append(c)
+        # Build page-labelled sections; preserve source index for citations
         context_parts = []
-        
-        for i, chunk in enumerate(chunks, 1):
-            # Use display_name if available, otherwise fall back to document_id
-            doc_name = chunk.get('display_name', chunk.get('document_id', 'Unknown'))
-            # Format each chunk with citation info (never expose document_hash)
-            context_parts.append(
-                f"[Source {i} - Document: {doc_name}, Page: {chunk['page_number']}]\n"
-                f"{chunk['text']}\n"
-            )
-            # Include source metadata and text
-            # Format: [Source N - Document: DisplayName, Page: X]\nText\n
-        
-        return "\n".join(context_parts)
-        # Join all chunks with newlines
+        source_index = 1
+        for (doc_id, page_no), page_chunks in sorted(pages.items(), key=lambda x: (x[0][0], x[0][1])):
+            doc_name = page_chunks[0].get("display_name", doc_id or "Unknown")
+            context_parts.append(f"Document: {doc_name}\n\nPage {page_no}:")
+            for chunk in page_chunks:
+                context_parts.append(f"[Source {source_index} - Document: {doc_name}, Page: {page_no}]\n{chunk.get('text', '')}")
+                source_index += 1
+            context_parts.append("")
+        return "\n".join(context_parts).strip()
     
     def _build_prompt(self, query: str, context: str) -> str:
         """
@@ -1011,12 +1120,13 @@ class RAGService:
         if document_type == 'statute':
             document_type_instruction = "\n- For statutes/laws: If information is not explicitly stated, use: 'The law does not expressly state this.' Do not summarize or infer."
         
+        page_invariant_instruction = "\n- Use ONLY the document pages below; do NOT merge or infer across different pages.\n- Always cite page numbers explicitly (e.g. \"as stated on Page 7\")."
         prompt = f"""You are a legal document assistant. Answer the user's question based ONLY on the provided document context.
 
 STRICT RULES:
 - Only use information from the provided context
 - ALWAYS cite sources using [Source N] format when referencing information
-- Citations MUST directly support your claim, not just be thematically related
+- Citations MUST directly support your claim, not just be thematically related{page_invariant_instruction}
 - If you find relevant information in the context that answers the question, provide that answer with citations. DO NOT say "not specified" if you have found and cited relevant information.
 - ONLY state "{not_specified_msg}" if you truly cannot find ANY relevant information in the context that addresses the question
 - Do not use phrases like "it seems", "probably", "might be" - be direct and factual

@@ -21,6 +21,8 @@ from typing import List, Dict, Optional
 import os
 import re
 import hashlib
+from functools import lru_cache
+
 import numpy as np
 
 from backend.config import settings
@@ -42,6 +44,39 @@ class _LightweightEmbeddingModel:
         return self._embedding_dim
 
 
+@lru_cache(maxsize=1)
+def get_embedding_model():
+    """
+    Lazily load the SentenceTransformers embedding model with fallbacks.
+
+    This function is process-global and cached, so the heavy model load
+    happens at most once, on first real embedding use.
+    """
+    # Import inside the function to avoid any startup cost.
+    from sentence_transformers import SentenceTransformer  # type: ignore
+
+    model_names = [
+        settings.EMBEDDING_MODEL,
+        getattr(settings, "EMBEDDING_MODEL_FALLBACK", None),
+        getattr(settings, "EMBEDDING_MODEL_FALLBACK_2", None),
+    ]
+
+    last_error: Optional[Exception] = None
+    for name in model_names:
+        if not name:
+            continue
+        try:
+            print(f"Loading embedding model: {name}")
+            model = SentenceTransformer(name)
+            model.eval()
+            return model
+        except Exception as e:  # pragma: no cover - defensive, depends on env
+            last_error = e
+            print(f"Failed to load embedding model '{name}': {e}")
+
+    raise RuntimeError(f"Failed to load any embedding model. Last error: {last_error}")
+
+
 class EmbeddingService:
     """
     Service for generating deterministic, unit-normalized multilingual embeddings.
@@ -59,7 +94,11 @@ class EmbeddingService:
     def __init__(self, model_name: str = None):
         """
         Initialize the embedding service.
-        
+
+        This constructor is deliberately lightweight: it does NOT load the
+        heavy SentenceTransformers model. The actual model load happens
+        lazily on the first real embedding call.
+
         Args:
             model_name: Name of the embedding model (defaults to config)
         """
@@ -72,31 +111,50 @@ class EmbeddingService:
             os.environ.get("USE_LIGHTWEIGHT_EMBEDDINGS", "").lower() in {"1", "true", "yes"}
         )
 
-        self.model = None
-        if not self._use_lightweight:
-            print(f"Loading embedding model: {self.model_name}")
-            try:
-                # Lazy import so tests can run without heavy dependencies/hangs.
-                from sentence_transformers import SentenceTransformer  # type: ignore
-                self.model = SentenceTransformer(self.model_name)
-                self.model.eval()
-                self.embedding_dim = self.model.get_sentence_embedding_dimension()
-                print(f"Embedding dimension: {self.embedding_dim}")
-            except Exception:
-                # Fall back to lightweight embeddings.
-                self.model = None
-                self._use_lightweight = True
-
-        if self._use_lightweight:
-            # Match the default multilingual MiniLM dimension used throughout tests/config.
-            self.embedding_dim = 384
-            self.model = _LightweightEmbeddingModel(self.embedding_dim)
-            print(f"Loading embedding model: lightweight-fallback")
-            print(f"Embedding dimension: {self.embedding_dim}")
+        # Heavy model handle (SentenceTransformers or lightweight stub) – loaded lazily.
+        self.model: Optional[object] = None
+        # Default embedding dimension from config so other services (like VectorStore)
+        # can be initialized without forcing a model load.
+        self.embedding_dim: int = int(getattr(settings, "EMBEDDING_DIM", 384))
 
         # Optional in-memory cache for repeated texts (best-effort, per-process only).
         # Cache key is the sanitized text. No eviction policy yet; can be extended with LRU if needed.
         self._embedding_cache: Dict[str, np.ndarray] = {}
+
+    def _ensure_model(self) -> None:
+        """
+        Ensure that `self.model` is initialized.
+
+        - If `_use_lightweight` is True, we construct a deterministic lightweight model.
+        - Otherwise, we call the global `get_embedding_model()` singleton which
+          loads SentenceTransformers (with fallbacks) once per process.
+        """
+        if self.model is not None:
+            return
+
+        if self._use_lightweight:
+            # Match the default multilingual MiniLM dimension used throughout tests/config.
+            self.model = _LightweightEmbeddingModel(self.embedding_dim)
+            print("Loading embedding model: lightweight-fallback")
+            print(f"Embedding dimension: {self.embedding_dim}")
+            return
+
+        try:
+            model = get_embedding_model()
+            self.model = model
+            # Update embedding dimension from actual model (should match config).
+            try:
+                self.embedding_dim = int(model.get_sentence_embedding_dimension())  # type: ignore[attr-defined]
+            except Exception:
+                # If model does not expose dimension cleanly, keep existing config value.
+                pass
+            print(f"Embedding dimension: {self.embedding_dim}")
+        except Exception:
+            # Fall back to lightweight embeddings if heavy model fails to load.
+            self._use_lightweight = True
+            self.model = _LightweightEmbeddingModel(self.embedding_dim)
+            print("Loading embedding model: lightweight-fallback")
+            print(f"Embedding dimension: {self.embedding_dim}")
 
     def _sanitize_text(self, text: str) -> str:
         """
@@ -214,6 +272,10 @@ class EmbeddingService:
         if cached is not None:
             return cached
 
+        # Lazily load the heavy model (if configured) on first real use.
+        if not self._use_lightweight and self.model is None:
+            self._ensure_model()
+
         if self._use_lightweight or self.model is None:
             embedding = self._lightweight_embed(text)
         else:
@@ -247,6 +309,10 @@ class EmbeddingService:
         # Prepare indices for non-empty texts
         non_empty_indices = [i for i, t in enumerate(sanitized_texts) if t]
         non_empty_texts = [sanitized_texts[i] for i in non_empty_indices]
+
+        # Lazily load the heavy model (if configured) on first real use.
+        if not self._use_lightweight and self.model is None and non_empty_texts:
+            self._ensure_model()
 
         if self._use_lightweight or self.model is None:
             embeddings_non_empty = np.stack([self._lightweight_embed(t) for t in non_empty_texts], axis=0)

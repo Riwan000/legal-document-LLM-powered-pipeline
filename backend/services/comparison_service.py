@@ -5,6 +5,7 @@ Compares uploaded contracts against firm templates using embedding similarity an
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import difflib
+
 from backend.services.clause_extraction import ClauseExtractionService
 from backend.services.embedding_service import EmbeddingService
 
@@ -12,10 +13,15 @@ from backend.services.embedding_service import EmbeddingService
 class ComparisonService:
     """Service for comparing contracts against templates."""
     
-    def __init__(self):
-        """Initialize the comparison service."""
+    def __init__(self, embedding_service: EmbeddingService):
+        """
+        Initialize the comparison service.
+
+        The embedding service is injected so we share the same lazy-loaded
+        embedding model as the rest of the application.
+        """
         self.clause_extractor = ClauseExtractionService()
-        self.embedding_service = EmbeddingService()
+        self.embedding_service = embedding_service
         # Comparison approach:
         # 1) Extract clauses from both documents.
         # 2) Embed each clause text.

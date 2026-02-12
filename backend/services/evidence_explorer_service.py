@@ -101,12 +101,13 @@ class EvidenceExplorerService:
         expanded_keywords = expand_query_terms(request.query)
         ocr_noise_detected = detect_ocr_noise(request.query)
 
+        include_retrieval_debug = getattr(request, "debug", False)
         if mode == "both":
-            response, debug = self._run_both(request.document_id, request.query, top_k, expanded_keywords, ocr_noise_detected)
+            response, debug = self._run_both(request.document_id, request.query, top_k, expanded_keywords, ocr_noise_detected, include_retrieval_debug)
         elif mode == "clauses":
-            response, debug = self._run_clauses(request.document_id, request.query, top_k, expanded_keywords, ocr_noise_detected)
+            response, debug = self._run_clauses(request.document_id, request.query, top_k, expanded_keywords, ocr_noise_detected, include_retrieval_debug)
         else:
-            response, debug = self._run_text(request.document_id, request.query, top_k, expanded_keywords, ocr_noise_detected)
+            response, debug = self._run_text(request.document_id, request.query, top_k, expanded_keywords, ocr_noise_detected, include_retrieval_debug)
 
         debug["mode"] = mode
         debug["expanded_keywords"] = expanded_keywords
@@ -127,6 +128,7 @@ class EvidenceExplorerService:
         top_k: int,
         expanded_keywords: List[str],
         ocr_noise_detected: bool,
+        include_retrieval_debug: bool = False,
     ) -> Tuple[EvidenceExplorerResponse, Dict[str, Any]]:
         """
         Text mode: semantic search with explorer threshold, then lexical fallback.
@@ -195,17 +197,31 @@ class EvidenceExplorerService:
         }
 
         if not results:
+            if include_retrieval_debug:
+                debug["retrieval_debug"] = {
+                    "candidate_clause_ids": [],
+                    "candidate_pages": [],
+                    "scores": [],
+                    "query_normalized": normalize_for_match(query),
+                }
             return (
                 EvidenceExplorerResponse(
                     status="not_found",
                     results=[],
-                    reason="No relevant text or clauses found in the document.",
+                    reason="not_found",
                     debug=debug,
                 ),
                 debug,
             )
+        if include_retrieval_debug:
+            debug["retrieval_debug"] = {
+                "candidate_clause_ids": [f"{r.document_id}:{r.chunk_index}" for r in results],
+                "candidate_pages": list(dict.fromkeys(r.page_number for r in results)),
+                "scores": [r.score for r in results],
+                "query_normalized": normalize_for_match(query),
+            }
         return (
-            EvidenceExplorerResponse(status="ok", results=results, reason=None, debug=debug),
+            EvidenceExplorerResponse(status="ok", results=results, reason="ok", debug=debug),
             debug,
         )
 
@@ -216,6 +232,7 @@ class EvidenceExplorerService:
         top_k: int,
         expanded_keywords: List[str],
         ocr_noise_detected: bool,
+        include_retrieval_debug: bool = False,
     ) -> Tuple[EvidenceExplorerResponse, Dict[str, Any]]:
         """
         Clause mode: match over extracted clauses with heading-prioritized scoring.
@@ -224,49 +241,53 @@ class EvidenceExplorerService:
         clauses_searched = len(clauses)
 
         if not clauses:
+            debug_empty = {
+                "clauses_searched": 0,
+                "chunks_searched": 0,
+                "embeddings_used": False,
+                "semantic_results": 0,
+                "lexical_results": 0,
+            }
+            if include_retrieval_debug:
+                debug_empty["retrieval_debug"] = {
+                    "candidate_clause_ids": [],
+                    "candidate_pages": [],
+                    "scores": [],
+                    "query_normalized": normalize_for_match(query),
+                }
             return (
                 EvidenceExplorerResponse(
                     status="not_found",
                     results=[],
-                    reason="No clauses extracted for this document.",
-                    debug={
-                        "clauses_searched": 0,
-                        "chunks_searched": 0,
-                        "embeddings_used": False,
-                        "semantic_results": 0,
-                        "lexical_results": 0,
-                    },
+                    reason="not_found",
+                    debug=debug_empty,
                 ),
-                {
-                    "clauses_searched": 0,
-                    "chunks_searched": 0,
-                    "embeddings_used": False,
-                    "semantic_results": 0,
-                    "lexical_results": 0,
-                },
+                debug_empty,
             )
 
         if not expanded_keywords:
+            debug_no_kw = {
+                "clauses_searched": clauses_searched,
+                "chunks_searched": 0,
+                "embeddings_used": False,
+                "semantic_results": 0,
+                "lexical_results": 0,
+            }
+            if include_retrieval_debug:
+                debug_no_kw["retrieval_debug"] = {
+                    "candidate_clause_ids": [],
+                    "candidate_pages": [],
+                    "scores": [],
+                    "query_normalized": normalize_for_match(query),
+                }
             return (
                 EvidenceExplorerResponse(
                     status="not_found",
                     results=[],
-                    reason="Clauses exist for this document, but no confident match was found due to OCR quality or wording variation.",
-                    debug={
-                        "clauses_searched": clauses_searched,
-                        "chunks_searched": 0,
-                        "embeddings_used": False,
-                        "semantic_results": 0,
-                        "lexical_results": 0,
-                    },
+                    reason="not_found",
+                    debug=debug_no_kw,
                 ),
-                {
-                    "clauses_searched": clauses_searched,
-                    "chunks_searched": 0,
-                    "embeddings_used": False,
-                    "semantic_results": 0,
-                    "lexical_results": 0,
-                },
+                debug_no_kw,
             )
 
         matches: List[Tuple[float, Dict[str, Any]]] = []
@@ -307,17 +328,31 @@ class EvidenceExplorerService:
         }
 
         if not results:
+            if include_retrieval_debug:
+                debug["retrieval_debug"] = {
+                    "candidate_clause_ids": [],
+                    "candidate_pages": [],
+                    "scores": [],
+                    "query_normalized": normalize_for_match(query),
+                }
             return (
                 EvidenceExplorerResponse(
                     status="not_found",
                     results=[],
-                    reason="Clauses exist for this document, but no confident match was found due to OCR quality or wording variation.",
+                    reason="not_found",
                     debug=debug,
                 ),
                 debug,
             )
+        if include_retrieval_debug:
+            debug["retrieval_debug"] = {
+                "candidate_clause_ids": [r.clause_id or f"{document_id}:{r.page_number}" for r in results],
+                "candidate_pages": list(dict.fromkeys(r.page_number for r in results)),
+                "scores": [r.score for r in results],
+                "query_normalized": normalize_for_match(query),
+            }
         return (
-            EvidenceExplorerResponse(status="ok", results=results, reason=None, debug=debug),
+            EvidenceExplorerResponse(status="ok", results=results, reason="ok", debug=debug),
             debug,
         )
 
@@ -328,13 +363,14 @@ class EvidenceExplorerService:
         top_k: int,
         expanded_keywords: List[str],
         ocr_noise_detected: bool,
+        include_retrieval_debug: bool = False,
     ) -> Tuple[EvidenceExplorerResponse, Dict[str, Any]]:
         """
         Both mode: run clauses first; if any clause hits return those; else text mode.
         """
         clause_response, clause_debug = self._run_clauses(
-            document_id, query, top_k, expanded_keywords, ocr_noise_detected
+            document_id, query, top_k, expanded_keywords, ocr_noise_detected, include_retrieval_debug
         )
         if clause_response.results:
             return clause_response, clause_debug
-        return self._run_text(document_id, query, top_k, expanded_keywords, ocr_noise_detected)
+        return self._run_text(document_id, query, top_k, expanded_keywords, ocr_noise_detected, include_retrieval_debug)

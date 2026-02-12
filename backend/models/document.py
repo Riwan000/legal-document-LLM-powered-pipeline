@@ -58,7 +58,7 @@ class AnswerResponse(BaseModel):
     confidence: str = Field(..., description="Confidence level: high, medium, low")
     refusal_reason: Optional[str] = Field(None, description="Reason for refusal if status is refused")
     hierarchy_analysis: Optional[Dict[str, Any]] = Field(None, description="Legal hierarchy analysis results")
-    sources: List[Dict[str, Any]] = Field(default_factory=list, description="Source chunks with citations")
+    sources: List[Dict[str, Any]] = Field(default_factory=list, description="Source chunks with citations; each entry includes document_id and page_number for page-aware navigation")
     query: str = Field(..., description="Original query")
 
 

@@ -259,6 +259,23 @@ def get_documents() -> list:
         return []
 
 
+def delete_document(document_id: str) -> bool:
+    """Permanently delete a document and its artifacts."""
+    try:
+        response = requests.delete(
+            f"{API_BASE_URL}/api/documents/{document_id}",
+            timeout=30,
+        )
+        if response.status_code == 404:
+            st.warning(f"Document {document_id} was not found (it may already be deleted).")
+            return False
+        response.raise_for_status()
+        return True
+    except Exception as e:
+        st.error(f"Error deleting document: {str(e)}")
+        return False
+
+
 def rename_document(document_id: str, new_display_name: str) -> Optional[Dict]:
     """Rename a document (update display_name)."""
     try:
@@ -465,13 +482,27 @@ if page == "📋 Contract Review":
                         if contract_type_label and contract_type_label[0].islower():
                             contract_type_label = contract_type_label[0].upper() + contract_type_label[1:]
                         st.subheader("Clauses Not Detected (Based on " + contract_type_label + " Contract Profile)")
-                        st.caption("Global contracts may express obligations implicitly or across multiple provisions. This review surfaces such structures conservatively.")
+                        if resp.get("used_implicit_or_distributed_logic"):
+                            st.caption("Global contracts may express obligations implicitly or across multiple provisions. This review surfaces such structures conservatively.")
                         if not_detected:
                             for name in not_detected:
                                 st.markdown(f"- {name}")
                             st.caption("Not detected means no supporting evidence was found in the document. This does not confirm absence.")
                         else:
                             st.info("All expected clauses for this profile were detected or had weak evidence.")
+
+                        implicitly_covered = resp.get("implicitly_covered_clauses", []) or []
+                        coverage_notes = resp.get("implicit_coverage_notes") or {}
+                        if implicitly_covered:
+                            st.markdown("")
+                            st.subheader("Implicitly covered")
+                            st.caption("No standalone clause detected. Related obligations appear implicitly across other provisions.")
+                            for name in implicitly_covered:
+                                note = coverage_notes.get(name)
+                                if note:
+                                    st.markdown(f"- **{name}**: {note}")
+                                else:
+                                    st.markdown(f"- {name}")
 
                         st.markdown("---")
 
@@ -487,12 +518,20 @@ if page == "📋 Contract Review":
                                     continue
                                 display_name = ev.get("display_name") or ev.get("clause_id", "")
                                 page_num = ev.get("page_number", 0)
-                                if ev.get("semantic_label"):
-                                    heading = f"Section: {ev['semantic_label']} — Page {page_num}"
+                                semantic_label = ev.get("semantic_label")
+                                structure_class = ev.get("structure_class")
+                                if structure_class == "clause":
+                                    heading = f"Clause: {display_name} — Page {page_num}"
+                                elif structure_class == "provision":
+                                    heading = f"Provision: {display_name} — Page {page_num}"
+                                elif structure_class == "section_non_standard":
+                                    heading = f"Section (Non-standard): {semantic_label or display_name or '…'} — Page {page_num}"
+                                elif semantic_label:
+                                    heading = f"Section: {semantic_label} — Page {page_num}"
                                 elif ev.get("is_non_contractual"):
                                     heading = f"Section (Non-contractual): {display_name} — Page {page_num}"
                                 else:
-                                    heading = f"Section (Non-standard) — Page {page_num}"
+                                    heading = f"Section (Non-standard): {display_name or '…'} — Page {page_num}"
                                 with st.expander(heading):
                                     st.write("**Cleaned text:**")
                                     st.write(ev.get("clean_text", ""))
@@ -500,14 +539,38 @@ if page == "📋 Contract Review":
                                     st.write(ev.get("raw_text", ""))
 
                         st.markdown("")
-                        # Key Review Observations
+                        # Key Review Observations (grouped by category)
                         st.subheader("Key Review Observations")
                         exec_items = resp.get("executive_summary", []) or []
                         if not exec_items:
                             st.info("No executive summary items were produced.")
                         else:
+                            by_cat = {}
                             for item in exec_items:
-                                if isinstance(item, dict):
+                                if not isinstance(item, dict):
+                                    continue
+                                cat = item.get("category") or "other"
+                                by_cat.setdefault(cat, []).append(item)
+                            for section_title, category_key in [
+                                ("Risks", "risk"),
+                                ("Findings", "finding"),
+                                ("Confirmations", "confirmation"),
+                            ]:
+                                group = by_cat.get(category_key, [])
+                                if group:
+                                    st.markdown(f"**{section_title}**")
+                                    for item in group:
+                                        sev = item.get("severity")
+                                        text = item.get("text", "")
+                                        if sev:
+                                            st.markdown(f"- **{sev}**: {text}")
+                                        else:
+                                            st.markdown(f"- {text}")
+                                    st.markdown("")
+                            other = by_cat.get("other", [])
+                            if other:
+                                st.markdown("**Other**")
+                                for item in other:
                                     sev = item.get("severity")
                                     text = item.get("text", "")
                                     if sev:
@@ -523,11 +586,11 @@ if page == "📋 Contract Review":
                             st.json(resp)
 
 # -----------------------------------------------------------------------------
-# Page: Document Explorer (evidence snippets + RAG answer)
+# Page: Document Explorer (RAG answer + citations)
 # -----------------------------------------------------------------------------
 elif page == "🔍 Document Explorer":
     st.markdown('<div class="main-header">🔍 Document Explorer</div>', unsafe_allow_html=True)
-    st.markdown("Locate evidence (snippets) and get a RAG answer with citations within a single document.")
+    st.markdown("Ask focused questions about a single document and get a RAG answer with citations.")
     st.caption(WORKFLOW_DISCLAIMER)
     documents = get_documents()
     if not documents:
@@ -538,53 +601,25 @@ elif page == "🔍 Document Explorer":
         query = st.text_input("Query (e.g. Where is termination notice?)", placeholder="Where is… / Show clauses related to…")
         top_k = st.slider("Max results", min_value=1, max_value=25, value=10)
 
-        tab_evidence, tab_answer = st.tabs(["Evidence (snippets)", "Answer (RAG)"])
-
-        with tab_evidence:
-            st.markdown("**Evidence Explorer**: deterministic snippets only (no LLM). Modes: text chunks, extracted clauses, or both.")
-            mode = st.radio("Mode", ["both", "text", "clauses"], format_func=lambda x: {"both": "Both (clauses first, then text)", "text": "Text chunks", "clauses": "Extracted clauses"}[x], horizontal=True)
-            if st.button("Search evidence", type="primary", key="btn_evidence"):
-                if not query or not query.strip():
-                    st.warning("Enter a query.")
-                else:
-                    with st.spinner("Searching evidence..."):
-                        result = explore_evidence(document_id, query, top_k=top_k, mode=mode)
-                    if result is not None:
-                        status = result.get("status")
-                        results = result.get("results", [])
-                        reason = result.get("reason")
-                        if status == "not_found":
-                            st.info(reason or "No relevant text or clauses found in the document.")
-                        elif results:
-                            for i, hit in enumerate(results, 1):
-                                src = hit.get("source_type", "chunk")
-                                label = f"Page {hit.get('page_number', 0)} — Score {hit.get('score', 0):.2f} — {src}"
-                                with st.expander(label):
-                                    st.write(hit.get("text_snippet", ""))
-                        else:
-                            st.info(reason or "No results.")
-                        with st.expander("Debug (QA)", expanded=False):
-                            st.json(result.get("debug") or {})
-
-        with tab_answer:
-            st.markdown("**RAG Answer Explorer**: LLM-generated answer with citations from the document.")
-            if st.button("Get answer", type="primary", key="btn_answer"):
-                if not query or not query.strip():
-                    st.warning("Enter a query.")
-                else:
-                    with st.spinner("Generating answer..."):
-                        result = explore_answer(document_id, query, top_k=top_k)
-                    if result is not None:
-                        st.subheader("Answer")
-                        st.write(result.get("answer") or "No answer generated.")
-                        st.caption(f"Status: {result.get('status', '—')} | Confidence: {result.get('confidence', '—')}")
-                        sources = result.get("sources", []) or []
-                        if sources:
-                            st.subheader("Sources / citations")
-                            for i, src in enumerate(sources[:10], 1):
-                                with st.expander(f"Source {i} — Page {src.get('page_number', 0)}"):
-                                    st.write(src.get("text", "")[:800] + ("..." if len(src.get("text", "")) > 800 else ""))
-                                    st.caption(f"Document: {src.get('display_name', src.get('document_id', '—'))}")
+        st.markdown("**RAG Answer Explorer**: LLM-generated answer with citations from the document.")
+        if st.button("Get answer", type="primary", key="btn_answer"):
+            if not query or not query.strip():
+                st.warning("Enter a query.")
+            else:
+                with st.spinner("Generating answer..."):
+                    result = explore_answer(document_id, query, top_k=top_k)
+                if result is not None:
+                    st.subheader("Answer")
+                    st.write(result.get("answer") or "No answer generated.")
+                    st.caption(f"Status: {result.get('status', '—')} | Confidence: {result.get('confidence', '—')}")
+                    sources = result.get("sources", []) or []
+                    if sources:
+                        st.subheader("Sources / citations")
+                        for i, src in enumerate(sources[:10], 1):
+                            with st.expander(f"Source {i} — Page {src.get('page_number', 0)}"):
+                                text = src.get('text', '') or ''
+                                st.write(text[:800] + ("..." if len(text) > 800 else ""))
+                                st.caption(f"Document: {src.get('display_name', src.get('document_id', '—'))}")
 
 # -----------------------------------------------------------------------------
 # Page: Upload Document
@@ -676,6 +711,27 @@ elif page == "📤 Upload Document":
                                     st.rerun()
                             else:
                                 st.warning("Please enter a different name")
+
+                    # Delete functionality
+                    st.markdown("---")
+                    if st.button(
+                        "🗑️ Delete this document",
+                        key=f"delete_{doc.get('document_id')}",
+                        type="secondary",
+                    ):
+                        doc_id = doc.get("document_id")
+                        if doc_id:
+                            confirm_key = f"confirm_delete_{doc_id}"
+                            if not st.session_state.get(confirm_key):
+                                st.warning(
+                                    f"Click delete again to permanently remove {doc.get('display_name', doc_id)}. This action cannot be undone."
+                                )
+                                st.session_state[confirm_key] = True
+                            else:
+                                if delete_document(doc_id):
+                                    st.success("✅ Document deleted successfully.")
+                                    st.session_state.pop(confirm_key, None)
+                                    st.rerun()
         else:
             st.info("No documents uploaded yet")
 
@@ -736,7 +792,7 @@ elif page == "ℹ️ About":
     - Contract Review workflow (risks, evidence, executive summary)
     - Contract Comparison workflow
     - Due Diligence Memo workflow
-    - Document Explorer (evidence-only search, Arabic/English)
+    - Document Explorer (RAG answer + citations, Arabic/English)
     - Clause extraction (verbatim)
     
     ### ❌ What This System Cannot Do:
@@ -786,7 +842,7 @@ elif page == "ℹ️ About":
     
     ### 5-Minute Walkthrough:
     1. **Upload a Contract**: Navigate to Upload Document, upload a PDF/DOCX
-    2. **Document Explorer**: Go to Document Explorer, ask "Where are the payment terms?" (evidence only)
+    2. **Document Explorer**: Go to Document Explorer, ask \"Where are the payment terms?\" and review the answer + citations
     3. **Contract Review**: Run Contract Review workflow for risks and clause evidence
     4. **Clause Extraction**: Navigate to Clause Extraction, view extracted clauses
     5. **Contract Comparison**: Compare contract against template
