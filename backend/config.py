@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     # Used to initialize vector stores without forcing model load at startup.
     EMBEDDING_DIM: int = 384
     
+    
     # Vector Store Configuration
     VECTOR_STORE_PATH: Path = Path("data/vector_store")
     FAISS_INDEX_NAME: str = "legal_documents.index"
@@ -116,6 +117,18 @@ class Settings(BaseSettings):
     # Can be overridden via env var `RISK_SEVERITY_THRESHOLDS` as JSON (e.g. {"high":0.8,"medium":0.5}).
     RISK_SEVERITY_THRESHOLDS: Dict[str, float] = {"high": 0.8, "medium": 0.5}
     
+    # Session / Conversational RAG Configuration
+    SESSION_TTL_HOURS: int = 24            # Session lifetime in hours (0 = never expire if PERSIST_FOREVER)
+    SESSION_PERSIST_FOREVER: bool = False  # If True, sessions never expire
+    MAX_SESSION_TURNS: int = 20            # Hard cap on conversation turns before truncation
+    MAX_SESSION_TOKENS: int = 8000         # Max token budget for assembled context (approx chars // 4)
+    SESSION_CONTEXT_WINDOW: int = 5        # Number of recent turns passed to LLM as history
+
+    # Evidence Guardrail Thresholds
+    GUARDRAIL_STRONG_THRESHOLD: float = 0.75   # Semantic similarity ≥ this → strong evidence
+    GUARDRAIL_WEAK_THRESHOLD: float = 0.40     # Semantic similarity ≥ this → sentence grounded (was 0.50)
+    GUARDRAIL_HOLISTIC_THRESHOLD: float = 0.28  # Holistic answer-vs-chunks similarity for fallback when sentence coverage is 0 (lenient for overview answers)
+
     # Section-specific top-K limits (PRD requirements)
     CASE_SUMMARY_EXEC_MAX_CHUNKS: int = 8  # Executive summary max chunks
     CASE_SUMMARY_TIMELINE_MAX_CHUNKS: int = 10  # Timeline max chunks

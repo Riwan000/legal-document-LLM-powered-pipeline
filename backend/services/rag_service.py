@@ -669,8 +669,8 @@ class RAGService:
         # Step 1: Classify query
         classification = self.query_classifier.classify_query(query)
         
-        # Step 2: Check scope and refuse if out of scope
-        if self.query_classifier.is_out_of_scope(query):
+        # Step 2: Check scope and refuse if out of scope (skip when caller provided chunks)
+        if chunks_override is None and self.query_classifier.is_out_of_scope(query):
             return {
                 'status': 'refused',
                 'answer': 'This topic is not covered in the provided documents.',
@@ -813,8 +813,9 @@ class RAGService:
                 }
         
         # Only check detect_not_specified if we have chunks but they might not be relevant (page-local: use top_chunks).
+        # Skip when caller provided chunks_override (orchestrator already decided which chunks to use).
         # FIX 1: Disable contract fallback logic for statutes
-        if (chunks or flat_chunks_for_context) and not structured_clauses:
+        if (chunks or flat_chunks_for_context) and not structured_clauses and chunks_override is None:
             if document_type == 'statute':
                 pass  # Continue with chunks
             else:
@@ -944,8 +945,8 @@ class RAGService:
                 elif answer_clean.endswith('\n' + statute_phrase):
                     answer = answer_clean[:-len('\n' + statute_phrase)].strip()
             
-            # FIX 3: Validate citation-answer semantic support
-            if answer and flat_chunks_for_context:
+            # FIX 3: Validate citation-answer semantic support (skip when caller provided chunks — orchestrator/guardrail handle evidence)
+            if answer and flat_chunks_for_context and chunks_override is None:
                 cited_chunks = flat_chunks_for_context
                 citation_valid = self._validate_citation_support(answer, cited_chunks, query)
                 if not citation_valid:

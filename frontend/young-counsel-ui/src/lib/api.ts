@@ -252,3 +252,115 @@ export type ExploreAnswerResult = {
   citation?: string;
 };
 
+// ---------------------------------------------------------------------------
+// Conversational RAG — Chat API
+// ---------------------------------------------------------------------------
+
+export type ChatMode = "strict" | "conversational";
+
+export type ChatSource = {
+  document_id: string;
+  page_number?: number;
+  chunk_index?: number;
+  text_snippet?: string;
+  score?: number;
+  citation?: string;
+};
+
+export type RetrievalTrace = {
+  original_query: string;
+  rewritten_query?: string;
+  retrieved_chunk_ids: string[];
+  similarity_scores: number[];
+  guardrail_decision?: string;
+  evidence_score?: string;
+};
+
+export type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+  trace?: RetrievalTrace;
+};
+
+export type CreateSessionResponse = {
+  session_id: string;
+  document_id: string;
+  mode: ChatMode;
+  created_at: string;
+};
+
+export type ChatMessageResponse = {
+  session_id: string;
+  answer: string;
+  status: "ok" | "refused";
+  evidence_score?: string;
+  guardrail_decision?: string;
+  sources: ChatSource[];
+  trace?: RetrievalTrace;
+};
+
+export type SessionHistoryResponse = {
+  session_id: string;
+  document_id: string;
+  mode: ChatMode;
+  messages: ChatMessage[];
+  summary?: string;
+  last_active_at: string;
+};
+
+/** Create a new conversational RAG session for a document. */
+export async function createChatSession(params: {
+  document_id: string;
+  mode?: ChatMode;
+}): Promise<CreateSessionResponse> {
+  return apiFetch<CreateSessionResponse>("/api/chat/session", {
+    method: "POST",
+    body: JSON.stringify({ document_id: params.document_id, mode: params.mode ?? "strict" })
+  });
+}
+
+/** Send a message in an existing session and receive a grounded answer. */
+export async function sendChatMessage(
+  session_id: string,
+  params: { message: string; mode?: ChatMode }
+): Promise<ChatMessageResponse> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/chat/${encodeURIComponent(session_id)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: params.message, mode: params.mode })
+    }
+  );
+
+  if (res.status === 404) throw new Error("Session not found or has expired.");
+  if (res.status === 409) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error((err as any)?.detail ?? "Document mismatch error.");
+  }
+  if (!res.ok) throw new Error(`Chat request failed: ${res.status} ${res.statusText}`);
+  return (await res.json()) as ChatMessageResponse;
+}
+
+/** Retrieve the full message history for a session. */
+export async function getChatSession(session_id: string): Promise<SessionHistoryResponse> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/chat/${encodeURIComponent(session_id)}`,
+    { method: "GET", headers: { "Content-Type": "application/json" } }
+  );
+  if (res.status === 404) throw new Error("Session not found or has expired.");
+  if (!res.ok) throw new Error(`Failed to load session: ${res.status}`);
+  return (await res.json()) as SessionHistoryResponse;
+}
+
+/** Delete a session and all its history. */
+export async function deleteChatSession(session_id: string): Promise<void> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/chat/${encodeURIComponent(session_id)}`,
+    { method: "DELETE", headers: { "Content-Type": "application/json" } }
+  );
+  if (res.status === 404) throw new Error("Session not found.");
+  if (!res.ok) throw new Error(`Failed to delete session: ${res.status}`);
+}
+

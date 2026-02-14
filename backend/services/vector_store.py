@@ -377,8 +377,7 @@ class VectorStore:
         if not priority_weights:
             # No priority weights, return standard results
             return results[:top_k or settings.TOP_K_RESULTS]
-<<<<<<< HEAD
-        
+
         # Normalize keys to lowercase once (callers may use "Governing Law", etc.)
         normalized_priority_weights = {}
         for k, v in (priority_weights or {}).items():
@@ -389,8 +388,6 @@ class VectorStore:
             except Exception:
                 continue
 
-=======
->>>>>>> 2b45b4aa (chore: update RAG/legal hierarchy and clause store)
         # Boosting rules:
         # - priority_score is cumulative over matching clause types
         # - boost_factor scales the influence of priority over base similarity

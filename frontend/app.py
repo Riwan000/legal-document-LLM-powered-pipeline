@@ -368,6 +368,62 @@ def explore_answer(document_id: str, query: str, top_k: Optional[int] = None, re
         return None
 
 
+# ---------------------------------------------------------------------------
+# Chat / Conversational RAG helpers
+# ---------------------------------------------------------------------------
+
+def create_chat_session(document_id: str, mode: str = "strict") -> Optional[Dict]:
+    """Create a new conversational RAG session. Returns {session_id, document_id, mode, created_at}."""
+    try:
+        response = requests.post(
+            f"{API_BASE_URL}/api/chat/session",
+            json={"document_id": document_id, "mode": mode},
+            timeout=15,
+        )
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        st.error(f"Could not create chat session: {e}")
+        return None
+
+
+def send_chat_message(session_id: str, message: str, mode: Optional[str] = None) -> Optional[Dict]:
+    """Send a message to an existing session. Returns ChatMessageResponse."""
+    try:
+        payload: Dict = {"message": message}
+        if mode:
+            payload["mode"] = mode
+        response = requests.post(
+            f"{API_BASE_URL}/api/chat/{session_id}",
+            json=payload,
+            timeout=90,
+        )
+        if response.status_code == 404:
+            st.error("Session not found or has expired. Please reset the session.")
+            return None
+        if response.status_code == 409:
+            try:
+                detail = response.json().get("detail", "Document mismatch error.")
+            except Exception:
+                detail = "Document mismatch error."
+            st.error(detail)
+            return None
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        st.error(f"Chat request failed: {e}")
+        return None
+
+
+def delete_chat_session_api(session_id: str) -> bool:
+    """Delete a session and all its history."""
+    try:
+        response = requests.delete(f"{API_BASE_URL}/api/chat/{session_id}", timeout=10)
+        return response.ok
+    except Exception:
+        return False
+
+
 # Mandatory disclaimer for workflow outputs
 WORKFLOW_DISCLAIMER = "This system does not provide legal advice. All outputs are for review purposes only."
 
@@ -586,40 +642,225 @@ if page == "📋 Contract Review":
                             st.json(resp)
 
 # -----------------------------------------------------------------------------
-# Page: Document Explorer (RAG answer + citations)
+# Page: Document Explorer (RAG answer + citations, with Conversational mode)
 # -----------------------------------------------------------------------------
 elif page == "🔍 Document Explorer":
     st.markdown('<div class="main-header">🔍 Document Explorer</div>', unsafe_allow_html=True)
-    st.markdown("Ask focused questions about a single document and get a RAG answer with citations.")
+    st.markdown("Ask focused questions about a single document and get a grounded answer with citations.")
     st.caption(WORKFLOW_DISCLAIMER)
+
     documents = get_documents()
     if not documents:
         st.warning("Upload a document first.")
     else:
         doc_options = {d["document_id"]: d.get("display_name", d["document_id"]) for d in documents}
-        document_id = st.selectbox("Document", options=list(doc_options.keys()), format_func=lambda x: doc_options[x])
-        query = st.text_input("Query (e.g. Where is termination notice?)", placeholder="Where is… / Show clauses related to…")
-        top_k = st.slider("Max results", min_value=1, max_value=25, value=10)
 
-        st.markdown("**RAG Answer Explorer**: LLM-generated answer with citations from the document.")
-        if st.button("Get answer", type="primary", key="btn_answer"):
-            if not query or not query.strip():
-                st.warning("Enter a query.")
-            else:
-                with st.spinner("Generating answer..."):
-                    result = explore_answer(document_id, query, top_k=top_k)
-                if result is not None:
-                    st.subheader("Answer")
-                    st.write(result.get("answer") or "No answer generated.")
-                    st.caption(f"Status: {result.get('status', '—')} | Confidence: {result.get('confidence', '—')}")
-                    sources = result.get("sources", []) or []
-                    if sources:
-                        st.subheader("Sources / citations")
-                        for i, src in enumerate(sources[:10], 1):
-                            with st.expander(f"Source {i} — Page {src.get('page_number', 0)}"):
-                                text = src.get('text', '') or ''
-                                st.write(text[:800] + ("..." if len(text) > 800 else ""))
-                                st.caption(f"Document: {src.get('display_name', src.get('document_id', '—'))}")
+        # ── Session-state defaults ──────────────────────────────────────────
+        if "explorer_document_id" not in st.session_state:
+            st.session_state.explorer_document_id = list(doc_options.keys())[0]
+        if "explorer_chat_mode" not in st.session_state:
+            st.session_state.explorer_chat_mode = "Evidence (Strict)"
+        if "explorer_session_id" not in st.session_state:
+            st.session_state.explorer_session_id = None
+        if "explorer_chat_history" not in st.session_state:
+            st.session_state.explorer_chat_history = []
+
+        # ── Document selector ───────────────────────────────────────────────
+        selected_doc = st.selectbox(
+            "Document",
+            options=list(doc_options.keys()),
+            format_func=lambda x: doc_options[x],
+            index=list(doc_options.keys()).index(st.session_state.explorer_document_id)
+            if st.session_state.explorer_document_id in doc_options else 0,
+        )
+        # Reset session when document changes
+        if selected_doc != st.session_state.explorer_document_id:
+            if st.session_state.explorer_session_id:
+                delete_chat_session_api(st.session_state.explorer_session_id)
+            st.session_state.explorer_document_id = selected_doc
+            st.session_state.explorer_session_id = None
+            st.session_state.explorer_chat_history = []
+
+        document_id = st.session_state.explorer_document_id
+
+        # ── Mode toggle ─────────────────────────────────────────────────────
+        mode_choice = st.radio(
+            "Mode",
+            ["Evidence (Strict)", "Conversational (Evidence-Grounded)"],
+            index=0 if st.session_state.explorer_chat_mode == "Evidence (Strict)" else 1,
+            horizontal=True,
+            help=(
+                "**Evidence (Strict)**: stateless RAG answer per query — identical to the original explorer.\n\n"
+                "**Conversational**: session-based with query rewriting, dual retrieval, and evidence guardrails."
+            ),
+        )
+        # Reset session when mode changes
+        if mode_choice != st.session_state.explorer_chat_mode:
+            if st.session_state.explorer_session_id:
+                delete_chat_session_api(st.session_state.explorer_session_id)
+            st.session_state.explorer_chat_mode = mode_choice
+            st.session_state.explorer_session_id = None
+            st.session_state.explorer_chat_history = []
+
+        st.markdown("---")
+
+        # ════════════════════════════════════════════════════════════════════
+        # STRICT MODE — original evidence + answer explorer
+        # ════════════════════════════════════════════════════════════════════
+        if mode_choice == "Evidence (Strict)":
+            top_k = st.slider("Max results", min_value=1, max_value=25, value=10)
+            query = st.text_input(
+                "Query",
+                placeholder="Where is… / Show clauses related to…",
+                key="strict_query",
+            )
+
+            if st.button("Get answer", type="primary", key="btn_answer"):
+                if not query or not query.strip():
+                    st.warning("Enter a query.")
+                else:
+                    with st.spinner("Generating answer..."):
+                        result = explore_answer(document_id, query, top_k=top_k)
+                    if result is not None:
+                        st.subheader("Answer")
+                        st.write(result.get("answer") or "No answer generated.")
+                        st.caption(
+                            f"Status: {result.get('status', '—')} | Confidence: {result.get('confidence', '—')}"
+                        )
+                        sources = result.get("sources", []) or []
+                        if sources:
+                            st.subheader("Sources / citations")
+                            for i, src in enumerate(sources[:10], 1):
+                                with st.expander(f"Source {i} — Page {src.get('page_number', 0)}"):
+                                    text = src.get("text", "") or ""
+                                    st.write(text[:800] + ("..." if len(text) > 800 else ""))
+                                    st.caption(
+                                        f"Document: {src.get('display_name', src.get('document_id', '—'))}"
+                                    )
+
+        # ════════════════════════════════════════════════════════════════════
+        # CONVERSATIONAL MODE — session-based chat with guardrails
+        # ════════════════════════════════════════════════════════════════════
+        else:
+            # ── Session status bar ──────────────────────────────────────────
+            session_col, reset_col = st.columns([5, 1])
+            with session_col:
+                if st.session_state.explorer_session_id:
+                    st.caption(
+                        f"Session active · ID: `{st.session_state.explorer_session_id[:12]}…` · "
+                        f"{len(st.session_state.explorer_chat_history) // 2} turn(s)"
+                    )
+                else:
+                    st.caption("No session yet — send a message to start.")
+            with reset_col:
+                if st.button("🔄 Reset", key="btn_reset_session", help="Clear session history"):
+                    if st.session_state.explorer_session_id:
+                        delete_chat_session_api(st.session_state.explorer_session_id)
+                    st.session_state.explorer_session_id = None
+                    st.session_state.explorer_chat_history = []
+                    st.rerun()
+
+            # ── Chat thread (render history) ────────────────────────────────
+            for turn in st.session_state.explorer_chat_history:
+                role = turn.get("role", "user")
+                with st.chat_message(role):
+                    st.write(turn.get("content", ""))
+                    if role == "assistant":
+                        meta_parts = []
+                        ev_score = turn.get("evidence_score")
+                        guardrail = turn.get("guardrail_decision")
+                        rewritten = turn.get("rewritten_query")
+                        status = turn.get("status")
+                        if ev_score:
+                            score_emoji = {"strong": "🟢", "moderate": "🟡", "weak": "🟠", "none": "🔴"}.get(ev_score, "⚪")
+                            meta_parts.append(f"{score_emoji} Evidence: **{ev_score}**")
+                        if guardrail:
+                            meta_parts.append(f"Guardrail: `{guardrail}`")
+                        if status == "refused":
+                            meta_parts.append("⚠️ Response refused — insufficient evidence")
+                        if rewritten and rewritten != turn.get("original_query"):
+                            meta_parts.append(f"*Query rewritten:* {rewritten}")
+                        if meta_parts:
+                            st.caption(" · ".join(meta_parts))
+                        # Sources expander
+                        sources = turn.get("sources") or []
+                        if sources:
+                            with st.expander(f"Sources ({len(sources)})"):
+                                for src in sources[:8]:
+                                    pg = src.get("page_number") or src.get("page")
+                                    snippet = src.get("text_snippet") or src.get("text") or ""
+                                    label = f"Page {pg}" if pg else "Source"
+                                    st.markdown(f"**{label}** — {snippet[:300]}{'…' if len(snippet) > 300 else ''}")
+
+            # ── Chat input ──────────────────────────────────────────────────
+            user_input = st.chat_input("Ask a question about the document…")
+            if user_input and user_input.strip():
+                user_msg = user_input.strip()
+
+                # Render user bubble immediately
+                with st.chat_message("user"):
+                    st.write(user_msg)
+                st.session_state.explorer_chat_history.append({"role": "user", "content": user_msg})
+
+                # Ensure we have a session
+                if not st.session_state.explorer_session_id:
+                    with st.spinner("Starting session…"):
+                        sess = create_chat_session(document_id, mode="conversational")
+                    if not sess:
+                        st.stop()
+                    st.session_state.explorer_session_id = sess["session_id"]
+
+                # Send message
+                with st.spinner("Thinking…"):
+                    resp = send_chat_message(
+                        st.session_state.explorer_session_id,
+                        user_msg,
+                        mode="conversational",
+                    )
+
+                if resp is not None:
+                    answer = resp.get("answer") or "No answer generated."
+                    ev_score = resp.get("evidence_score")
+                    guardrail = resp.get("guardrail_decision")
+                    status = resp.get("status", "ok")
+                    sources = resp.get("sources") or []
+                    trace = resp.get("trace") or {}
+                    rewritten = trace.get("rewritten_query")
+
+                    # Render assistant bubble
+                    with st.chat_message("assistant"):
+                        st.write(answer)
+                        meta_parts = []
+                        if ev_score:
+                            score_emoji = {"strong": "🟢", "moderate": "🟡", "weak": "🟠", "none": "🔴"}.get(ev_score, "⚪")
+                            meta_parts.append(f"{score_emoji} Evidence: **{ev_score}**")
+                        if guardrail:
+                            meta_parts.append(f"Guardrail: `{guardrail}`")
+                        if status == "refused":
+                            meta_parts.append("⚠️ Response refused — insufficient evidence")
+                        if rewritten and rewritten != user_msg:
+                            meta_parts.append(f"*Query rewritten:* {rewritten}")
+                        if meta_parts:
+                            st.caption(" · ".join(meta_parts))
+                        if sources:
+                            with st.expander(f"Sources ({len(sources)})"):
+                                for src in sources[:8]:
+                                    pg = src.get("page_number") or src.get("page")
+                                    snippet = src.get("text_snippet") or src.get("text") or ""
+                                    label = f"Page {pg}" if pg else "Source"
+                                    st.markdown(f"**{label}** — {snippet[:300]}{'…' if len(snippet) > 300 else ''}")
+
+                    # Persist to history
+                    st.session_state.explorer_chat_history.append({
+                        "role": "assistant",
+                        "content": answer,
+                        "evidence_score": ev_score,
+                        "guardrail_decision": guardrail,
+                        "status": status,
+                        "sources": sources,
+                        "rewritten_query": rewritten,
+                        "original_query": user_msg,
+                    })
 
 # -----------------------------------------------------------------------------
 # Page: Upload Document

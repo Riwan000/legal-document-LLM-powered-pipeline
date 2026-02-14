@@ -35,6 +35,7 @@ PyYAML>=6.0
 
 # Additional utilities
 numpy==1.24.3
+tiktoken>=0.7.0
 
 # Translation
 deep-translator==1.11.4

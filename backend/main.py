@@ -44,6 +44,22 @@ from backend.models.workflow import WorkflowContext
 from backend.services.guardrails import WORKFLOW_DISCLAIMER
 from backend import workflow_store
 
+# Conversational RAG
+from backend.models.session import (
+    CreateSessionRequest,
+    CreateSessionResponse,
+    ChatMessageRequest,
+    ChatMessageResponse,
+    SessionHistoryResponse,
+    SessionMode,
+)
+from backend.services.session_store import SessionStore
+from backend.services.session_manager import SessionManager, SessionNotFoundError, DocumentMismatchError
+from backend.services.evidence_guardrail_service import EvidenceGuardrailService
+from backend.services.query_rewriter import QueryRewriter
+from backend.services.chat_orchestrator import ChatOrchestratorService
+from backend.services.conversation_summarizer import ConversationSummarizer
+
 
 # Lifespan handlers (replaces deprecated on_event startup/shutdown)
 @asynccontextmanager
@@ -106,6 +122,11 @@ contract_review_service: Optional[ContractReviewService] = None
 workflow_orchestrator: Optional[WorkflowOrchestrator] = None
 ingestion_metadata_store: Optional[IngestionMetadataStore] = None
 
+# Conversational RAG service instances
+session_store: Optional[SessionStore] = None
+session_manager: Optional[SessionManager] = None
+chat_orchestrator: Optional[ChatOrchestratorService] = None
+
 
 async def _initialize_services():
     """Initialize services on application startup."""
@@ -114,6 +135,7 @@ async def _initialize_services():
     global comparison_service, summarization_service, translation_service
     global document_explorer_service, evidence_explorer_service, contract_review_service, workflow_orchestrator
     global extracted_clause_store, ingestion_metadata_store
+    global session_store, session_manager, chat_orchestrator
     
     print("Initializing services...")
     
@@ -174,6 +196,21 @@ async def _initialize_services():
         due_diligence_memo_service,
         evidence_explorer_service=evidence_explorer_service,
     )
+
+    # Conversational RAG services
+    session_store = SessionStore()
+    conversation_summarizer = ConversationSummarizer()
+    session_manager = SessionManager(store=session_store, summarizer=conversation_summarizer)
+    evidence_guardrail = EvidenceGuardrailService(embedding_service)
+    query_rewriter = QueryRewriter()
+    chat_orchestrator = ChatOrchestratorService(
+        rag_service=rag_service,
+        session_manager=session_manager,
+        embedding_service=embedding_service,
+        guardrail_service=evidence_guardrail,
+        query_rewriter=query_rewriter,
+    )
+    print("Conversational RAG services initialized (SessionStore, SessionManager, ChatOrchestrator)")
 
     print("All services initialized successfully!")
 
@@ -1307,6 +1344,92 @@ async def get_stats():
             "top_k_results": settings.TOP_K_RESULTS
         }
     }
+
+
+# ---------------------------------------------------------------------------
+# Conversational RAG endpoints
+# ---------------------------------------------------------------------------
+
+@app.post("/api/chat/session", response_model=CreateSessionResponse, tags=["Chat"])
+async def create_chat_session(body: CreateSessionRequest):
+    """
+    Create a new conversational RAG session bound to a document.
+
+    - **document_id**: The document to query against (must already be uploaded).
+    - **mode**: "strict" (stateless, evidence-only) or "conversational" (session-aware).
+    """
+    if session_manager is None:
+        raise HTTPException(status_code=503, detail="Chat service not initialized")
+    try:
+        session = session_manager.create_session(
+            document_id=body.document_id,
+            mode=body.mode,
+        )
+        return CreateSessionResponse(
+            session_id=session.session_id,
+            document_id=session.document_id,
+            mode=session.mode,
+            created_at=session.created_at,
+        )
+    except Exception as exc:
+        logging.error("create_chat_session error: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/api/chat/{session_id}", response_model=ChatMessageResponse, tags=["Chat"])
+async def send_chat_message(session_id: str, body: ChatMessageRequest):
+    """
+    Send a message in an existing chat session and receive a grounded answer.
+
+    - Strict mode: stateless RAG, no history, matches /api/explore-answer behaviour.
+    - Conversational mode: query rewriting, dual retrieval, evidence guardrail, two-pass validation.
+    """
+    if chat_orchestrator is None or session_manager is None:
+        raise HTTPException(status_code=503, detail="Chat service not initialized")
+    try:
+        response = chat_orchestrator.chat(
+            session_id=session_id,
+            user_message=body.message,
+            mode_override=body.mode,
+        )
+        return response
+    except SessionNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except DocumentMismatchError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    except Exception as exc:
+        logging.error("send_chat_message error [%s]: %s", session_id, exc, exc_info=True)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/api/chat/{session_id}", response_model=SessionHistoryResponse, tags=["Chat"])
+async def get_chat_session(session_id: str):
+    """Retrieve the full message history for a session."""
+    if session_manager is None:
+        raise HTTPException(status_code=503, detail="Chat service not initialized")
+    try:
+        session = session_manager.get_session(session_id)
+        return SessionHistoryResponse(
+            session_id=session.session_id,
+            document_id=session.document_id,
+            mode=session.mode,
+            messages=session.messages,
+            summary=session.summary,
+            last_active_at=session.last_active_at,
+        )
+    except SessionNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@app.delete("/api/chat/{session_id}", tags=["Chat"])
+async def delete_chat_session(session_id: str):
+    """Delete a chat session and all its history."""
+    if session_manager is None:
+        raise HTTPException(status_code=503, detail="Chat service not initialized")
+    deleted = session_manager.delete_session(session_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found")
+    return {"status": "deleted", "session_id": session_id}
 
 
 if __name__ == "__main__":
