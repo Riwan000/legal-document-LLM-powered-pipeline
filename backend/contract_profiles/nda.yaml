@@ -6,13 +6,22 @@ expected_clauses:
   - governing_law
   - liability
   - remedies
+  - carve_outs
+  - mutual_vs_unilateral
+  - non_solicitation     # contract_fixes1: moved from optional (dead code)
 
 optional_clauses:
-  - non_solicitation
+  - remedies_injunction
+  - return_of_information
 
 risk_weights:
   governing_law: high
   liability: high
   confidentiality: medium
+  carve_outs: medium
   term: low
   remedies: medium
+  mutual_vs_unilateral: low
+  remedies_injunction: low
+  return_of_information: low
+  non_solicitation: low  # contract_fixes1

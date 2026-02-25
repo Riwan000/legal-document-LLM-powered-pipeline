@@ -21,7 +21,7 @@ from typing import List, Optional
 import ollama
 
 from backend.config import settings
-from backend.models.session import SessionMessage
+from backend.models.session import ChatSession, SessionMessage
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +56,7 @@ class QueryRewriter:
         history: List[SessionMessage],
         question: str,
         document_id: str,
+        session: Optional["ChatSession"] = None,
     ) -> str:
         """
         Rewrite `question` using `history` to expand pronouns.
@@ -64,6 +65,7 @@ class QueryRewriter:
             history:     Recent SessionMessage list (role + content).
             question:    The current user question.
             document_id: The document being discussed (for logging only).
+            session:     Optional ChatSession for state-aware context injection (Phase 5).
 
         Returns:
             The rewritten query, or the original question if no pronouns found
@@ -82,7 +84,20 @@ class QueryRewriter:
             f"{m.role.upper()}: {m.content}" for m in recent
         )
 
+        # Phase 5: prepend session state hint if available
+        session_hint = ""
+        if session is not None:
+            hint_parts = []
+            if getattr(session, "conversation_goal", None):
+                hint_parts.append(f"Conversation goal: {session.conversation_goal}")
+            identified = getattr(session, "identified_terms", [])
+            if identified:
+                hint_parts.append(f"Previously identified terms: {', '.join(identified[:5])}")
+            if hint_parts:
+                session_hint = "[Session context] " + "; ".join(hint_parts) + "\n\n"
+
         user_prompt = (
+            f"{session_hint}"
             f"Conversation history:\n{history_text}\n\n"
             f"Current question: {question}\n\n"
             f"Rewritten question:"

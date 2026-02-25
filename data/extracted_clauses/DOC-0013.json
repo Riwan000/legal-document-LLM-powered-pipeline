@@ -1,0 +1,1433 @@
+{
+  "schema_version": 2,
+  "document_id": "DOC-0013",
+  "extraction_version": "v1.0",
+  "clauses": [
+    {
+      "clause_id": "legal-reas_Itiscommongroundthat_e424448e8243b7e7",
+      "document_section": "legal_reasoning",
+      "page_start": 3,
+      "page_end": 3,
+      "clause_heading": "It is common ground that the burden of proving that the claim falls within s 5 a",
+      "verbatim_text": "8.\t\tIt is common ground that the burden of proving that the claim falls within s 5 as one of \nthe exceptions to the general immunity provided by s 1 lies on the Claimant and not the \nDefendant. It will not suffice for the Claimant to show a ‘good arguable case’ that the \nclaim falls within one of the exceptions. The question of whether the case falls within one of the exceptions is to be determined on the balance of probabilities as a preliminary issue: JH Rayner (Mincing Lane) Ltd v Department of Trade and Industry [1989] Ch \n72, 193-194 (Kerr LJ) and 252 (Ralph Gibson LJ), applied in London Steam Ship \nOwners’ Mutual Insurance Associated Limited v Kingdom of Spain [2020] 1 WLR \n4943, 4956 at [30] per Henshaw J.",
+      "clause_number": "8",
+      "clause_title": "It is common ground that the burden of proving that the claim falls within s 5 a",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Howeverwhileitishigh_4fd78361a5880d64",
+      "document_section": "unknown",
+      "page_start": 5,
+      "page_end": 5,
+      "clause_heading": "However, while it is highly unlikely that Parliament intended to require courts ",
+      "verbatim_text": "25.\t\tHowever, while it is highly unlikely that Parliament intended to require courts to act contrary to international law unless the clear language of the SIA 1978 were to compel that conclusion, the statute ‘does not do more than this’ since it purports to deal comprehensively with the jurisdiction of the UK courts both to adjudicate upon claims against foreign States and to enforce by legal process judgments pronounced and orders \nmade in the exercise of that adjudicative jurisdiction: Alcom, p600B.",
+      "clause_number": "25",
+      "clause_title": "However, while it is highly unlikely that Parliament intended to require courts ",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_Asamatterofdomesticl_7f364704b58499bb",
+      "document_section": "legal_reasoning",
+      "page_start": 5,
+      "page_end": 5,
+      "clause_heading": "As a matter of domestic law, Part I of the SIA ‘is a complete code’: Benkharbouc",
+      "verbatim_text": "24.\t\tAs a matter of domestic law, Part I of the SIA ‘is a complete code’: Benkharbouche , \n[39]. It is to be construed against the background of customary international law: Alcom \nLtd v Republic of Colombia [1984] AC 580, p597G.",
+      "clause_number": "24",
+      "clause_title": "As a matter of domestic law, Part I of the SIA ‘is a complete code’: Benkharbouc",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_Thes5exceptiontostat_abf679d478825f9d",
+      "document_section": "legal_reasoning",
+      "page_start": 5,
+      "page_end": 5,
+      "clause_heading": "The s 5 exception to state immunity applies to claims for personal injury, inclu",
+      "verbatim_text": "23.\t\tThe s 5 exception to state immunity applies to claims for personal injury, including psychiatric injury. It is not limited to cases in which personal injury is a ‘direct consequence’ of the conduct complained of: Federal Republic of Nigeria v Ogbonna \n[2012] 1 WLR 139, [6(5)] and [13], per Underhill J (as he then was).",
+      "clause_number": "23",
+      "clause_title": "The s 5 exception to state immunity applies to claims for personal injury, inclu",
+      "legal_category": "conduct",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Ins5Parliamentchosen_1bb0802c8a330bf3",
+      "document_section": "unknown",
+      "page_start": 6,
+      "page_end": 6,
+      "clause_heading": "In s 5, Parliament chose not to condition immunity by reference to such language",
+      "verbatim_text": "29.\t\tIn s 5, Parliament chose not to condition immunity by reference to such language, and so reading it in to the section, as the Defendants would have me do, would exceed the proper bounds of statutory construction. In other words, the Defendant’s limitation on \ns 5 to purely private acts would overturn the plain meaning of s 5. \nIssue (b): The requirement in s 5 that the injury or damage be ‘caused by an act or omission \nin the United Kingdom’ does not require all of the alleged acts to have occurred in the United Kingdom. It is sufficient if a causative act or omission occurs here, even if other causative acts occur abroad.",
+      "clause_number": "29",
+      "clause_title": "In s 5, Parliament chose not to condition immunity by reference to such language",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Thes5exceptionapplie_cdbf4e6c9be8edd6",
+      "document_section": "unknown",
+      "page_start": 6,
+      "page_end": 6,
+      "clause_heading": "The s 5 exception applies when the death, injury or damage is ‘caused by an act ",
+      "verbatim_text": "30.\t\tThe s 5 exception applies when the death, injury or damage is ‘caused by an act or \nomission in the United Kingdom’. In accordance with the plain meaning of this phrase, it is only necessary for a single relevant act or omission causative of the death, injury or damage to take place within the UK in order to engage the exception. Contrary to the \nDefendant’s submissions, there is no proper basis on which the Court, under the guise \nof statutory construction, could replace the words ‘caused by an act or omission in the United Kingdom’ with the phrase ‘where the entire tort took place in the United \nKingdom’. Nor can s 5 be interpreted so as to require all of the acts and omissions \ncausative of the death, injury or damages, and in respect of which the proceedings are \nbrought, to have taken place in the UK. If that was what Parliament had intended, it would not have used the words that appear in s 5.",
+      "clause_number": "30",
+      "clause_title": "The s 5 exception applies when the death, injury or damage is ‘caused by an act ",
+      "legal_category": "liability",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_MrWhitesubmittedthat_e2159068086736c8",
+      "document_section": "unknown",
+      "page_start": 8,
+      "page_end": 8,
+      "clause_heading": "Mr White submitted that s 5 requires the whole tort to take place within the UK ",
+      "verbatim_text": "44.\t\tMr White submitted that s 5 requires the whole tort to take place within the UK and \nthat, subject to de minimis exceptions, where a tort takes place partly inside and partly \noutside the UK, then it falls outside the exception in s 5 and the foreign state is entitled \nto immunity: Dickinson, Lindsay and Loonam, State Immunity: Selected Materials and \nCommentary (OUP, 2004) pp369-370. Section 5 therefore has stricter jurisdictional \nrequirements for States as defendants than an ordinary defendant pursuant to CPR r",
+      "clause_number": "44",
+      "clause_title": "Mr White submitted that s 5 requires the whole tort to take place within the UK ",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_InotherwordstheDefen_06431f3ecc7dbceb",
+      "document_section": "legal_reasoning",
+      "page_start": 8,
+      "page_end": 8,
+      "clause_heading": "In other words, the Defendant invites me to read the words ‘act or omission’ in ",
+      "verbatim_text": "41.\t\tIn other words, the Defendant invites me to read the words ‘act or omission’ in s 5 as excluding acts or omissions which are of an inherently sovereign or governmental nature, ie, acts done jure imperii . It submits that s 5 only covers acts done jure gestionis. \nRecognition in English law of the centrality of the customary international law distinction between acts of a private law character and acts of a sovereign character when applying state immunity from civil claims is well established: see for example the views of Lord Wilberforce in Playa Larga v I Congreso del Partido [1983] 1 AC 244 \nat pp.265-7, and Lord Millett in Holland v Lampen Wolfe [2000] 1 WLR 1573, 1583-",
+      "clause_number": "41",
+      "clause_title": "In other words, the Defendant invites me to read the words ‘act or omission’ in ",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_IntheeventIweretocon_0517e2f0e2c03d5e",
+      "document_section": "legal_reasoning",
+      "page_start": 8,
+      "page_end": 8,
+      "clause_heading": "In the event I were to conclude that s 5 is ambiguous, Mr White invited me, in",
+      "verbatim_text": "42.\t\tIn the event I were to conclude that s 5 is ambiguous, Mr White invited me, in \naccordance with Pepper v Hart [1993] AC 593, to consider various Hansard materials \nin relation to the passage of the Bill which became the SIA 1978 which he said \nsupported his position.",
+      "clause_number": "42",
+      "clause_title": "In the event I were to conclude that s 5 is ambiguous, Mr White invited me, in",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_ThelongtitleoftheSIA_20bdfa9a3da52dbf",
+      "document_section": "unknown",
+      "page_start": 10,
+      "page_end": 11,
+      "clause_heading": "The long title of the SIA 1978 states that it is:",
+      "verbatim_text": "56.\t\tThe long title of the SIA 1978 states that it is: \n“An Act to make new provision with respect to proceedings in the United Kingdom by or against other States; to provide for the effect\nof judgments given against the United Kingdom in the courts of \nStates parties to the European Convention on State Immunity; to \nmake new provision with respect to the immunities and privileges \nof heads of State; and for connected purposes.”",
+      "clause_number": "56",
+      "clause_title": "The long title of the SIA 1978 states that it is:",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_Atonetimeforeignstat_67fa762d99948e34",
+      "document_section": "legal_reasoning",
+      "page_start": 10,
+      "page_end": 10,
+      "clause_heading": "At one time foreign states enjoyed absolute immunity from suit in the courts of ",
+      "verbatim_text": "51.\t\tAt one time foreign states enjoyed absolute immunity from suit in the courts of the UK. \nThe classic statement was that of Lord Atkin in Cia Naviera Vascongada v Steamship \nCristina; (The Cristina) [1938] AC 485, 490: \n“The courts of a country will not implead a foreign sovereign, that is, they will not by their process make him against his will a party \nto legal proceedings whether the proceedings involve process \nagainst his person or seek to recover from him specific property or damages.”",
+      "clause_number": "51",
+      "clause_title": "At one time foreign states enjoyed absolute immunity from suit in the courts of ",
+      "legal_category": "liability",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_Thatrecognitionfirst_954c74723e8fd2ee",
+      "document_section": "legal_reasoning",
+      "page_start": 10,
+      "page_end": 10,
+      "clause_heading": "That recognition first occurred in a judgment of the Privy Council in The Philip",
+      "verbatim_text": "54.\t\tThat recognition first occurred in a judgment of the Privy Council in The Philippine \nAdmiral [1977] AC 373 delivered in November 1975; though this in its terms was \nlimited to actions in rem. It was the judgment of Lord Denning MR in Trendtex Trading \nCorporation v Central Bank of Nigeria [1977] QB 529 that marked the definitive \nabsorption by the common law of the restrictive theory of sovereign immunity. Lord Denning's statement in Trendtex as to what had become the revised common law rule \nas to the immunity of foreign sovereign states from the jurisdiction of the English \ncourts, before the passing of the SIA 1978, received the approval of the House of Lords \nin I Congreso del Partido [1983] AC 244.",
+      "clause_number": "54",
+      "clause_title": "That recognition first occurred in a judgment of the Privy Council in The Philip",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_InLondonSteamShipOwn_317a0063a5b343ee",
+      "document_section": "unknown",
+      "page_start": 11,
+      "page_end": 12,
+      "clause_heading": "In London Steam-Ship Owners' Mutual Insurance Association Ltd v Spain ; The Pres",
+      "verbatim_text": "58.\t\tIn London Steam-Ship Owners' Mutual Insurance Association Ltd v Spain ; The Prestige \n(Nos 3 and 4) [2021] EWCA Civ 1589, [39]-[40], the Court of Appeal (Males, \nPopplewell and Phillips LLJ) said, summarising earlier high authority: \n“39. We start with some observations on the relationship \nbetween the 1978 Act and public international law. The \nprovisions of the Act fall to be construed against the background \nof the principles of customary international law, which at the time it was enacted, as now, drew a distinction between claims arising out of those activities which a state undertakes jure imperii , i.e. \nin the exercise of sovereign authority, and those arising out of activities which it undertakes jure gestionis , i.e. transactions of a \nkind which might appropriately be undertaken by private individuals instead of sovereign states, in particular what is done \nin the course of commercial or trading activities. The former \nenjoyed immunity; the latter did not. This came to be known as the restrictive theory of immunity, which had by then been adopted by the common law in this country. See Alcom Ltd. v \nRepublic of Colombia [1984] AC 580 at pp. 597-599, Playa \nLarga and Marble Island (Owners of Cargo Lately Laden on Board) v I Congreso del Partido [1983] 1 AC 244 at pp. 261-262, \nand Benkharbouche at [8]. The Act did not, however, merely seek \nto frame immunity in terms of this binary distinction, choosing instead to formulate the exceptions to immunity in a series of detailed sections, such that the existence of immunity under public international law is not conclusive as to whether immunity has been removed by the 1978 Act. As Lord Diplock observed in \nAlcom at p. 600, the fact that the bank account of the Colombian \ndiplomatic mission which the respondents in that case sought to \nmake the subject of garnishee proceedings would have been \nentitled to immunity from attachment under public international \nlaw, at the date of the passing of the 1978 Act, was not sufficient to establish that it enjoyed immunity under the Act; it made it highly unlikely that Parliament intended to require United \nKingdom courts to act contrary to international law unless the \nclear language of the statute compelled such a conclusion; but it did not do more than this.",
+      "clause_number": "58",
+      "clause_title": "In London Steam-Ship Owners' Mutual Insurance Association Ltd v Spain ; The Pres",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_InAlAdsanivGovernmen_358efd8abbcfb581",
+      "document_section": "legal_reasoning",
+      "page_start": 11,
+      "page_end": 11,
+      "clause_heading": "In Al-Adsani v Government of Kuwait (No 2) (1996) 107 ILR 536, p542, Stuart-Smit",
+      "verbatim_text": "57.\t\tIn Al-Adsani v Government of Kuwait (No 2) (1996) 107 ILR 536, p542, Stuart-Smith \nLJ said that the Act ‘is a comprehensive code and is not subject to overriding considerations.’ In Benkharbouche, [39], Lord Sumption said: \n“No one doubts that as a matter of domestic law, Part I of the State Immunity Act 1978 is a complete code. If the case does not fall within one of the exceptions to section 1, the state is immune.”",
+      "clause_number": "57",
+      "clause_title": "In Al-Adsani v Government of Kuwait (No 2) (1996) 107 ILR 536, p542, Stuart-Smit",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_2p548inwhichtheHouse_d3443c99fe45fd47",
+      "document_section": "unknown",
+      "page_start": 12,
+      "page_end": 13,
+      "clause_heading": "2), p548), in which the House of Lords had to consider the impact of the law of ",
+      "verbatim_text": "2), p548), in which the House of Lords had to consider the impact of the law of nations \n(now generally referred to as customary international law) upon certain provisions of the Bankruptcy Act 1914. At p195 Lord Porter said this: \n“Interpreted in accordance with its strict wording, the latter sub-section applies to British and foreign nationals alike, and unless some principle to the contrary can be established I should so \nconstrue it. If I am right in this an invocation of the comity of \nnations is irrelevant. If the meaning of an Act of Parliament is ambiguous that doctrine may be prayed in aid, but where an \nEnglish statute enacts a provision in plain terms no such principle \napplies. Any foreign nation of which the person affected is a member or with which such person is domiciled is free to disregard the provisions of the English enactment, but the person concerned cannot himself take exception to it, though it may be \nthat he will escape from compliance with its terms because he is \nout of the jurisdiction and cannot be reached by the English process.”",
+      "clause_number": "2",
+      "clause_title": "2), p548), in which the House of Lords had to consider the impact of the law of ",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Intheconversesituati_6a1ca74414bffe0f",
+      "document_section": "unknown",
+      "page_start": 12,
+      "page_end": 12,
+      "clause_heading": "In the converse situation, however, in which there would be",
+      "verbatim_text": "40. In the converse situation, however, in which there would be \nno immunity under customary international law, there is a more \ndirect correlation between immunity under customary international law and the 1978 Act as a result of the enactment of sections 3 and 4 the Human Rights Act 1998 and the application \nof article 6 ECHR, together with Article 47 of the Charter of \nFundamental Rights of the European Union. As explained in Benkharbouche , any immunity granted to a State is necessarily \nincompatible with Article 6 as disproportionate if and to the \nextent that it grants to a state an immunity which would not be \nafforded in accordance with customary international law. Section 3 of the Human Rights Act requires that so far as it is possible to do so, legislation must be given effect in a way which is \ncompatible with the Convention rights. This is an interpretative \nobligation of strong and far reaching effect which may require the court to depart from the legislative intention of Parliament, in accordance with the principles articulated in Ghaidan v Godin-\nMendoza [2004] UKHL 30, [2004] 2 AC 557 and Sheldrake v \nDirector of Public Prosecutions [2004] UKHL 43, [2005] 1 AC",
+      "clause_number": "40",
+      "clause_title": "In the converse situation, however, in which there would be",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_Paragraph39accordswi_e2c51b6e76e2541e",
+      "document_section": "legal_reasoning",
+      "page_start": 12,
+      "page_end": 12,
+      "clause_heading": "Paragraph 39 accords with the well-understood rule that international law obliga",
+      "verbatim_text": "59.\t\tParagraph 39 accords with the well-understood rule that international law obligations, \nwhile relevant in resolving any ambiguity in the meaning of statutory language, are not \ncapable of overriding the terms of a statute which lack such ambiguity: Lesa v AG of \nNew Zealand [1983] 2 AC 20, 33. This was the approach of Lord Porter in Theophile \nv Solicitor-General [1950] AC 186, (cited in relation to the SIA 1978 in Al-Adsani (No",
+      "clause_number": "59",
+      "clause_title": "Paragraph 39 accords with the well-understood rule that international law obliga",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_ThefirstcanonisLordB_e02e5144575e612c",
+      "document_section": "unknown",
+      "page_start": 13,
+      "page_end": 14,
+      "clause_heading": "The first canon is Lord Bingham’s stricture that the duty of the English court i",
+      "verbatim_text": "64.\t\tThe first canon is Lord Bingham’s stricture that the duty of the English court is to apply \nthe plain terms of the domestic statute. Next, I consider to be relevant the presumption (to the extent it is different from Lord Bingham’s statement) that the grammatical meaning of an enactment is the meaning that was intended by the legislator: Bennion, \nBailey and Norbury on Statutory Interpretation (8\nth Edn), s 11.4. Bennion says at s 11.4, \nin a section which has been judicially approved in R (Shropshire and Wrekin Fire \nAuthority and others) v Secretary of State for the Home Department [2019] EWHC \n1967, [55]; Edwards v S J Henderson & Company Ltd [2019] EWHC 2742,[63]; Jeffrey \nv Sawyer (1993) 16 OR (3d) 75, 78; Maguire v DPP [2004] 3 IR 241, [45]; Alcan (NT) \nAlumina Pty Ltd v Comr of Territory Revenue (2009) 239 CLR 27, [47]:\n“There is a presumption that the grammatical meaning of an \nenactment is the meaning that was intended by the legislator. \nComment \nThe grammatical meaning is arrived at without taking into \naccount legal considerations (see Code s 10.4). \nThe initial presumption is in favour of the grammatical meaning, \nsince the legislature is taken to mean what it says. The \npresumption is of very longstanding (sic), being embodied in \nearly maxims of the law. Broom cites the maxim Quoties in verbis \nnulla est ambiguitas, ibi nulla expositio contra verba non fienda est (where nothing in the words is ambiguous, no exposition of \nthem shall be made which is opposed to the words) [Legal Maxims (1st edn, 1845) pp 266ff (one must not depart from the words of a statute:see 5 Co Rep 119)]. \nThis presumption in favour of grammatical interpretation was \nstated by a nineteenth-century Lord Chancellor, Lord Selborne, in the words 'there is always some presumption in favour of the more simple and literal interpretation of the words of the statute' \n[Caledonian Rly Co v North British Rly Co (1881) 6 App Cas 114 \nat 121] \nMore recently, in Maunsell v Olins [[1975] AC 373 at 391F] Lord \nSimon said 'statutory language must always be given \npresumptively the most natural and ordinary meaning which is \nappropriate in the circumstances.' \nJudges of the present day show no inclination to abandon the \npresumption. So, for example, in R v Secretary of State for the \nEnvironment, Transport and the Regions, Ex p Spath Holme Ltd \n[[2001] 2 AC 349 at 397]. Lord Nicholls said: \n‘… an appropriate starting point is that language is to be taken to bear its ordinary meaning in the general context of the statute. \nAlthough Lord Bingham pointed out in R (Jackson) v Attorney \nGeneral [[2005] UKHL 56, [30].] that 'the literal meaning of even \na very familiar expression may have to be rejected if it leads to an interpretation or consequence which Parliament could not have \nintended', this passage indicates that the grammatical meaning is \nthe starting point and may not be rejected without cause.”",
+      "clause_number": "64",
+      "clause_title": "The first canon is Lord Bingham’s stricture that the duty of the English court i",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_Thispassagewasapprov_93f105288926a3ad",
+      "document_section": "legal_reasoning",
+      "page_start": 13,
+      "page_end": 13,
+      "clause_heading": "This passage was approved by Lord Bingham in Jones, [13]:",
+      "verbatim_text": "62.\t\tThis passage was approved by Lord Bingham in Jones, [13]: \n“On a straightforward application of the 1978 Act, it would follow that the Kingdom’s claim to immunity for itself and its servants or agents should succeed, since this is not one of those \nexceptional cases, specified in Part 1 of the 1978 Act, in which a \nstate is not immune, and therefore the general rule of immunity prevails. It is not suggested that the Act is in any relevant respect \nambiguous or obscure: it is, as Ward LJ observed in Al-Adsani v \nGovernment of Kuwait (No 2) (1996) 107 ILR 536, 549, ‘as plain \nas plain can be’. In the ordinary way, the duty of the English court \nis therefore to apply the plain terms of the domestic statute.”",
+      "clause_number": "62",
+      "clause_title": "This passage was approved by Lord Bingham in Jones, [13]:",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_InRvBentham20051WLR1_d93698a7ff808fc5",
+      "document_section": "legal_reasoning",
+      "page_start": 14,
+      "page_end": 14,
+      "clause_heading": "In R v Bentham [2005] 1 WLR 1057, Lord Bingham said:",
+      "verbatim_text": "65. In R v Bentham [2005] 1 WLR 1057, Lord Bingham said: \n“Rules of statutory construction have a valuable role when the meaning of a statutory provision is doubtful, but none where, as",
+      "clause_number": "65",
+      "clause_title": "In R v Bentham [2005] 1 WLR 1057, Lord Bingham said:",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Itseemstomethatafurt_9c3684bd657916f8",
+      "document_section": "unknown",
+      "page_start": 15,
+      "page_end": 15,
+      "clause_heading": "It seems to me that a further strong pointer that Parliament did not intend s 5 ",
+      "verbatim_text": "67.\t\tIt seems to me that a further strong pointer that Parliament did not intend s 5 only to \ncover acts done jure gestionis is the fact that in a number of other sections in the Act, \nParliament did choose to refer to sovereign authority in order to restrict exceptions to \nthe general immunity conferred by s 1(1). So, s 3 provides (emphasis added): \n“3 Commercial transactions and contracts to be performed in \nUnited Kingdom. \n(1) A State is not immune as respects proceedings relating to— \n(a) a commercial transaction entered into by the State; or \n(b) an obligation of the State which by virtue of a contract \n(whether a commercial transaction or not) falls to be performed \nwholly or partly in the United Kingdom. \n(2) This section does not apply if the parties to the dispute are \nStates or have otherwise agreed in writing; and subsection (1)(b) \nabove does not apply if the contract (not being a commercial \ntransaction) was made in the territory of the State concerned and the obligation in question is governed by its administrative law. \n(3) In this section ‘commercial transaction’ means -\n(a) any contract for the supply of goods or services; \n(b) any loan or other transaction for the provision of finance and \nany guarantee or indemnity in respect of any such transaction or \nof any other financial obligation; and \n(c) any other transaction or activity (whether of a commercial, \nindustrial, financial, professional or other similar character) into \nwhich a State enters or in which it engages otherwise than in the \nexercise of sovereign authority ; \nbut neither paragraph of subsection (1) above applies to a contract of employment between a State and an individual.”",
+      "clause_number": "67",
+      "clause_title": "It seems to me that a further strong pointer that Parliament did not intend s 5 ",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Section14providesaga_e49374c7eac02978",
+      "document_section": "unknown",
+      "page_start": 15,
+      "page_end": 15,
+      "clause_heading": "Section 14 provides (again, emphasis added):",
+      "verbatim_text": "68.\t\tSection 14 provides (again, emphasis added): \n“States entitled to immunities and privileges",
+      "clause_number": "68",
+      "clause_title": "Section 14 provides (again, emphasis added):",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_Thecanonofconstructi_b272c336dd60e5ed",
+      "document_section": "legal_reasoning",
+      "page_start": 16,
+      "page_end": 16,
+      "clause_heading": "The canon of construction that is engaged here is the principle that where Parli",
+      "verbatim_text": "69.\t\tThe canon of construction that is engaged here is the principle that where Parliament \nhas omitted particular words used in one part of an Act from an equivalent context in another part of the Act, such an omission will generally be treated as deliberate and as connoting a different approach in the two contexts: Bennion, s 21.3; R (M) v Gateshead \nCouncil [2007] 1 All ER 1262, [19]. Bennion comments on that case as follows: \n“In R (on the application of M) v Gateshead Council Dyson LJ \nsaid of provisions in the Children Act 1989: \n'… it is striking that the duties in ss 17, 18, and 20 are all owed by local authorities to children ‘within their area’, but that this qualifying phrase is absent from s 21. It would be striking if this omission were not deliberate.’ \nThis helped to show in relation to the s 21 duty (where those words were absent) that the duty applied to all children.”",
+      "clause_number": "69",
+      "clause_title": "The canon of construction that is engaged here is the principle that where Parli",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_Thisisconsistentwith_beaba488ace901e4",
+      "document_section": "legal_reasoning",
+      "page_start": 16,
+      "page_end": 17,
+      "clause_heading": "This is consistent with the approach adopted in Shepherd v Information Commissio",
+      "verbatim_text": "70.\t\tThis is consistent with the approach adopted in Shepherd v Information Commissioner \n[2019] EWCA (Crim) 2, [44]: \n“The fact that the legislature has chosen one form of words on three occasions, and a different (and, as we have said, atypical)\nformulation on two, is a strong indicator that the intention of \nParliament was to achieve different legal results.”",
+      "clause_number": "70",
+      "clause_title": "This is consistent with the approach adopted in Shepherd v Information Commissio",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_Asamatterofdomestica_4f9074fd87a888a5",
+      "document_section": "legal_reasoning",
+      "page_start": 17,
+      "page_end": 17,
+      "clause_heading": "As a matter of domestic and international law, torture can only be committed by ",
+      "verbatim_text": "73.\t\tAs a matter of domestic and international law, torture can only be committed by a public \nofficial (or at their instigation) and those acting in an official capacity: see s 134, \nCriminal Justice Act 1988; Article 1 of the UN Convention Against Torture (considered at length in R v Bow Street Magistrates Court ex parte Pinochet Ugarte (No 3) [2000] \nAC 147); and Article 1 of UN General Assembly Resolution 3452 (1975), cited in Al-\nAdsani (No 2) , p540.",
+      "clause_number": "73",
+      "clause_title": "As a matter of domestic and international law, torture can only be committed by ",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_Inthatsensetherefore_ffc23ffb63da6ea1",
+      "document_section": "legal_reasoning",
+      "page_start": 17,
+      "page_end": 18,
+      "clause_heading": "In that sense, therefore, torture is the very epitome of a sovereign or governme",
+      "verbatim_text": "74.\t\tIn that sense, therefore, torture is the very epitome of a sovereign or governmental act. \nIn Saudi Arabia v Nelson 507 US 349 (1993), a decision of the US Supreme Court, Mr \nNelson sued Saudi Arabia for torture committed in Saudi Arabia. Souter J wrote at \npp361-2: \n“The conduct boils down to abuse of the power of its police by \nthe Saudi Government, and however monstrous such abuse \nundoubtedly may be, a foreign state's exercise of the power of its police has long been understood for purposes of the restrictive theory as peculiarly sovereign in nature. See Arango v. Guzman \nTravel Advisors Corp., 621 F. 2d 1371, 1379 (CA5 1980); Victory \nTransport Inc. v. Comisaria General de Abastecimientos y \nTransportes, 336 F.2d 354, 360 (CA2 1964) (restrictive theory \ndoes extend immunity to a foreign state's ‘internal administrative \nacts\"), cert. denied, 381 U. S. 934 (1965); Herbage v. Meese, 747 \nF. Supp. 60, 67 (DC 1990), affirmance order, 292 U. S. App. D. \nC. 84, 946 F.2d 1564 (1991); K. Randall, Federal Courts and the \nInternational Human Rights Paradigm 93 (1990) (the Act's commercial-activity exception is irrelevant to cases alleging that \na foreign state has violated human rights). Exercise of the powers of police and penal officers is not the sort of action by which\nprivate parties can engage in commerce. \"[S]uch acts as \nlegislation, or the expulsion of an alien, or a denial of justice, \ncannot be performed by an individual acting in his own name. \nThey can be performed only by the state acting as such.\" Lauterpacht, The Problem of Jurisdictional Immunities of Foreign States, 28 Brit. Y. B. Int'l L. 220, 225 (1952); see also id., \nat 237.”",
+      "clause_number": "74",
+      "clause_title": "In that sense, therefore, torture is the very epitome of a sovereign or governme",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Myviewisalsosupporte_394d23ff3b1d6518",
+      "document_section": "unknown",
+      "page_start": 18,
+      "page_end": 18,
+      "clause_heading": "My view is also supported by Garnett, in The Defence of State Immunity for Acts ",
+      "verbatim_text": "79.\t\tMy view is also supported by Garnett, in The Defence of State Immunity for Acts of \nTorture, (1997) 18 Australian Year Book of International Law 97. The author \nconcluded, after addressing Al-Adsani (No 2) : \n“However, what is interesting about this discussion is that it \nconfirms that English courts will take a view similar to the US \ncourts in the Letelier case, that is, the availability of the tort \nexception will not be premised on any distinction between sovereign and private or commercial acts. If, therefore, acts of",
+      "clause_number": "79",
+      "clause_title": "My view is also supported by Garnett, in The Defence of State Immunity for Acts ",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_TolikeeffectisLordBi_0b525740373ad39b",
+      "document_section": "unknown",
+      "page_start": 18,
+      "page_end": 18,
+      "clause_heading": "To like effect is Lord Bingham’s statement in Jones, [19]:",
+      "verbatim_text": "75.\t\tTo like effect is Lord Bingham’s statement in Jones, [19]: \n“It is, I think, difficult to accept that torture cannot be a \ngovernmental or official act, since under article 1 of the Torture Convention torture must, to qualify as such, be inflicted by or with the connivance of a public official or other person acting in \nan official capacity.”",
+      "clause_number": "75",
+      "clause_title": "To like effect is Lord Bingham’s statement in Jones, [19]:",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_InotethatinBenkharbo_a7b03cafaef499a8",
+      "document_section": "unknown",
+      "page_start": 20,
+      "page_end": 20,
+      "clause_heading": "I note that in Benkharbouche , [10], Lord Sumption said that the exceptions in t",
+      "verbatim_text": "89.\t\tI note that in Benkharbouche , [10], Lord Sumption said that the exceptions in the SIA \n1978 ‘related to a broad range of acts conceived to be of a private law character’. Respectfully, I do not consider this observation provides any assistance to the \nDefendant. Firstly, as the following words of the sentence make clear, Lord Sumption \nwas talking specifically of commercial transactions and commercial activities, as well as contracts of employment and enforcement against state-owned property used or intended for use for commercial purposes. Second, the case was not about s 5 and the imperii/gestionis dichotomy. The question at issue on the appeal, as Lord Sumption \nexplained at [1], was whether two provisions of the SIA 1978 are consistent with the European Convention on Human Rights (ECHR) and the European Union Charter of Fundamental Rights. The two provisions are ss 4(2)(b) and 16(1)(a). In summary the effect of section 4(2)(b) is that a state is immune in respect of proceedings relating to a contract of employment between a state and a person who at the time of the contract is \nneither a national of the UK nor habitually resident there; and the effect of section \n16(1)(a) is that a state is immune as respects proceedings concerning the employment of members of a diplomatic mission, including its administrative, technical and \ndomestic staff. It was therefore concerned with a different issue to the one I am \naddressing, as Lord Sumption made clear at [39] when he said the case was not concerned with whether the acts in question were covered by an exception in the SIA 1978 (the issue before me), but whether the immunity they confer is wider than customary international law requires, ‘and that raises different considerations.’",
+      "clause_number": "89",
+      "clause_title": "I note that in Benkharbouche , [10], Lord Sumption said that the exceptions in t",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Article11oftheEurope_2a16426a2f7e4581",
+      "document_section": "unknown",
+      "page_start": 21,
+      "page_end": 21,
+      "clause_heading": "Article 11 of the European Convention on State Immunity 1972 (the Basle Conventi",
+      "verbatim_text": "91.\t\tArticle 11 of the European Convention on State Immunity 1972 (the Basle Convention) (ETS 74) provides: \n“A Contracting State cannot claim immunity from the jurisdiction of a court of another Contracting State in proceedings which \nrelate to redress for injury to the person or damage to tangible \nproperty, if the facts which occasioned the injury or damage occurred in the territory of the State of the forum, and if the author of the injury or damage was present in that territory at the time when those facts occurred.”",
+      "clause_number": "91",
+      "clause_title": "Article 11 of the European Convention on State Immunity 1972 (the Basle Conventi",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Thefactsaresomewhatc_98c6ca7dc014b8e2",
+      "document_section": "unknown",
+      "page_start": 21,
+      "page_end": 22,
+      "clause_heading": "The facts are somewhat convoluted, but in summary were as follows. In August 199",
+      "verbatim_text": "94.\t\tThe facts are somewhat convoluted, but in summary were as follows. In August 1993, \nthe Attorney-General of Australia made a request to the Government of the United \nKingdom, pursuant to the 1986 Scheme relating to Mutual Assistance in Criminal Matters within the Commonwealth (the Harare Scheme), to seek a Court order to search \nfor documents relating to an investigation being conducted by the Australian Federal\nPolice (the AFP) into suspected tax evasion. The investigation concerned the plaintiff \ncompany, Propend Finance Pty Limited (Propend). In response to this request, the \nHome Secretary issued directions to the Metropolitan Police in London under the \nCriminal Justice (International Cooperation) Act 1990. Acting under these directions, officers of the Metropolitan Police applied for search warrants, which were issued by a judge at the Central Criminal Court on 26 October 1993. The first defendant, \nSuperintendent Alan Sing, who was an officer of the AFP and an accredited diplomat \nwith the role of police liaison officer at the Australian High Commission in London, gave evidence at the hearing at which the warrants were issued. The following day, the Metropolitan Police seized documents from the premises of a firm of solicitors and a \nfirm of accountants in London. These documents were subsequently handed by the \nMetropolitan Police to the first defendant who took them to the premises of the Australian High Commission.",
+      "clause_number": "94",
+      "clause_title": "The facts are somewhat convoluted, but in summary were as follows. In August 199",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Aftersettingoutthefa_b3adebc057534b2f",
+      "document_section": "unknown",
+      "page_start": 22,
+      "page_end": 22,
+      "clause_heading": "After setting out the facts, Laws J turned to the law at p628. One of the issues",
+      "verbatim_text": "98.\t\tAfter setting out the facts, Laws J turned to the law at p628. One of the issues he considered was whether the AFP was entitled to immunity under s 14 of the SIA 1978 \nas falling within the expression ‘the government’ in s 14(1)(b) or a ‘department of that \ngovernment’ (in s 14(1)(c)), both of which are entitled to the general immunity conferred by s 1(1) and to which the exceptions to immunity in the Act apply.",
+      "clause_number": "98",
+      "clause_title": "After setting out the facts, Laws J turned to the law at p628. One of the issues",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Severalmonthslaterth_2eeb08c712ed9bc5",
+      "document_section": "unknown",
+      "page_start": 22,
+      "page_end": 22,
+      "clause_heading": "Several months later, the plaintiffs discovered that the first defendant had sen",
+      "verbatim_text": "96.\t\tSeveral months later, the plaintiffs discovered that the first defendant had sent extracts from the seized documents to the headquarters of the AFP in Canberra shortly after giving the undertaking to the Court. The plaintiffs alleged that this communication was \nin breach of the undertaking and instituted proceedings for contempt of court against \nthe first defendant, who by then had completed his appointment in the UK and returned to Australia, and the Commissioner of the AFP, who was sued as representing the AFP. The defendants maintained that the Court lacked jurisdiction, because the first defendant was entitled to diplomatic immunity and both defendants were protected by \nstate immunity.",
+      "clause_number": "96",
+      "clause_title": "Several months later, the plaintiffs discovered that the first defendant had sen",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_ThejudgeheldthattheA_5a50b1fc957a5931",
+      "document_section": "unknown",
+      "page_start": 22,
+      "page_end": 22,
+      "clause_heading": "The judge held that the AFP did not fall within either provision (at p651) and s",
+      "verbatim_text": "99.\t\tThe judge held that the AFP did not fall within either provision (at p651) and so was not entitled to immunity (at p653). After referring to a German case he said at p652: \n“The case throws no light on the question whether the AFP are, \nby the law of Australia, part of the executive federal government. \nIn my judgment they are not. Certainly they exercise public power, but not all public power is the power of the executive.",
+      "clause_number": "99",
+      "clause_title": "The judge held that the AFP did not fall within either provision (at p651) and s",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Theplaintiffssoughtj_371a5cbc959fd9ff",
+      "document_section": "unknown",
+      "page_start": 22,
+      "page_end": 22,
+      "clause_heading": "The plaintiffs sought judicial review of the decision to issue the search warran",
+      "verbatim_text": "95.\t\tThe plaintiffs sought judicial review of the decision to issue the search warrants, and on 29 October 1993 applied to the High Court for an interlocutory injunction restraining \nthe first defendant from dealing with the documents. At the hearing of the application \nfor an injunction before Potts J, the first defendant gave an undertaking to the Court that neither the documents nor copies thereof would be removed from the jurisdiction of the Court or from the High Commission and that copies of the documents would not \nbe transmitted by fax. The decision to issue the search warrants was subsequently \nquashed by the Divisional Court in March 1994.",
+      "clause_number": "95",
+      "clause_title": "The plaintiffs sought judicial review of the decision to issue the search warran",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Theplaintiffshadcont_9eca8e812a883fe5",
+      "document_section": "unknown",
+      "page_start": 23,
+      "page_end": 23,
+      "clause_heading": "The plaintiffs had contended that the AFP did not fall within s 14(1)(b) or (c),",
+      "verbatim_text": "100.\t\tThe plaintiffs had contended that the AFP did not fall within s 14(1)(b) or (c), but that \nif it did, then it did not have immunity ( inter alia) because of s 5. As to this, Laws J \nsaid at pp651-652: \n“Mr Pleming [for the plaintiffs] had a number of submissions to the effect that, if he was wrong about the status of the AFP, nevertheless they were excluded from immunity on specific \ngrounds … Secondly, by virtue of Section 5(b) of the Act of 1978 \nthe AFP is deprived of immunity, because the proceedings before Potts J were in respect of damage or loss of tangible property caused by an act or omission in the United Kingdom. The \nproperty is said to be seized documents. I would not have upheld \nMr Pleming's argument on this ground. It seems to me that Section 5(b) is concerned with what I may call ordinary private \nlaw claims. The section's flavour is given by para (a), the \nreference to death or personal injury. There is I think no authority on the point, but I incline to the view that the section's rationale may he lie in the fact that an accident causing personal injury, or some event causing damage to property (or its loss), is for the \nmost part likely to involve acts or omissions by a servant of the \nforeign State in question which are incidental to the State's sovereign status, rather than integral to it. Where, as here, property is seized pursuant to an order of the court, obtained following a direction of the Secretary of State following a request \nmade at the international level, neither the seizure nor the \nproperty's later retention can in my judgment fall within Section 5(b). It is true that the proceedings before Potts J fall to be \nregarded procedurally as part and parcel of the writ action which \nwas issued after the hearing; and in form that was a private law claim. But in truth, as I have made clear, it was ancillary to the judicial review. In the alternative I would conclude the section 5(b) issue against the plaintiffs on the short ground (as submitted \nin Mr Mayhew's skeleton argument) that the ‘loss’ of the \ndocuments was not caused by an act or omission in the UK by Australia, but by the Metropolitan Police acting under Judge Goddard's order.”",
+      "clause_number": "100",
+      "clause_title": "The plaintiffs had contended that the AFP did not fall within s 14(1)(b) or (c),",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_LawsJfoundthatInspec_186bec819a3155dd",
+      "document_section": "unknown",
+      "page_start": 24,
+      "page_end": 24,
+      "clause_heading": "Laws J found that Inspector Sing (the first defendant) was entitled to immunity,",
+      "verbatim_text": "102.\t\tLaws J found that Inspector Sing (the first defendant) was entitled to immunity, and the \nplaintiffs appealed to the Court of Appeal against that finding. The Commissioner of \nthe AFP (the second defendant) cross-appealed against the finding that the AFP was \nnot entitled to immunity. There was a Respondents’ Notice on the cross-appeal. This was summarised by the Court of Appeal at pp664-665: \n“They also rely by Respondents' Notice on three alternative arguments that the Commissioner has no immunity because (i) the present action constitutes ‘proceedings in respect of … damage or loss of tangible property’ within Section 5(b) of the \n1978 Act; (ii) the Commissioner instituted the present action and \nis therefore deemed to have submitted to the jurisdiction and waived any immunity under Sections 2(1) and (3)(a); and (iii) the Commissioner had submitted to the jurisdiction, by the giving by \nthe Superintendent of the undertakings on the cross-appeal that \nthe action constituted ‘proceedings in respect of … damage or loss of tangible property within s 5(b) of the SIA 1978 (at p664).”",
+      "clause_number": "102",
+      "clause_title": "Laws J found that Inspector Sing (the first defendant) was entitled to immunity,",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_LawsJhandeddownhisju_6e6a38f72bdf20d7",
+      "document_section": "unknown",
+      "page_start": 24,
+      "page_end": 24,
+      "clause_heading": "Laws J handed down his judgment on 14 March 1996. The decision of the Court in A",
+      "verbatim_text": "101.\t\tLaws J handed down his judgment on 14 March 1996. The decision of the Court in Al-\nAdsani (No 2) had only been handed down two days earlier, on 12 March 1996. \nUnsurprisingly, therefore, Laws J was not referred to it. I will return to this point later.",
+      "clause_number": "101",
+      "clause_title": "Laws J handed down his judgment on 14 March 1996. The decision of the Court in A",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Seconditseemstomethe_18da01b87884be02",
+      "document_section": "unknown",
+      "page_start": 24,
+      "page_end": 24,
+      "clause_heading": "Second, it seems to me the Claimant is right to say that the passage in issue wa",
+      "verbatim_text": "106.\t\tSecond, it seems to me the Claimant is right to say that the passage in issue was, in any event, obiter dicta , given that the judge had already found that the AFP was not entitled \nto immunity as falling outwith s 14. Thus, the applicability or otherwise of s 5 on the facts of the case did not arise. That the passage in question was (and was intended) to \nbe obiter I think is supported by the judge’s phraseology (emphasis added): ‘ I would \nnot have upheld Mr Pleming's argument on this ground.’ This does not seem to me to \nbe a sign the judge was intending to reach a definitive conclusion on the issue. Added \nto this is the fact that he was much more definite on the basis on which he did determine",
+      "clause_number": "106",
+      "clause_title": "Second, it seems to me the Claimant is right to say that the passage in issue wa",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_TheCourtofAppealdeal_ee5f421171e23a94",
+      "document_section": "unknown",
+      "page_start": 24,
+      "page_end": 24,
+      "clause_heading": "The Court of Appeal dealt with the s 5 point in the briefest of terms at p664:",
+      "verbatim_text": "103.\t\tThe Court of Appeal dealt with the s 5 point in the briefest of terms at p664: \n“About the first two we need say no more than that they were succinctly rejected by the judge (at pages 52–3 of his judgment) on grounds with which we agree. To the third we shall refer at the \nend of this judgment.”",
+      "clause_number": "103",
+      "clause_title": "The Court of Appeal dealt with the s 5 point in the briefest of terms at p664:",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Idonotconsideragainw_a322c19fccf4ebb6",
+      "document_section": "unknown",
+      "page_start": 25,
+      "page_end": 25,
+      "clause_heading": "I do not consider, again with respect, that the Court of Appeal’s very brief app",
+      "verbatim_text": "110.\t\tI do not consider, again with respect, that the Court of Appeal’s very brief approval of \nLaws J’s approach can convert it into a binding ratio, given the way in which the judge \nexpressed himself. The Court of Appeal’s view was no more than a bare approval of a \ntentatively expressed obiter dictum which, in light of Al-Adsani (No 2) , was in my view \nper incuriam . Like Laws J, the Court of Appeal does not appear to have been referred \nto that decision. I also agree with the Claimant that the terms in which the Court of \nAppeal expressed itself indicates that no general rule as advanced by the Defendant in \nthis case can be spelled out of the ratio of the case: see Great Western Railway Co v \nOwners of SS Mostyn [1928] AC 57, [73].",
+      "clause_number": "110",
+      "clause_title": "I do not consider, again with respect, that the Court of Appeal’s very brief app",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_ThirdLawsJslanguagee_20af50112e068ebe",
+      "document_section": "unknown",
+      "page_start": 25,
+      "page_end": 25,
+      "clause_heading": "Third, Laws J’s language elsewhere smacks of a tentative obiter dictum and no mo",
+      "verbatim_text": "107.\t\tThird, Laws J’s language elsewhere smacks of a tentative obiter dictum and no more. \nI refer in particular to, ‘There is I think no authority on the point, but I incline to the \nview that the section's rationale may be … for the most part likely to involve ’ (emphasis \nadded).",
+      "clause_number": "107",
+      "clause_title": "Third, Laws J’s language elsewhere smacks of a tentative obiter dictum and no mo",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_Ialsoneedtobrieflyme_b613b5184664a209",
+      "document_section": "legal_reasoning",
+      "page_start": 25,
+      "page_end": 25,
+      "clause_heading": "I also need to briefly mention the judgment of Stewart J in Estate of Michael He",
+      "verbatim_text": "111.\t\tI also need to briefly mention the judgment of Stewart J in Estate of Michael Heiser \nand 121 Others v Islamic Republic of Iran [2019] EWHC 2074, [131]. The case was \ncomplicated, but at bottom it concerned the enforcement of judgments obtained by \nvarious claimants in the US Federal District Court for the District of Columbia. They \narose out of a number of attacks around the world at various times in recent history in \nwhich citizens of the United States were either killed or severely injured. Very often \nthe basis of the finding against the Government of Iran had been that it had conspired \nto cause the deaths or injuries concerned and had provided assistance by way of",
+      "clause_number": "111",
+      "clause_title": "I also need to briefly mention the judgment of Stewart J in Estate of Michael He",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_At131StewartJsaid_ff6ad4ec5db0363b",
+      "document_section": "unknown",
+      "page_start": 26,
+      "page_end": 26,
+      "clause_heading": "At [131] Stewart J said:",
+      "verbatim_text": "112. At [131] Stewart J said: \n“Although not argued before me, it occurs to me that there may possibly be a more fundamental objection to enforcement. This \nwould be that when a foreign state commits an inherently \nsovereign or governmental act, section 5 has no application since it cannot deprive the state of its defence of state immunity. This is because in such circumstances customary international law \nprovides a complete defence – see Benkharbouche at [17]; see \nalso the reference at [10] that the exceptions in the 1978 Act \n‘relate to a broad range of acts conceived to be of a private law character’ Obviously I do not rule on this, in the absence of \nargument. I merely mention it.”",
+      "clause_number": "112",
+      "clause_title": "At [131] Stewart J said:",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Beforemetherewasexte_0a8e52a92e3821f7",
+      "document_section": "unknown",
+      "page_start": 26,
+      "page_end": 26,
+      "clause_heading": "Before me there was extensive and impressive citation of public international la",
+      "verbatim_text": "114. Before me there was extensive and impressive citation of public international law materials, in particular by Mr White on behalf of the Defendant. However, in accordance with Lesa, this material cannot assist the Defendant because s 5 is not \nambiguous, as Al-Adsani (No 2) and Jones make clear. In Lesa, Lord Dipock said at \np33: \n“Despite the fact that the resolutions (of the Council of the League of Nations) did not impose on the Government of New Zealand any obligation binding upon it in International Law, their Lordships agree with the Court of Appeal that the resolutions \nwould be relevant in resolving any ambiguity in the meaning of \nthe language ... They are, however, unable, for reasons already stated, to discern any ambiguity or lack of clarity in that language ...”",
+      "clause_number": "114",
+      "clause_title": "Before me there was extensive and impressive citation of public international la",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_ForsimilarreasonsIde_a873b7a7ea0cc7d5",
+      "document_section": "legal_reasoning",
+      "page_start": 26,
+      "page_end": 26,
+      "clause_heading": "For similar reasons, I decline to consider the materials deployed by the Defenda",
+      "verbatim_text": "115. For similar reasons, I decline to consider the materials deployed by the Defendant under \nPepper v Hart for the reasons given by the Claimant at [38]-[42] of his Skeleton \nArgument.",
+      "clause_number": "115",
+      "clause_title": "For similar reasons, I decline to consider the materials deployed by the Defenda",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_Suchdomesticauthorit_cc961a9eb8196737",
+      "document_section": "legal_reasoning",
+      "page_start": 27,
+      "page_end": 27,
+      "clause_heading": "Such domestic authority as there is on this question supports, in a limited way,",
+      "verbatim_text": "121.\t\tSuch domestic authority as there is on this question supports, in a limited way, the \nClaimant’s interpretation. In Heiser v Islamic Republic of Iran [2012] EWHC 2938 (QB) \n(the same case which later came before Stewart J), on an ex parte application for \npermission to serve the claim form out of the jurisdiction, Singh J (as he then was) held that the claimants had a good arguable case that the s 5 exception applied in relation to \ninternational conspiracies causing death and injury to US citizens. He said at [6]-[7]: \n“6. The issue which may arise under the State Immunity Act is \nwhether section 5 would apply if this were a case which arose in the United Kingdom. By way of analogy, the question will become whether the death or personal injury had been caused ‘by \nan act or omission in the United States’.",
+      "clause_number": "121",
+      "clause_title": "Such domestic authority as there is on this question supports, in a limited way,",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_IaccepttheDefendants_ccac443b8df28b3a",
+      "document_section": "unknown",
+      "page_start": 28,
+      "page_end": 28,
+      "clause_heading": "I accept the Defendant’s point that these were short ex parte judgments, nonethe",
+      "verbatim_text": "123.\t\tI accept the Defendant’s point that these were short ex parte judgments, nonetheless they \nare judgments of exceptionally distinguished judges and are helpful so far as they go, and provide more support for the Claimant’s contention than they do for the Defendant’s \nposition.",
+      "clause_number": "123",
+      "clause_title": "I accept the Defendant’s point that these were short ex parte judgments, nonethe",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_Inhis2019judgmentinH_7404da6386b1508f",
+      "document_section": "legal_reasoning",
+      "page_start": 28,
+      "page_end": 28,
+      "clause_heading": "In his 2019 judgment in Heiser ([2019] EWHC 2074 (QB)) Stewart J considered s 5 ",
+      "verbatim_text": "124.\t\tIn his 2019 judgment in Heiser ([2019] EWHC 2074 (QB)) Stewart J considered s 5 at \n[134]-[160]. He concluded that, on the facts, s 5 could not apply because all but one of the cases with which he was concerned, ‘… involved acts or omissions committed \nin Middle Eastern states, not in the United States’ ( [146],[148]). He emphasised at [148] that: \n“The fact that either primary victims continued to suffer injury on \nreturn to the United States or that secondary victims never left the \nUnited States does not assist the Claimants. Section 5 does not permit eliding the act or omission causing the personal injury with \nwhere the personal injury occurs. I do not accept that section 5 \ncan be construed with such flexibility as to permit the Claimants’ submission to succeed.",
+      "clause_number": "124",
+      "clause_title": "In his 2019 judgment in Heiser ([2019] EWHC 2074 (QB)) Stewart J considered s 5 ",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_Thisreasoningwasadop_d133dd9ed28775da",
+      "document_section": "legal_reasoning",
+      "page_start": 28,
+      "page_end": 28,
+      "clause_heading": "This reasoning was adopted in Ben-Rafael v Islamic Republic of Iran [2015] EWHC",
+      "verbatim_text": "122.\t\tThis reasoning was adopted in Ben-Rafael v Islamic Republic of Iran [2015] EWHC \n3203 (QB). That case concerned an attempt to enforce a judgment from a US court for \ndamages arising out of a bomb attack in Buenos Aires. Whipple J (as she then was) noted that the US courts had concluded that \n“… the proceedings were caused by an act or omission in the \nUnited States, to the extent that the US courts were considering a composite act (namely, one of conspiracy) at least one element of which had occurred within the territory of the US”.",
+      "clause_number": "122",
+      "clause_title": "This reasoning was adopted in Ben-Rafael v Islamic Republic of Iran [2015] EWHC",
+      "legal_category": "liability",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Ifindsupportforthisi_c4863188134b6996",
+      "document_section": "unknown",
+      "page_start": 29,
+      "page_end": 29,
+      "clause_heading": "I find support for this interpretation from the cases on the tort jurisdictional",
+      "verbatim_text": "128.\t\tI find support for this interpretation from the cases on the tort jurisdictional gateway in PD 6B, [3.1(9)(b)]. I do not accept the Defendant’s suggestion that these cases can readily be distinguished. True, the context is different, but the language is similar. \nParagraph [3.1(9)(b)] provides (emphasis added): \n“3.1 The claimant may serve a claim form out of the jurisdiction \nwith the permission of the court under rule 6.36 where – \n… \n(9) A claim is made in tort where – \n(a) damage was sustained, or will be sustained, within the \njurisdiction; or \n(b) damage which has been or will be sustained results from an \nact committed, or likely to be committed, within the jurisdiction .”",
+      "clause_number": "128",
+      "clause_title": "I find support for this interpretation from the cases on the tort jurisdictional",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Thisseriesofcasessup_0793fc9a06d949c8",
+      "document_section": "unknown",
+      "page_start": 29,
+      "page_end": 29,
+      "clause_heading": "This series of cases supports the view that s 5 will not apply when no act or om",
+      "verbatim_text": "127.\t\tThis series of cases supports the view that s 5 will not apply when no act or omission of a \nforeign state takes place in the UK. But they do not require that all acts or omissions \nmust occur in the UK for s 5 to apply, and they indicate that composite acts may fall \nwithin s 5.",
+      "clause_number": "127",
+      "clause_title": "This series of cases supports the view that s 5 will not apply when no act or om",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_TheapproachoftheEngl_1343b9075504af08",
+      "document_section": "legal_reasoning",
+      "page_start": 29,
+      "page_end": 29,
+      "clause_heading": "The approach of the English courts to the predecessor to [3.9(1)(b)] was that it",
+      "verbatim_text": "129.\t\tThe approach of the English courts to the predecessor to [3.9(1)(b)] was that it was \nsufficient that a ‘substantial and efficacious act’, and not the entire tort, be committed \nwithin the jurisdiction: Metall und Rohstoff AG v Donaldson Lutfin & Jenrette Inc \n[1990] 1 QB 391, p437A-G, a case under the old RSC r 11: \n“As the rule now stands it is plain that jurisdiction may be assumed only where (a) the claim is founded on a tort and either \n(b) the damage was sustained within the jurisdiction or (c) the \ndamage resulted from an act committed within the jurisdiction. \nCondition (a) poses a question which we consider below: what law is to be applied in resolving whether the claim is “founded on a tort”? Condition (b) raises the question: what damage is referred \nto? It was argued for ACLI that, since the draftsman had used the \ndefinite article and not simply referred to “damage”, it is necessary that all the damage should have been sustained within the jurisdiction. No authority was cited to support the suggestion that this is the correct construction of the convention to which the \nrule gives effect and it could lead to an absurd result if there were \nno one place in which all the plaintiff’s damage had been suffered. \nThe judge rejected this argument and so do we. It is enough if \nsome significant damage has been sustained in England. Condition (c) prompts the inquiry: what if damage has resulted from acts committed partly within and partly without the jurisdiction? This will often be the case where a series of acts, \nregarded by English law as tortious, are committed in an \ninternational context. It would not, we think, make sense to require all the acts to have been committed within the jurisdiction, because again there might be no single jurisdiction where that",
+      "clause_number": "129",
+      "clause_title": "The approach of the English courts to the predecessor to [3.9(1)(b)] was that it",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_InAshtonInvestmentsL_9670a5cae99c7d2c",
+      "document_section": "legal_reasoning",
+      "page_start": 30,
+      "page_end": 30,
+      "clause_heading": "In Ashton Investments Ltd v OJSC Russian Aluminium [2007] 1 All ER (Comm) 857,",
+      "verbatim_text": "130.\t\tIn Ashton Investments Ltd v OJSC Russian Aluminium [2007] 1 All ER (Comm) 857, \n[62]-[63], the test under PD 6B, [3.1(9)(b)] was held to be satisfied in circumstances where a ‘hack’ of devices located within the jurisdiction emanated from abroad. Jonathan Hirst QC (sitting as a deputy judge of the High Court) said: \n“[62] Ashton’s computer server was in London. That is where the confidential and privileged information was stored. The attack emanated from Russia but it was directed at the server in London \nand that is where the hacking occurred. In my view, significant \ndamage occurred in England where the server was improperly accessed and the confidential and privileged information was \nviewed and downloaded. The fact that it was transmitted almost \ninstantly to Russia does not mean that the damage occurred only in Russia. If a thief steals a confidential letter in London but does not read it until he is abroad, damage surely occurs in London. It should not make a difference that, in a digital age of almost \ninstantaneous communication, the documents are stored in digital \nform rather than hard copy and information is transmitted electronically abroad where it is read. The removal took place in London. I also emphatically reject the proposition that the damages claimed are so trivial that the court should decline to \nbother the defendants with the claim. On the contrary, if the \nclaimants make good the pleaded allegations at trial, then I think this is a very serious and substantial case indeed, with \nconsiderable potential ramifications. The cost of replacing the \ncomputer and the investigation/consultancy costs may not be very great, but the court will also have to consider what damages and other relief it should grant for the substantial injury caused—viz the improper obtaining of confidential and privileged \ninformation. \n[63] I also consider that substantial and efficacious acts occurred \nin London, as well as Russia. That is where the hacking occurred \nand access to the server was achieved. This may have been as a result of actions taken in Russia but they were designed to make",
+      "clause_number": "130",
+      "clause_title": "In Ashton Investments Ltd v OJSC Russian Aluminium [2007] 1 All ER (Comm) 857,",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_InRvGovernorofBrixto_50a750e74a3dbdf7",
+      "document_section": "legal_reasoning",
+      "page_start": 31,
+      "page_end": 31,
+      "clause_heading": "In R v Governor of Brixton Prison, ex p Levin [1997] QB 65, the United States so",
+      "verbatim_text": "133.\t\tIn R v Governor of Brixton Prison, ex p Levin [1997] QB 65, the United States sought \nMr Levin’s extradition to face trial on 66 charges concerning his alleged unauthorised access to a bank's computer in the United States in order to transfer funds into various bank accounts controlled by him. He had gained access to the US computer by means \nof his own computer in Russia. The conduct alleged translated under English criminal \nlaw into offences of theft, forgery, false accounting and unauthorised modification of computer material. Because of how extradition law operates, there was an issue as to whether what happened in the US would, in equivalent circumstances, be regarded as \nhaving happened in the UK. The Divisional Court said at p81: \n“For the reasons we have already indicated, the operation of the keyboard by a computer operator produces a virtually \ninstantaneous result on the magnetic disk of the computer even though it may be 10,000 miles away. It seems to us artificial to \nregard the act as having been done in one rather than the other \nplace. But, in the position of having to choose on the facts of this case whether, after entering the computer in Parsipenny [New Jersey], the act of appropriation by inserting instructions on the disk occurred there or in St. Petersburg, we would opt for \nParsipenny. The fact that the applicant was physically in St. \nPetersburg is of far less significance than the fact that he was looking at and operating on magnetic disks located in Parsipenny. The essence of what he was doing was done there. Until the \ninstruction is recorded on the disk, there is in fact no \nappropriation of the rights of Bank Artha Graha \n… \nIn the case of a virtually instantaneous instruction intended to take \neffect where the computer is situated it seems to us artificial to \nregard the insertion of an instruction onto the disk as having been done only at the remote place where the keyboard is situated.”",
+      "clause_number": "133",
+      "clause_title": "In R v Governor of Brixton Prison, ex p Levin [1997] QB 65, the United States so",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_TosimilareffectareVi_ebd822b6e01e1726",
+      "document_section": "legal_reasoning",
+      "page_start": 31,
+      "page_end": 31,
+      "clause_heading": "To similar effect are Vidal-Hall v Google Inc [2014] 1 WLR 4155, [78], and Lloyd",
+      "verbatim_text": "131.\t\tTo similar effect are Vidal-Hall v Google Inc [2014] 1 WLR 4155, [78], and Lloyd v \nGoogle LLC [2019] 1 WLR 1265, [47], both of which concerned alleged secret \ntransnational tracking of internet users by Google in breach of data protection legislation. Although both Vidal-Hall and Lloyd were subject to appeal, the analysis \non these issues was not revisited on appeal.",
+      "clause_number": "131",
+      "clause_title": "To similar effect are Vidal-Hall v Google Inc [2014] 1 WLR 4155, [78], and Lloyd",
+      "legal_category": "conduct",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_AsnotedbyStewartJinH_88c3e65ca9494862",
+      "document_section": "unknown",
+      "page_start": 32,
+      "page_end": 32,
+      "clause_heading": "As noted by Stewart J in Heiser, [98], most US court decisions on FSIA have take",
+      "verbatim_text": "136.\t\tAs noted by Stewart J in Heiser, [98], most US court decisions on FSIA have taken \nthe position that the entire tort (including the causative acts) must have occurred in the \nUS for the non-commercial tort exception to immunity to apply under that Act. These cases include: Smith v Socialist Peoples’ Libyan Arab Jamahiriya 101 F 3d 239, 246 \n(2nd Cir.1996) (The Lockerbie Bombing case); Argentine Republic v Ameradi Hess \nShipping Corp 488 US 428, 421 (1989); Persinger v Islamic Republic of Iran 729, F \n2d 835 (DC Cir); Cabiri v Government of Republic of Ghana 165 F 3d 193 (1999); in \nRe Terrorist Attacks 714 F 3d 109, 116 (2nd Cir 2013).",
+      "clause_number": "136",
+      "clause_title": "As noted by Stewart J in Heiser, [98], most US court decisions on FSIA have take",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Inthelastofthesecase_efbcc311ac2edbb9",
+      "document_section": "unknown",
+      "page_start": 32,
+      "page_end": 32,
+      "clause_heading": "In the last of these cases, the US Court of Appeals for the Second Circuit summa",
+      "verbatim_text": "137.\t\tIn the last of these cases, the US Court of Appeals for the Second Circuit summarised the ‘entire tort’ rule as follows: \n“As noted, the FSIA's non-commercial tort exception provides: \nA foreign state shall not be immune from the jurisdiction of courts \nof the United States or of the States in any case—... in which \nmoney damages are sought against a foreign state for personal injury or death, or damage to or loss of property, occurring in the United States and caused by the tortious act or omission of that foreign state or of any official or employee of that foreign state \nwhile acting within the scope of his office or employment. (28 \nUSC § 1605(a)(5)). \nFor this exception to apply, however, the ‘entire tort’ must be \ncommitted in the United States. This so-called “entire tort” rule \nwas first articulated by the Supreme Court in Argentine Republic",
+      "clause_number": "137",
+      "clause_title": "In the last of these cases, the US Court of Appeals for the Second Circuit summa",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_OveralltheDefendantp_346d87814775d3d8",
+      "document_section": "unknown",
+      "page_start": 32,
+      "page_end": 32,
+      "clause_heading": "Overall, the Defendant proposes a test for s 5 that requires ‘each of the acts r",
+      "verbatim_text": "134.\t\tOverall, the Defendant proposes a test for s 5 that requires ‘each of the acts relied on as \ncausing the personal injury [to have] occurred in the UK’ (Skeleton, [43]). I consider \nthat this test has no basis in the text of s 5, as properly interpreted, for the reasons I have \ngiven; the case law of the English courts; or international treaties. It appears to be modelled on the ‘entire tort’ doctrine in the United States, which is based on different statutory wording and legislative history. I will now turn to that.",
+      "clause_number": "134",
+      "clause_title": "Overall, the Defendant proposes a test for s 5 that requires ‘each of the acts r",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_vAmeradaHessShipping_7aa2f905e2793ecb",
+      "document_section": "legal_reasoning",
+      "page_start": 32,
+      "page_end": 32,
+      "clause_heading": "v. Amerada Hess Shipping Corp., 488 U.S. 428, 109 S.Ct. 683,",
+      "verbatim_text": "v. Amerada Hess Shipping Corp., 488 U.S. 428, 109 S.Ct. 683, \n102 L.Ed.2d 818 (1989). In that case, the Supreme Court considered whether courts in the United States had jurisdiction over a suit brought by two Liberian corporations against the Argentine Republic to recover damages stemming from a tort allegedly committed by Argentina's armed forces on the high seas \nin violation of international law. Id. at 431, 109 S.Ct. 683. The \nCourt held that the action was barred by the FSIA, holding that \nthe noncommercial tort exception “covers only torts occurring within the territorial jurisdiction of the United States.” Id. at 441, \n109 S.Ct. 683.",
+      "clause_number": "V",
+      "clause_title": "v. Amerada Hess Shipping Corp., 488 U.S. 428, 109 S.Ct. 683,",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Seconditseemstometha_dacb0a43ff6f964e",
+      "document_section": "unknown",
+      "page_start": 34,
+      "page_end": 35,
+      "clause_heading": "Second, it seems to me that the wording of the US provision (‘ the tortious act ",
+      "verbatim_text": "146.\t\tSecond, it seems to me that the wording of the US provision (‘ the tortious act or \nomission of that foreign state’) is critically different to s 5 of the SIA 1978, with its \nreference to ‘ an act or omission in the United Kingdom’ (emphasis added). As I have \nalready indicated, the fact that Parliament specified only ‘an act’ suggests that not every \nwrongful act has to occur in the UK. By contrast, the use of the definite article conjoined to the word ‘tortious’ in the FSIA is a pointer to the conclusion that the\nentirety of the tortious activity is governed by the territorial jurisdictional \nrequirement (as the US courts have consistently held). Moreover, as set out above, \nEnglish courts have accepted that s 5 may apply where only some acts occur in the UK.",
+      "clause_number": "146",
+      "clause_title": "Second, it seems to me that the wording of the US provision (‘ the tortious act ",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_TheCourtinKidanewent_7c98480f38e15aa8",
+      "document_section": "unknown",
+      "page_start": 34,
+      "page_end": 34,
+      "clause_heading": "The Court in Kidane went on to highlight that the phrase ‘occurring in the Unite",
+      "verbatim_text": "141.\t\tThe Court in Kidane went on to highlight that the phrase ‘occurring in the United States’ \nis no mere surplusage as ‘[t]he entire tort – including not only the injury but also the \nact precipitating that injury – must occur in the United States’. On the facts, it held: \n“… at least a portion of Ethiopia’s alleged tort occurred abroad \n… \n… whether in London, Ethiopia or elsewhere, the tortious intent \naimed at Kidane plainly lay abroad and the tortious acts of computer \nprogramming likewise occurred abroad. Moreover, Ethiopia’s \nplacement of the FinSpy virus on Kidane’s computer, although completed in the United States when Kidane opened the infected e-mail attachment, began outside the United States. It thus cannot be \nsaid that the entire tort occurred in the United States. \n… \nWithout the software’s initial dispatch or an intent to spy – integral \nparts of the final tort which lay solely abroad – Ethiopia could not have intruded upon Kidane’s seclusion under Maryland law …”",
+      "clause_number": "141",
+      "clause_title": "The Court in Kidane went on to highlight that the phrase ‘occurring in the Unite",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Therearestatementsto_eb9de7e66baf93cf",
+      "document_section": "unknown",
+      "page_start": 35,
+      "page_end": 35,
+      "clause_heading": "There are statements to similar effect in later US cases on the entire tort doct",
+      "verbatim_text": "148.\t\tThere are statements to similar effect in later US cases on the entire tort doctrine: Asociacion de Reclamantes v United Mexican States 735 F.2d 1517 (DC Cir 1984) and \nJerez v Cuba 775 F.3d 419 (DC Cir 2014), itself cited in Kidane, on which the \nDefendant relies. I agree with the Claimant’s submissions that those circumstances particular to the FSIA are inapplicable to the SIA 1978.",
+      "clause_number": "148",
+      "clause_title": "There are statements to similar effect in later US cases on the entire tort doct",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Thirditisclearfromth_da9a613ef77db379",
+      "document_section": "unknown",
+      "page_start": 35,
+      "page_end": 35,
+      "clause_heading": "Third, it is clear from the decision In the Matter of the Complaint of Sedco Inc",
+      "verbatim_text": "147.\t\tThird, it is clear from the decision In the Matter of the Complaint of Sedco Inc 543 F \nSupp 561 (SD Tex, 1982), an early authority on the ‘entire tort’ theory under the FSIA, \nthat this approach was based in large part on the specific legislative history of that legislation in the US: \n“Plaintiffs argue the tort may occur, in whole or in part, in the United States, and that the tort occurs in the United States if the \nacts or omissions directly affect this country. This argument may \nbe correct in other circumstances, see Ohio v. Wyandotte \nChemicals Corp ., 401 U.S. 493, 91 S.Ct. 1005, 28 L.Ed.2d 258 \n(1971); however, legislative history appears to reject this theory \nwith respect to the FSIA. In describing the purpose of § \n1605(a)(5), the House Committee Report accompanying the House Bill, which ultimately became the FSIA, states: \n‘It denies immunity as to claims for personal injury or death, or for damage to or loss of property caused by the tortious act or omission of a foreign state or its officials \nor employees, acting within the scope of their authority; \nthe tortious act or omission must occur within the jurisdiction of the United States … \nHouse Report, supra at 6619 (emphasis added). The primary purpose of this exception is to cover the problem of traffic \naccidents by embassy and governmental officials in this country. \nId.”",
+      "clause_number": "147",
+      "clause_title": "Third, it is clear from the decision In the Matter of the Complaint of Sedco Inc",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_Incommonwithitssubmi_89cbe7fac8699003",
+      "document_section": "legal_reasoning",
+      "page_start": 35,
+      "page_end": 35,
+      "clause_heading": "In common with its submissions on the sovereign/private act issue (see above), t",
+      "verbatim_text": "149.\t\tIn common with its submissions on the sovereign/private act issue (see above), the \nDefendant also seeks to place reliance on Parliamentary statements made during the \npassage of the State Immunity Bill (see Skeleton, [35] and [37]). I again consider the Defendant’s submissions to be contrary to the principles in Pepper v Hart since the \nmeaning of s 5 is clear. Further, the Parliamentary statements relied upon by the Defendant would not ‘almost certainly settle the matter immediately one way or the other’, which is one of the well-known Pepper v Hart requirements. So, the \nParliamentary statement of Lord Wilberforce relied on by the Defendant at [35] of \nits Skeleton Argument (‘… Lord Wilberforce described the mechanism of s 5 in relation \nto composite acts as ‘unscientific’ because it ‘talks about an act or omission in the United Kingdom, whereas a great many acts or omissions are composite and sometimes occur partly inside and partly outside’. He stated: ‘I have not sought to clarify or clear that because it would involve too radical a reconstruction’’ …) is, to my mind, \ninconclusive on this point. Furthermore, the Defendant’s reliance on it also contravenes",
+      "clause_number": "149",
+      "clause_title": "In common with its submissions on the sovereign/private act issue (see above), t",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_DrMarczaksaysthisat4_c65abaccde69a8e5",
+      "document_section": "unknown",
+      "page_start": 38,
+      "page_end": 38,
+      "clause_heading": "Dr Marczak says this at [4]-[7] of Marczak 2 (which was primarily a response to ",
+      "verbatim_text": "166.\t\tDr Marczak says this at [4]-[7] of Marczak 2 (which was primarily a response to points made on behalf of the Defendant in response to Marczak 1): \n“4. Having considered the points made by Ms Given, my conclusions on these matters, as expressed in my first witness statement, remain the same. I first provide a brief \nexplanation of my conclusions, and then explore specific \npoints raised by Ms Given.",
+      "clause_number": "166",
+      "clause_title": "Dr Marczak says this at [4]-[7] of Marczak 2 (which was primarily a response to ",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_IreferheretotheClaim_f4e2aca240975a2f",
+      "document_section": "unknown",
+      "page_start": 42,
+      "page_end": 42,
+      "clause_heading": "I refer, here, to the Claimant’s Skeleton Argument at [80]-[82]:",
+      "verbatim_text": "174.\t\tI refer, here, to the Claimant’s Skeleton Argument at [80]-[82]: \n“80. The evidence also demonstrates that the only state body which might have had any interest in hacking the Claimant’s devices is the Defendant. Not only is the evidence on this point (again) undisputed by the Defendant, but the Defendant also fails to identify any other state body which might conceivably \nhave been motivated to undertake that hack. There is moreover",
+      "clause_number": "174",
+      "clause_title": "I refer, here, to the Claimant’s Skeleton Argument at [80]-[82]:",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Theevidencedemonstra_d8ec700c4c3e677a",
+      "document_section": "unknown",
+      "page_start": 42,
+      "page_end": 42,
+      "clause_heading": "The evidence demonstrates to me that the only state which might have had any int",
+      "verbatim_text": "172.\t\tThe evidence demonstrates to me that the only state which might have had any interest in \nhacking the Claimant’s devices is the Defendant. I acknowledge the points made on its behalf, but it seems to me there is no other viable candidate than Saudi Arabia. If one \nasks the question which the great Roman judge Lucius Cassius would often ask (as quoted by Cicero), ‘Cui bono fuisset ?’ (‘Who benefits ?’), then the answer is obvious.",
+      "clause_number": "172",
+      "clause_title": "The evidence demonstrates to me that the only state which might have had any int",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Thesemaybesoundforen_96b6eb36262b88e4",
+      "document_section": "unknown",
+      "page_start": 42,
+      "page_end": 42,
+      "clause_heading": "These may be sound forensic points, and should there be a trial they can be made",
+      "verbatim_text": "170.\t\tThese may be sound forensic points, and should there be a trial they can be made then, but at this stage they do not dissuade me from concluding that the Claimant has discharged \nthe burden upon him, and especially since Dr Marczak specifically considered them and \nanswered them in Marczak 2.",
+      "clause_number": "170",
+      "clause_title": "These may be sound forensic points, and should there be a trial they can be made",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "legal-reas_InshorttheClaimantse_e7e6e925f2207493",
+      "document_section": "legal_reasoning",
+      "page_start": 42,
+      "page_end": 42,
+      "clause_heading": "In short, the Claimant’s evidence is not capable of establishing",
+      "verbatim_text": "52. In short, the Claimant’s evidence is not capable of establishing \non the balance of probabilities that his alleged personal injury arising from the spyware Claims is properly attributable to the Defendant: compare Al-Adsani v Government of Kuwait (1996) \n107 ILR 536 at 545, 551; Al-Adsani v Government of Kuwait , \nQBD, 3 May 1995 (Unreported) per Mantell J at 10.”",
+      "clause_number": "52",
+      "clause_title": "In short, the Claimant’s evidence is not capable of establishing",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "case_citation_pattern",
+        "section_confidence": "medium",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Thisissueconcernsthe_a9d094d916442867",
+      "document_section": "unknown",
+      "page_start": 45,
+      "page_end": 45,
+      "clause_heading": "This issue concerns the alleged assault of the Claimant by two men. It is pleade",
+      "verbatim_text": "186.\t\tThis issue concerns the alleged assault of the Claimant by two men. It is pleaded in the \nPOC at [64] that he was assaulted in Knightsbridge on 31 August 2018 by unknown \nmen. His case is that those responsible were working for or on behalf of the Defendant. These matters are said to have contributed to the Claimant’s personal injuries. If, on a balance of probabilities the Defendant is responsible, then for the reasons given in relation to issue (a), the assault falls within s 5 notwithstanding it may be said to have \nbeen of a sovereign nature (an attack on a political dissident).",
+      "clause_number": "186",
+      "clause_title": "This issue concerns the alleged assault of the Claimant by two men. It is pleade",
+      "legal_category": "liability",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_AftertheattackIwassi_f882203543062d1f",
+      "document_section": "unknown",
+      "page_start": 46,
+      "page_end": 46,
+      "clause_heading": "After the attack I was sitting by a wall waiting for the",
+      "verbatim_text": "8. After the attack I was sitting by a wall waiting for the \nambulance and the police to arrive. The ambulance crew arrived \nfirst to tend to my injuries. When I was being seen to in the back \nof the ambulance my acquaintance was standing by outside. A man approached my acquaintance. He told him that he was a Saudi businessman, that he was an importer of rice in the UK and \nthat he had seen what had been going on (meaning my attack) and \nit was in my acquaintance’s interest to not get involved. He told my acquaintance, “Don’t associate yourself with this son of a bitch!”. He then warned him that “The police will not come for Ghanem, we are in charge here, we run the police and they will \nnot come.” My acquaintance told me everything when the man \nleft. He also stated this exchange to the police in his statement to them.",
+      "clause_number": "8",
+      "clause_title": "After the attack I was sitting by a wall waiting for the",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_NextIamnotwhollysure_3a84354b34bbfc75",
+      "document_section": "unknown",
+      "page_start": 49,
+      "page_end": 49,
+      "clause_heading": "Next, I am not wholly sure what ‘help’ the mother was seeking or expecting. Nor ",
+      "verbatim_text": "200.\t\tNext, I am not wholly sure what ‘help’ the mother was seeking or expecting. Nor am I clear why these grown adult men needed to rely on their mother. Whatever the men heard, it was part of a private conversation between the Claimant and his friend, and so to say the men were ‘provoked’ seems to me to be far-fetched. There was no question of them requiring consular assistance, as all foreign detained people are entitled to under \nthe Vienna Convention on Consular Relations 1963, as they had not been arrested nor \nwere they likely to be (and so far as I know, were not). I am also not entirely sure what the mother feared the Claimant’s dissident voice – or his statements about the attack referred to in Given 2 at [9] -could do to Saudi Arabia. Those who come to this country, on whatever basis, need to realise that here, there is a long and rich history of freedom \nof speech, especially when uttered privately.",
+      "clause_number": "200",
+      "clause_title": "Next, I am not wholly sure what ‘help’ the mother was seeking or expecting. Nor ",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_Onthesecondaccountth_3a741be62a088bba",
+      "document_section": "unknown",
+      "page_start": 49,
+      "page_end": 49,
+      "clause_heading": "On the second account, therefore, it seems the Defendant learnt of the altercati",
+      "verbatim_text": "199.\t\tOn the second account, therefore, it seems the Defendant learnt of the altercation before the men went to the Embassy (from their mother) and that the men then went on to \nspeak to Ms Given rather than consular officials. There may be an explanation for all of this, but on its face it is striking that Ms Given was apparently not told of the mother’s \ninvolvement until some time later. Given 1 is dated 5 February 2021. Given 2 is dated \n16 April 2021.",
+      "clause_number": "199",
+      "clause_title": "On the second account, therefore, it seems the Defendant learnt of the altercati",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    },
+    {
+      "clause_id": "unknown_GivenIhaveresolvedth_0d4758352b91d51f",
+      "document_section": "unknown",
+      "page_start": 51,
+      "page_end": 51,
+      "clause_heading": "Given I have resolved the first four issues in the Claimant’s favour, it seems t",
+      "verbatim_text": "207.\t\tGiven I have resolved the first four issues in the Claimant’s favour, it seems to me this fifth issue also must also be determined in his favour. \nConclusion",
+      "clause_number": "207",
+      "clause_title": "Given I have resolved the first four issues in the Claimant’s favour, it seems t",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "document_type_gate",
+        "section_confidence": "high",
+        "document_type": "judgment"
+      }
+    }
+  ],
+  "defined_terms": {}
+}

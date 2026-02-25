@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import re
+import yaml
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Iterable, Tuple, Literal
 
@@ -19,6 +20,7 @@ from backend.workflow_stages import StageStatus
 from backend.models.contract_review import (
     ContractReviewResponse,
     RiskItem,
+    VerbatimSnippet,
     ClauseEvidenceBlock,
     ExecutiveSummaryItem,
 )
@@ -28,6 +30,8 @@ from backend.services.clause_extraction import ClauseExtractionService
 from backend.services.guardrails import enforce_non_prescriptive_language
 from backend.utils.file_parser import FileParser
 
+
+_log = logging.getLogger(__name__)
 
 STEP_NAME = "contract_review"
 MIN_SNIPPET_LENGTH = 120
@@ -44,20 +48,130 @@ EXPECTED_CLAUSE_PATTERNS: Dict[str, List[str]] = {
         "this agreement may be terminated",
         "termination of this agreement",
     ],
-    "notice": ["notice period", "written notice", "days notice"],
-    "salary_wages": ["salary", "wages", "remuneration"],
-    "compensation": ["compensation", "indemnity", "blood money"],
+    # 1b: widened
+    "notice": [
+        "notice period", "written notice", "days notice", "days of notice",
+        "notice of termination", "give notice", "provide notice",
+    ],
+    # 1b: widened
+    "salary_wages": [
+        "salary", "wages", "remuneration", "pay", "base salary",
+        "basic salary", "monthly pay", "hourly rate",
+    ],
+    # 1a: removed "indemnity" and "blood money" (cross-match fix)
+    "compensation": ["compensation", "remuneration", "salary package", "total package"],
     "benefits": ["benefit", "allowance", "insurance"],
-    "governing_law": ["governing law", "shall be governed by"],
+    # 1b: widened
+    "governing_law": [
+        "governing law", "governed by", "shall be governed by",
+        "laws of", "subject to the laws", "in accordance with the laws",
+        "applicable law",
+    ],
     "jurisdiction": ["jurisdiction", "courts of"],
-    "conduct_discipline": ["discipline", "misconduct", "code of conduct"],
+    # 1b: widened
+    "conduct_discipline": [
+        "discipline", "misconduct", "code of conduct",
+        "disciplinary", "disciplinary action",
+    ],
     # NDA profile
-    "confidentiality": ["confidential", "confidentiality", "non-disclosure"],
+    # 1b: widened; "non disclosure" = normalized form of "non-disclosure"
+    "confidentiality": [
+        "confidential", "confidentiality", "non disclosure",
+        "confidential information", "proprietary information", "trade secret",
+        "duty of confidentiality",               # additional synonyms
+        "obligation of confidentiality",
+    ],
     "term": ["term", "duration", "effective date"],
-    "liability": ["liability", "limitation of liability", "indemnify"],
-    "remedies": ["remedy", "injunctive relief"],
+    # 1a: removed "indemnify" (cross-match fix)
+    "liability": ["liability", "limitation of liability", "liable", "exempt from liability"],
+    # 1b: widened
+    "remedies": [
+        "remedy", "injunctive relief", "specific performance",
+        "equitable relief", "damages", "seek relief",
+    ],
     # MSA profile
-    "dispute_resolution": ["dispute resolution", "arbitration", "arbitral"],
+    # 1b: widened
+    "dispute_resolution": [
+        "dispute resolution", "arbitration", "arbitral",
+        "mediation", "conciliation", "settlement of disputes",
+        "resolution of disputes",               # word-order variant
+        "disputes and arbitration",
+        "resolution of disputes and arbitration",
+        "governing disputes",
+        "amicable settlement",
+    ],
+    # ── 1c: new entries (RC1 fix) ─────────────────────────────────────────────
+    "probation": [
+        "probation", "probation period", "probationary period",
+        "trial period", "on probation",
+    ],
+    "non_solicitation": [
+        "non solicitation", "not solicit", "solicit employees",
+        "solicit customers", "non compete",
+    ],
+    "indemnification": [
+        "indemnif",        # prefix-matches: indemnify, indemnification, indemnified…
+        "hold harmless",
+        "indemnitor",
+    ],
+    "ip_ownership": [
+        "intellectual property", "proprietary rights", "ip rights",
+        "work product", "ownership of", "assigns all right",
+        "vests in", "shall own", "deliverables", "work for hire",
+        "background ip", "foreground ip", "moral rights", "ip ownership",
+        "intellectual property rights",
+        "ownership of deliverables",             # additional synonyms
+        "client shall own",
+        "assigned to client",
+        "ip indemnification",
+    ],
+    "sla_obligations": [
+        "service level", "sla", "schedule a",
+        "service standards", "uptime", "availability", "response time",
+        "liquidated damages", "performance monitoring", "business continuity",
+        "key performance", "kpi", "service credits", "penalty",
+        "sla schedule",
+        "sla timelines",                          # additional synonyms
+        "service schedule",
+        "annexure a",
+        "timelines and sla",
+        "performance standards",
+    ],
+    "limitation_of_liability": [
+        "limitation of liability", "shall not exceed",
+        "aggregate liability", "maximum liability", "liability cap",
+    ],
+    # ── retained from contract-review-improvements.md ─────────────────────────
+    "probation_period":        ["probation", "trial period", "probationary period"],
+    "end_of_service_gratuity": ["gratuity", "end of service", "terminal benefits", "severance", "eosb", "end of service benefit", "service benefit"],
+    "non_compete":             ["non-compete", "non compete", "not compete", "restrain from competition", "competitive activity"],
+    "annual_leave":            ["annual leave", "paid leave", "vacation", "leave entitlement"],
+    "carve_outs":              ["excluding", "except for", "public domain", "prior knowledge", "independently developed", "rightfully obtained", "carve out", "exclusion", "permitted disclosure", "disclosure permitted", "exception to confidentiality"],
+    "mutual_vs_unilateral":    ["each party", "both parties", "mutual", "reciprocal"],
+    "remedies_injunction":     ["injunction", "injunctive relief", "specific performance", "equitable relief"],
+    "return_of_information":   ["return", "destroy", "deletion", "certification of destruction"],
+}
+
+# Clause heading synonyms: alternative section headings mapped to canonical clause types.
+# Used by G7 post-pass to catch clauses whose headings don't match primary keyword set.
+CLAUSE_HEADING_SYNONYMS: Dict[str, str] = {
+    "proprietary rights":                        "ip_ownership",
+    "intellectual property":                     "ip_ownership",
+    "resolution of disputes":                    "dispute_resolution",
+    "disputes and arbitration":                  "dispute_resolution",
+    "resolution of disputes and arbitration":    "dispute_resolution",
+    "arbitration clause":                        "dispute_resolution",
+    "sla timelines":                             "sla_obligations",
+    "sla and timelines":                         "sla_obligations",
+    "service level":                             "sla_obligations",
+    "performance monitoring":                    "sla_obligations",
+    "liquidated damages":                        "sla_obligations",
+    "business continuity plan":                  "sla_obligations",
+    "schedule a":                                "sla_obligations",
+    "confidentiality clause":                    "confidentiality",
+    "non disclosure":                            "confidentiality",
+    "duty of confidentiality":                   "confidentiality",
+    "obligation of confidentiality":             "confidentiality",
 }
 
 # Human-readable display names for clause IDs (semantic slug -> display name).
@@ -77,7 +191,21 @@ EXPECTED_CLAUSE_DISPLAY_NAMES: Dict[str, str] = {
     "liability": "Liability",
     "remedies": "Remedies",
     "dispute_resolution": "Dispute Resolution",
-    "probation": "Probation",
+    "probation": "Probation Period",       # updated per contract_fixes1
+    "non_solicitation": "Non-Solicitation",  # new per contract_fixes1
+    # ── Improvement 3 — new clause display names ──────────────────────────────
+    "probation_period":        "Probation Period",
+    "end_of_service_gratuity": "End-of-Service Gratuity",
+    "non_compete":             "Non-Compete",
+    "ip_ownership":            "IP Ownership",
+    "annual_leave":            "Annual Leave",
+    "carve_outs":              "Confidentiality Carve-Outs",
+    "mutual_vs_unilateral":    "Mutual vs Unilateral Confidentiality",
+    "remedies_injunction":     "Injunctive Relief Remedies",
+    "return_of_information":   "Return / Destruction of Information",
+    "indemnification":         "Indemnification",
+    "limitation_of_liability": "Limitation of Liability",
+    "sla_obligations":         "SLA Obligations",
 }
 
 WEAK_EVIDENCE_RULES: Dict[str, List[str]] = {
@@ -110,6 +238,41 @@ IMPLICIT_GOV_LAW_KEYWORDS: List[str] = [
     "according to article",
     "determined by the law",
 ]
+# Implicit dispute resolution (G1.5 post-pass): dispute-resolution language that doesn't use
+# the primary keyword set but signals a dispute mechanism exists.
+IMPLICIT_DISPUTE_RESOLUTION_KEYWORDS: List[str] = [
+    "resolution of disputes",
+    "amicable settlement",
+    "conciliation",
+    "arbitration tribunal",
+    "settlement of disputes",
+    "disputes shall be",
+    "disputes arising",
+    "governing disputes",
+]
+
+IMPLICIT_IP_OWNERSHIP_KEYWORDS: List[str] = [
+    "proprietary rights",
+    "intellectual property rights",
+    "vests in",
+    "client shall own",
+    "assigned to client",
+    "work for hire",
+    "deliverables belong",
+    "ip ownership",
+]
+
+IMPLICIT_SLA_KEYWORDS: List[str] = [
+    "liquidated damages",
+    "performance monitoring",
+    "business continuity",
+    "schedule a",
+    "sla schedule",
+    "kpi",
+    "service credits",
+    "penalty clause",
+]
+
 # Country/jurisdiction phrases used only to require a geographic reference alongside a keyword (no inference).
 GOV_LAW_COUNTRY_REFERENCES: List[str] = [
     "saudi arabia",
@@ -473,6 +636,10 @@ def _build_key_review_observations(
                 obs_override = "Reference to labor law provisions detected; jurisdiction not specified."
             elif not entry.get("implicit_evidence"):
                 obs_override = "A possible implicit governing law reference was observed through statutory citations; no explicit governing law clause was detected."
+        # ── Improvement 3 — jurisdiction override for end_of_service_gratuity ──
+        if clause_type == "end_of_service_gratuity" and status == "not_detected":
+            if (jurisdiction or "").strip() in ("KSA", "UAE", "Generic GCC"):
+                base_severity = "high"
         items.append(
             _build_observation_item(
                 clause_key=clause_type,
@@ -712,12 +879,30 @@ def _detect_clause_presence(
                     "matched_keyword": "this agreement + terminate*",
                 }
         for kw in keywords:
-            if kw and kw in normalized_text:
+            normalized_kw = _normalize_text(kw)  # Fix RC2: normalize before match (handles hyphens etc.)
+            # Primary: substring match
+            kw_matched = normalized_kw and normalized_kw in normalized_text
+            # Fallback: word-set match for multi-word keywords (handles word-order variants)
+            if not kw_matched and normalized_kw and " " in normalized_kw:
+                kw_words = set(normalized_kw.split())
+                text_words = set(normalized_text.split())
+                kw_matched = kw_words <= text_words
+            if kw_matched:
                 if _downgrade_if_non_contractual():
                     continue
                 is_weak = len(raw_text) < MIN_SNIPPET_LENGTH or _alpha_ratio(raw_text) < MIN_ALPHA_RATIO
                 if len(normalized_text) > 200:
                     is_weak = False
+                # Heading-only evidence: short text with no obligation verbs is a heading
+                # match, not an uncertain detection — treat as detected_implicit to avoid
+                # false risk items for legitimately-present clauses.
+                if is_weak and not any(v in normalized_text for v in ("shall", "must", "agree", "terminate")):
+                    return {
+                        "status": "detected_implicit",
+                        "clause_id": cand.get("clause_id"),
+                        "page_number": cand.get("page_number"),
+                        "matched_keyword": kw,
+                    }
                 rules = WEAK_EVIDENCE_RULES.get(clause_type or "", None)
                 if rules == []:
                     status = "detected"
@@ -756,6 +941,59 @@ def _detect_clause_presence(
     }
 
 
+def _page_fallback_scan(
+    document_id: str,
+    missing_clause_types: List[str],
+) -> Dict[str, Dict[str, Any]]:
+    """
+    Last-resort scan: parses raw document pages to find keywords for clauses
+    that remain not_detected after all structured and implicit post-passes.
+    Catches clauses in Schedules/Annexures excluded from structured extraction.
+    Returns {} silently on any error (non-fatal).
+    """
+    if not missing_clause_types:
+        return {}
+    file_path = _find_document_path(document_id)
+    if not file_path:
+        _log.warning("[ContractReview] _page_fallback_scan: document not found for id=%s", document_id)
+        return {}
+    try:
+        pages = FileParser.parse_file(Path(file_path))
+    except Exception as exc:
+        _log.warning(
+            "[ContractReview] _page_fallback_scan: FileParser failed for %s: %s",
+            file_path, exc,
+        )
+        return {}
+    if not pages:
+        _log.warning(
+            "[ContractReview] _page_fallback_scan: no pages parsed for %s", file_path
+        )
+        return {}
+    results: Dict[str, Dict[str, Any]] = {}
+    for clause_type in missing_clause_types:
+        if clause_type in results:
+            continue
+        keywords = EXPECTED_CLAUSE_PATTERNS.get(clause_type, [])
+        if not keywords:
+            continue
+        for page_text, page_num in pages:
+            normalized_page = _normalize_text(page_text)
+            if not normalized_page:
+                continue
+            for kw in keywords:
+                normalized_kw = _normalize_text(kw)
+                if normalized_kw and normalized_kw in normalized_page:
+                    results[clause_type] = {
+                        "status": "detected_implicit",
+                        "page_number": page_num,
+                    }
+                    break
+            if clause_type in results:
+                break
+    return results
+
+
 class ContractReviewService:
     """
     Contract Review workflow: profile-driven risk identification and
@@ -769,6 +1007,8 @@ class ContractReviewService:
     ):
         self.clause_store = clause_store
         self.clause_extractor = clause_extractor
+        # ── Improvement 2 — load explanation templates once at init ───────────
+        self.risk_explanations: Dict[str, Any] = self._load_risk_explanations()
 
         # Deterministic heuristic patterns for "problematic language detection".
         # Keep these non-prescriptive: we flag ambiguity/breadth and reference evidence.
@@ -801,6 +1041,87 @@ class ContractReviewService:
             re.compile(r"\bconsequential damages\b", re.IGNORECASE),
             re.compile(r"\bpunitive damages\b", re.IGNORECASE),
         ]
+
+    # ── Improvement 2 — risk explanation templates ────────────────────────────
+
+    def _load_risk_explanations(self) -> Dict[str, Any]:
+        """Load risk_explanations.yaml once at service init. Returns empty dict on missing file."""
+        path = Path("backend/contract_profiles/risk_explanations.yaml")
+        if path.exists():
+            try:
+                with open(path, encoding="utf-8") as f:
+                    return yaml.safe_load(f) or {}
+            except Exception as exc:
+                logging.warning("Failed to load risk_explanations.yaml: %s", exc)
+        return {}
+
+    def _resolve_problematic_key(self, description: str, clause_type: str) -> str:
+        """Map problematic language risk descriptions to explanation template keys."""
+        desc_lower = (description or "").lower()
+        if "without notice" in desc_lower:
+            return "problematic_termination_no_notice"
+        if "unlimited" in desc_lower:
+            return "problematic_liability_unlimited"
+        if "in perpetuity" in desc_lower or "forever" in desc_lower:
+            return "problematic_confidentiality_perpetuity"
+        return clause_type
+
+    def _attach_explanations(self, risks: List[RiskItem]) -> List[RiskItem]:
+        """
+        Attach severity_reason and recommendation from static templates.
+        Keyed on (clause_type, status, severity). No-op if no entry found (graceful fallback).
+        Does NOT run enforce_non_prescriptive_language on these fields.
+        """
+        if not self.risk_explanations:
+            return risks
+        for risk in risks:
+            for clause_type in (risk.clause_types or []):
+                # For problematic language risks (missing_clause=False), map to specific key
+                if risk.missing_clause:
+                    explanation_key = clause_type
+                else:
+                    explanation_key = self._resolve_problematic_key(risk.description, clause_type)
+                entry = (
+                    self.risk_explanations
+                    .get(explanation_key, {})
+                    .get(risk.status or "detected", {})
+                    .get(risk.severity, {})
+                )
+                if entry:
+                    risk.severity_reason = entry.get("reason")
+                    risk.recommendation = entry.get("recommendation")
+                break  # use first clause_type match only
+        return risks
+
+    # ── Improvement 1 — verbatim evidence per risk ────────────────────────────
+
+    def _attach_verbatim_evidence(
+        self,
+        risks: List[RiskItem],
+        evidence_blocks: List[ClauseEvidenceBlock],
+        max_snippets_per_risk: int = 3,
+    ) -> List[RiskItem]:
+        """
+        For each RiskItem, match clause_ids against evidence_blocks and attach up to
+        max_snippets_per_risk VerbatimSnippet objects.
+        Skips risks where status is not_detected or uncertain, or missing_clause=True.
+        """
+        block_by_id: Dict[str, ClauseEvidenceBlock] = {b.clause_id: b for b in evidence_blocks}
+        for risk in risks:
+            if risk.status in ("not_detected", "uncertain") or risk.missing_clause:
+                continue  # no verbatim text for absent clauses
+            snippets: List[VerbatimSnippet] = []
+            for cid in risk.clause_ids[:max_snippets_per_risk]:
+                block = block_by_id.get(cid)
+                if block and block.clean_text and not block.is_non_contractual:
+                    snippets.append(VerbatimSnippet(
+                        clause_id=cid,
+                        display_name=block.display_name,
+                        page_number=block.page_number,
+                        text=block.clean_text[:400],
+                    ))
+            risk.verbatim_evidence = snippets
+        return risks
 
     def _identify_problematic_language_risks(
         self,
@@ -1092,7 +1413,7 @@ class ContractReviewService:
         doc_path = _find_document_path(contract_id)
         if doc_path:
             try:
-                pages = FileParser.parse(Path(doc_path))
+                pages = FileParser.parse_file(Path(doc_path))
                 full_text = "\n".join((t or "") for t, _ in pages)
                 if not _is_likely_operative_contract(full_text):
                     document_classification_warning = (
@@ -1139,11 +1460,16 @@ class ContractReviewService:
                             structure_class=structure_class,
                         )
                     )
+                    # Fix 4: When heading is empty, use canonical display name so keyword
+                    # matching can pick up clause type even for heading-only store entries.
+                    if not heading:
+                        norm_type = _normalize_clause_type_for_profile(norm)
+                        heading = EXPECTED_CLAUSE_DISPLAY_NAMES.get(norm_type, "")
                     evidence_candidates.append(
                         {
                             "clause_id": c.clause_id,
                             "page_number": ev.page or 0,
-                            "text": ev_text,
+                            "text": (heading + " " + ev_text).strip() if (heading or ev_text) else "",
                             "is_non_contractual": is_nc,
                         }
                     )
@@ -1180,7 +1506,7 @@ class ContractReviewService:
                 cid = cl.get("clause_id", "")
                 is_nc = _is_non_contractual_snippet(evidence_text or "")
                 verbatim = cl.get("verbatim_text", "") or ""
-                heading = (cl.get("document_section") or cl.get("heading") or "").strip()
+                heading = (cl.get("clause_heading") or cl.get("clause_title") or cl.get("document_section") or "").strip()
                 if not heading and verbatim:
                     first_line = (verbatim.split("\n")[0] or "").strip()
                     if len(first_line) <= 80:
@@ -1206,7 +1532,7 @@ class ContractReviewService:
                     {
                         "clause_id": cl.get("clause_id", ""),
                         "page_number": cl.get("page_start", 0),
-                        "text": evidence_text or "",
+                        "text": (heading + " " + (evidence_text or "")).strip() if heading else (evidence_text or ""),
                         "is_non_contractual": is_nc,
                     }
                 )
@@ -1283,6 +1609,42 @@ class ContractReviewService:
                     }
                     break
 
+        # G1.5: Post-pass for implicit dispute_resolution
+        if (
+            "dispute_resolution" in expected
+            and presence_map.get("dispute_resolution", {}).get("status") == "not_detected"
+        ):
+            for cand in evidence_candidates:
+                t = (cand.get("text") or "").lower()
+                if any(kw in t for kw in IMPLICIT_DISPUTE_RESOLUTION_KEYWORDS):
+                    presence_map["dispute_resolution"]["status"] = "detected_implicit"
+                    presence_map["dispute_resolution"]["display_status"] = "Detected (Implicit Reference)"
+                    break
+
+        # G4: Post-pass for implicit ip_ownership
+        if (
+            "ip_ownership" in expected
+            and presence_map.get("ip_ownership", {}).get("status") == "not_detected"
+        ):
+            for cand in evidence_candidates:
+                t = (cand.get("text") or "").lower()
+                if any(kw in t for kw in IMPLICIT_IP_OWNERSHIP_KEYWORDS):
+                    presence_map["ip_ownership"]["status"] = "detected_implicit"
+                    presence_map["ip_ownership"]["display_status"] = _display_status_for("detected_implicit")
+                    break
+
+        # G5: Post-pass for implicit sla_obligations
+        if (
+            "sla_obligations" in expected
+            and presence_map.get("sla_obligations", {}).get("status") == "not_detected"
+        ):
+            for cand in evidence_candidates:
+                t = (cand.get("text") or "").lower()
+                if any(kw in t for kw in IMPLICIT_SLA_KEYWORDS):
+                    presence_map["sla_obligations"]["status"] = "detected_implicit"
+                    presence_map["sla_obligations"]["display_status"] = _display_status_for("detected_implicit")
+                    break
+
         # G2: Post-pass for benefits (composite). 0 categories must remain not_detected (no overwrite).
         if "benefits" in expected:
             detected_categories: set = set()
@@ -1317,8 +1679,45 @@ class ContractReviewService:
                     presence_map[clause_type]["coverage_note"] = note
                     break
 
+        # G6: Page-level fallback for any remaining not_detected clauses.
+        _still_missing = [
+            ct for ct in expected
+            if presence_map.get(ct, {}).get("status") == "not_detected"
+        ]
+        if _still_missing:
+            _fallback_hits = _page_fallback_scan(contract_id, _still_missing)
+            for ct, hit in _fallback_hits.items():
+                if presence_map.get(ct, {}).get("status") == "not_detected":
+                    presence_map[ct]["status"] = hit["status"]
+                    presence_map[ct]["display_status"] = _display_status_for(hit["status"])
+                    if hit.get("page_number"):
+                        presence_map[ct].setdefault("page_numbers", []).append(hit["page_number"])
+
+        # G7: Heading-synonym post-pass — scan clause titles from store against CLAUSE_HEADING_SYNONYMS.
+        # Catches alternative section headings (e.g. "Proprietary Rights" for ip_ownership) that
+        # survive all earlier passes because their title text is too short to be "detected".
+        if clauses_from_store:
+            for c in clauses_from_store:
+                title_norm = _normalize_text(getattr(c, "title", "") or "")
+                if not title_norm:
+                    continue
+                for heading_kw, canon_type in CLAUSE_HEADING_SYNONYMS.items():
+                    if canon_type not in expected:
+                        continue
+                    if presence_map.get(canon_type, {}).get("status") != "not_detected":
+                        continue
+                    norm_heading_kw = _normalize_text(heading_kw)
+                    if norm_heading_kw in title_norm or title_norm in norm_heading_kw:
+                        presence_map[canon_type]["status"] = "detected_implicit"
+                        presence_map[canon_type]["display_status"] = "Detected (Heading Match)"
+                        break
+
         # Add risk rows only for clause_types that are not detected (any variant)
-        _skip_risk_statuses = ("detected", "detected_implicit", "detected_distributed", "detected_weak", "implicitly_covered")
+        _skip_risk_statuses = (
+            "detected", "detected_implicit", "detected_distributed", "detected_weak",
+            "implicitly_covered",
+            "uncertain",   # heading/weak-evidence matches don't generate misleading risk items
+        )
         for clause_type in expected:
             status = presence_map.get(clause_type, {}).get("status", "not_detected")
             if status in _skip_risk_statuses:
@@ -1406,6 +1805,12 @@ class ContractReviewService:
             key=lambda r: (_severity_rank(r.severity), 0 if r.missing_clause else 1, (r.description or "").lower()),
         )
 
+        # ── Improvement 1: attach verbatim evidence snippets ──────────────────
+        risks = self._attach_verbatim_evidence(risks, evidence_blocks)
+
+        # ── Improvement 2: attach severity reason + recommendation ─────────────
+        risks = self._attach_explanations(risks)
+
         ctx.add_result(f"{STEP_NAME}.risks", [r.model_dump() for r in risks])
 
         # 4) Document confidence (for severity cap and guardrail)
@@ -1472,15 +1877,27 @@ class ContractReviewService:
         implicitly_covered_clauses: List[str] = []
         implicit_coverage_notes: Optional[Dict[str, str]] = None
         for ct in expected:
-            if presence_map.get(ct, {}).get("status") != "implicitly_covered":
-                continue
-            display = EXPECTED_CLAUSE_DISPLAY_NAMES.get(ct, ct.replace("_", " ").title())
-            implicitly_covered_clauses.append(display)
-            note = presence_map.get(ct, {}).get("coverage_note")
-            if note:
+            entry_status = presence_map.get(ct, {}).get("status")
+            if entry_status == "implicitly_covered":
+                display = EXPECTED_CLAUSE_DISPLAY_NAMES.get(ct, ct.replace("_", " ").title())
+                implicitly_covered_clauses.append(display)
+                note = presence_map.get(ct, {}).get("coverage_note")
+                if note:
+                    if implicit_coverage_notes is None:
+                        implicit_coverage_notes = {}
+                    implicit_coverage_notes[display] = note
+            elif entry_status == "uncertain":
+                # Uncertain clauses are detected with weak/heading-only evidence.
+                # Surface them in implicitly_covered_clauses with a note rather than
+                # generating a misleading risk item.
+                display = EXPECTED_CLAUSE_DISPLAY_NAMES.get(ct, ct.replace("_", " ").title())
+                display_with_note = f"{display} (Weak Evidence)"
+                implicitly_covered_clauses.append(display_with_note)
                 if implicit_coverage_notes is None:
                     implicit_coverage_notes = {}
-                implicit_coverage_notes[display] = note
+                implicit_coverage_notes[display_with_note] = (
+                    "Detected with limited textual evidence; manual review of the relevant section is recommended."
+                )
 
         # 10) Build deliverable and store in context
         response = ContractReviewResponse(

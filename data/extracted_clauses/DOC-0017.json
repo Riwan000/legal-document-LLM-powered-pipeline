@@ -1,0 +1,46 @@
+{
+  "schema_version": 2,
+  "document_id": "DOC-0017",
+  "extraction_version": "v1.0",
+  "clauses": [
+    {
+      "clause_id": "unknown_TheFirstPartyacknowl_9a80613cd744eead",
+      "document_section": "unknown",
+      "page_start": 5,
+      "page_end": 5,
+      "clause_heading": "The First Party acknowledges that 1! shail be fully",
+      "verbatim_text": "18. The First Party acknowledges that 1! shail be fully\nresponsible for Payment of geath compensation\nNcluding blood Money, on behail of the Second\n\nParty should the jatter be heid guilty of Causing the\n\ndeath of a third Dafly and is required to Pay any\n\ncompensation, INCludiNg biood money. to the nex!\nofkinofthe deceased. ~",
+      "clause_number": "18",
+      "clause_title": "The First Party acknowledges that 1! shail be fully",
+      "legal_category": "payment",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "multiple_section_matches",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_ThisagreementMaybele_3ba4f6798dc22e2d",
+      "document_section": "unknown",
+      "page_start": 5,
+      "page_end": 5,
+      "clause_heading": "This agreement May be lerminateg .n any of ine",
+      "verbatim_text": "15. This agreement May be lerminateg .n any of ine\nfollowing cases\n\n(a) Al any time by 4 30 days written Nolce from\n\n= either of the two Parties or mmediatery upon\n\n& Serving such notice and after mak *Q I0 the\nother party a payment of wages 'n lieu of the\nNotice period of 30 days\n\n(0) By the Firs; Party. without nee for any notice\nOF Cash payment :n eu there of or awarg of\ncompensation by reasons of any infractions\ncommitted by the Secong Pany. determ-neg\nby the Labour ane Workman Law in Articie 83\nthereol.\n\n(C) By the First Party: inthe Course of the lirst three\nmonths which snal! be Considered a probation\nPenog under the provisions of the lawn which\nCase the First Party wilt bear the cost of trans-\nPortation of the Secong Pany",
+      "clause_number": "15",
+      "clause_title": "This agreement May be lerminateg .n any of ine",
+      "legal_category": "payment",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "multiple_section_matches",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    }
+  ],
+  "defined_terms": {}
+}

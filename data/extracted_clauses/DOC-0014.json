@@ -1,0 +1,1281 @@
+{
+  "schema_version": 2,
+  "document_id": "DOC-0014",
+  "extraction_version": "v1.0",
+  "clauses": [
+    {
+      "clause_id": "unknown_2Itisnotintheinteres_b5638d59f5331f22",
+      "document_section": "unknown",
+      "page_start": 2,
+      "page_end": 2,
+      "clause_heading": "2) It is not in the interest of the IPPB that such employee/agent of the Service",
+      "verbatim_text": "2) It is not in the interest of the IPPB that such employee/agent of the Service \nProvider continues to be involved in the provision of the Service in relation to the \nProject. \n  \nf) Subject to the terms of this Agreement, the Service Provider shall ensure deployment \nof sufficient number of personnel to provide the required level of services, in a prompt \nand efficient manner.",
+      "clause_number": "2",
+      "clause_title": "2) It is not in the interest of the IPPB that such employee/agent of the Service",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_IntermsofthisAgreeme_1bb55859de4c73cb",
+      "document_section": "unknown",
+      "page_start": 2,
+      "page_end": 2,
+      "clause_heading": "In terms of this Agreement, the Service Provider shall, within the timelines pro",
+      "verbatim_text": "4. In terms of this Agreement, the Service Provider shall, within the timelines provided in \nthe RFQ and under this Agreement: \na) Has provided an unconditional and irrevocable Performance Bank Guarantee of \n………………….. Bank for Rs. …………………………….. issued on dated………..20……, \nand valid upto………………….. to Perform its obligations.  \nb) Fulfil all other obligations of the Service Provider as specified under the RFQ and \nthis Agreement.  \nc) Undertake any/all repair, replacement, up-gradation and procurement of equipment \nnecessary for providing the services, at its own cost. \nd) Provide such suitably qualified, experienced and competent personnel and sub-\ncontractors as may reasonably be required for the performance of the Services \ntowards the execution of Project. If so requested by the IPPB, the Service Provider shall \nprovide evidence of previous experience, qualifications and competence of the \npersonnel engaged in the performance of such services. \ne) Withdraw and/or bar its employee/s or agent/s from extending such Services, if, in the \nsole opinion of the IPPB:",
+      "clause_number": "4",
+      "clause_title": "In terms of this Agreement, the Service Provider shall, within the timelines pro",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_ThepurposeofthisAgre_ddeb5462494d30b6",
+      "document_section": "unknown",
+      "page_start": 2,
+      "page_end": 2,
+      "clause_heading": "The purpose of this Agreement is to set out as follows:",
+      "verbatim_text": "3. The purpose of this Agreement is to set out as follows: \na) Rights and obligations of the IPPB and the Service Provider in relation to services for \n……………………………………. or such other services as agreed between the Service \nProvider and the IPPB. \nb) The manner in which the Services are to be provided by the Service Provider, \nwhich shall strictly be in accordance to this agreement.",
+      "clause_number": "3",
+      "clause_title": "The purpose of this Agreement is to set out as follows:",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_ThisAgreementshallop_cc5c407d1cac8129",
+      "document_section": "unknown",
+      "page_start": 2,
+      "page_end": 2,
+      "clause_heading": "This Agreement shall operate as a legally binding Contract for service, specifyi",
+      "verbatim_text": "2. This Agreement shall operate as a legally binding Contract for service, specifying the \nterms which apply to the Parties under this Agreement and to the provision of the Services \nt o  b e  r e n d e r e d  by the Service Provider to the IPPB.",
+      "clause_number": "2",
+      "clause_title": "This Agreement shall operate as a legally binding Contract for service, specifyi",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_NonfulfilmentofanyCo_c759a59be46a61da",
+      "document_section": "unknown",
+      "page_start": 4,
+      "page_end": 4,
+      "clause_heading": "Non-fulfilment of any Conditions Precedent:",
+      "verbatim_text": "6. Non-fulfilment of any Conditions Precedent: \na. In the event that any of the Conditions Precedent relating to the Service \nProvider has not been fulfilled, this Agreement shall cease to have any effect \nas of that date and this Agreement can be terminated at the option of IPPB. \nb. In the event that the Agreement fails to come into effect on account of non-\nfulfilment of any of the Conditions Precedent, the IPPB shall not be liable in \nany manner whatsoever to the Service Provider and the IPPB shall notify \nthe Service Provider in writing of such failure and may forfeit the Performance \nBank Guarantee. \nc. In the event that possession of any facilities and/or data has been delivered \nto the Service Provider by or through the IPPB prior to the fulfilment in full of \nthe Conditions Precedent, upon the termination of this Agreement, such \nfacilities and data shall immediately revert to the IPPB, free and clear from any \nEncumbrances or claims.",
+      "clause_number": "6",
+      "clause_title": "Non-fulfilment of any Conditions Precedent:",
+      "legal_category": "termination",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "multiple_section_matches",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_PerformanceBankGuara_60b9d66d22ba051e",
+      "document_section": "unknown",
+      "page_start": 4,
+      "page_end": 5,
+      "clause_heading": "Performance Bank Guarantee:",
+      "verbatim_text": "7. Performance Bank Guarantee: \nThe Service Provider shall at its own expense has deposited with the IPPB, an unconditional \nand irrevocable Performance Bank Guarantee (PG) of amounting to ……………% of the \npurchase order or as decided by the IPPB . The Performance guarantee is valid for a period \nof 60 days beyond the date of competition of all contractual obligations or 60 days \nbeyond the period of contract, whichever is latter.  \nIn the event of the Service Provider being unable to fulfil its obligation under the Agreement \nor cause delay in providing the requisite service for whatever reason, the IPPB reserves the \nright to invoke and forfeit the Performance Bank Guarantee at its sole discretion, without \nany notice to the Service Provider. \n \nNotwithstanding and without prejudice to any rights whatsoever of the IPPB under this \nAgreement, the proceeds of the Performance Bank Guarantee shall be payable to IPPB as \ncompensation by the Service Provider for its failure to complete its obligations under this \nAgreement. The IPPB shall notify the Service Provider in writing of the exercise of its right to \nreceive such compensation within 14 days, indicating the contractual obligation(s) with \nrespect to which the Service Provider is in default. \n \nThe IPPB shall also be entitled to make recoveries from the Service Provider's bills, \nPerformance Bank Guarantee, or any other amount due to the Service Provider, the\nequivalent value of any payment made to the Service Provider due to inadvertence, error, \ncollusion, misconstruction or misstatement. \n \nThe Performance Bank Guarantee may be discharged/returned by IPPB upon being \nsatisfied that there has been due performance of the obligations of the Service Provider \nunder this Agreement. However, no interest shall be payable on the Performance Bank \nGuarantee.",
+      "clause_number": "7",
+      "clause_title": "Performance Bank Guarantee:",
+      "legal_category": "payment",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "multiple_section_matches",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_InvoicingSettlementa_f8e51d7a9c896082",
+      "document_section": "unknown",
+      "page_start": 5,
+      "page_end": 5,
+      "clause_heading": "Invoicing, Settlement and Taxation",
+      "verbatim_text": "12. Invoicing, Settlement and Taxation \nThe Invoicing,Settlement and Taxation shall be as per Schedule-B to this agreement.",
+      "clause_number": "12",
+      "clause_title": "Invoicing, Settlement and Taxation",
+      "legal_category": "arbitration",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_RepresentationandWar_dc81bbcd702cbda4",
+      "document_section": "unknown",
+      "page_start": 5,
+      "page_end": 6,
+      "clause_heading": "Representation and Warranty",
+      "verbatim_text": "13. Representation and Warranty  \ni) The Service Provider hereby represents and warrants that:  \na) It has been duly incorporated in India and is valid as per the existing laws of India. \n \nb) It has taken all required measures to authorize the execution and consummation of this \nAgreement and will furnish satisfactory evidence of the same upon request. An \nauthenticated list of the officers of the Service Provider who are authorized to sign and / \nor execute this Agreement and / or other related documents, in writing and duly supported \nby Board Resolution, shall be provided to the IPPB.\nc) The execution, delivery and performance of this Agreement by the Service Provider in \naccordance with its terms shall not violate or conflict with its Articles and/or memorandum \nof association and/or any other organizational documents. \nd) That it shall comply with all the provisions of the Information Technology Act, 2000 and any \nother laws for protection of data of IPPB or any of its customers or any data provided by \nIPPB. \n \ne) The Service Provider shall ensure that:",
+      "clause_number": "13",
+      "clause_title": "Representation and Warranty",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_SLATimelines_295eaa55cc518d59",
+      "document_section": "unknown",
+      "page_start": 5,
+      "page_end": 5,
+      "clause_heading": "SLA & Timelines",
+      "verbatim_text": "10. SLA & Timelines \nThe SLA & timelines shall be as per Schedule-A to this agreement.",
+      "clause_number": "10",
+      "clause_title": "SLA & Timelines",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_ScopeofWork_74621bb1a7da8421",
+      "document_section": "unknown",
+      "page_start": 5,
+      "page_end": 5,
+      "clause_heading": "Scope of Work:",
+      "verbatim_text": "9. Scope of Work: \nThe Service Provider shall perform its obligations and work as per Schedule-A to this \nagreement.",
+      "clause_number": "9",
+      "clause_title": "Scope of Work:",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "terminatio_TermofAgreement_830e0d4b5a203da3",
+      "document_section": "termination",
+      "page_start": 5,
+      "page_end": 5,
+      "clause_heading": "Term of Agreement ;",
+      "verbatim_text": "8. Term of Agreement ; \nThe tenure of this agreement will be for a period of ____ months/years from the date of \nexecution of this agreement (unless terminated by the Bank as per the termination \nclause in this agreement) . \nThe Bank may, at its sole discretion extend this agreement by a period of ______ months/ \nyears.",
+      "clause_number": "8",
+      "clause_title": "Term of Agreement ;",
+      "legal_category": "termination",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "payment_TermsofPaymentandSer_3eda9d9243be0059",
+      "document_section": "payment",
+      "page_start": 5,
+      "page_end": 5,
+      "clause_heading": "Terms of Payment and Service Credits and Debits",
+      "verbatim_text": "11. Terms of Payment and Service Credits and Debits \nThe term of payment shall be as per Schedule-B to this agreement. \nExcept as otherwise provided for herein or as agreed between the Parties in writing, the \nIPPB shall not be required to make any payments in respect of the Services other than those \ncovered by the terms of payment as stated under Schedule-B.",
+      "clause_number": "11",
+      "clause_title": "Terms of Payment and Service Credits and Debits",
+      "legal_category": "payment",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_iiiTheServiceProvide_be6be2aeb0d51874",
+      "document_section": "unknown",
+      "page_start": 6,
+      "page_end": 6,
+      "clause_heading": "iii. The Service Provider shall discharge its obligations under this Agreement w",
+      "verbatim_text": "iii. The Service Provider shall discharge its obligations under this Agreement with due skill, care \nand diligence so as to comply with the conditions stated in this Agreement.",
+      "clause_number": "III",
+      "clause_title": "iii. The Service Provider shall discharge its obligations under this Agreement w",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_ivTheexecutiondelive_910f9013e3304070",
+      "document_section": "unknown",
+      "page_start": 6,
+      "page_end": 7,
+      "clause_heading": "iv. The execution, delivery and performance by the Service Provider of this Agre",
+      "verbatim_text": "iv. The execution, delivery and performance by the Service Provider of this Agreement and \nthe compliance by it with the terms and provisions hereof do not and will not: -\na) Contravene any provision of any law, statute, rule or regulation or any order, writ, injunction \nor decree of any court, governmental instrumentality or Governmental Authority to which \nit is subject; or \nb) Conflict with or be inconsistent with or result in any breach of any of the terms, covenants, \nconditions or provisions of, or constitute a default under, or result in the creation or \nimposition of (or the obligation to create or impose) any Security Interest upon any of its \nproperty or assets pursuant to the terms of any indenture, mortgage, deed of trust, credit \nagreement, loan agreement or any other agreement, contract or instrument to which it is \na party or by which it or any of its property or assets is bound or to which it may be subject; \nor \nc) Violate any provision of its memorandum and articles of association or any other similar \nconstitutional documents.",
+      "clause_number": "IV",
+      "clause_title": "iv. The execution, delivery and performance by the Service Provider of this Agre",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "payment_iiThattherearenojudi_84e39b573126b34b",
+      "document_section": "payment",
+      "page_start": 6,
+      "page_end": 6,
+      "clause_heading": "ii. That there are no judicial or administrative actions, proceedings or investi",
+      "verbatim_text": "ii. That there are no judicial or administrative actions, proceedings or investigations \npending to the best of its knowledge, which would have a material adverse effect on \nits capacity to perform its obligations under this Agreement or any of the other \ndocuments referred to in this Agreement to which it is a party. \n      \nii) The Service Provider hereby represents and warrants to the IPPB that it shall not violate any \nproprietary and/ or intellectual property rights of any third party, including without \nlimitation, confidential relationships, patents, trade secrets, copyright and/or any other \nproprietary rights. \niii) The Employees of the Service Provider shall continue to be the Employees of the Service \nProvider and work under its discretion and shall not claim any employment from the IPPB \nby the virtue of providing the services, irrespective of the location of their work. \niv) At no time during the term of the agreement, employees of Service Provider will be treated \nas employees of the IPPB. The payment of salary, benefits and all related taxes for the \nemployees of the Service Provider will be the sole responsibility of the Service Provider. \nv) The Service Provider agrees, represents and warrants that no officer of the IPPB, director, \nemployee or immediate family member thereof has received or will receive anything of \nvalue of any kind from the Service Provider or its officers, directors, employees or agents in \nconnection with this Agreement; and that none of them has a business relationship of any \nkind with the Service Provider, it’s Personnel or any of its other officers. \nThe express warranties granted above are in addition to all other warranties, whether \nexpress or implied. The Service Provider warrants and represents to the IPPB in relation to \nthis Agreement, that:",
+      "clause_number": "II",
+      "clause_title": "ii. That there are no judicial or administrative actions, proceedings or investi",
+      "legal_category": "payment",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_ixTheServiceProvider_99b75eaa2300f987",
+      "document_section": "unknown",
+      "page_start": 7,
+      "page_end": 7,
+      "clause_heading": "ix. The Service Provider undertakes to provide details of data (related to IPPB ",
+      "verbatim_text": "ix. The Service Provider undertakes to provide details of data (related to IPPB and its \ncustomers) captured, processed and stored, under this agreement.",
+      "clause_number": "IX",
+      "clause_title": "ix. The Service Provider undertakes to provide details of data (related to IPPB ",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_viiTheserviceprovide_c1b8382108ba8e94",
+      "document_section": "unknown",
+      "page_start": 7,
+      "page_end": 7,
+      "clause_heading": "vii. The service provider undertakes to comply with all regulations/guidelines/d",
+      "verbatim_text": "vii. The service provider undertakes to comply with all regulations/guidelines/directions issued \nby IPPB or the Reserve Bank of India (RBI), issued from time to time, in relation to the services \nperformed under this agreement.",
+      "clause_number": "VII",
+      "clause_title": "vii. The service provider undertakes to comply with all regulations/guidelines/d",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_viiiTheserviceprovid_6145c1c97833832a",
+      "document_section": "unknown",
+      "page_start": 7,
+      "page_end": 7,
+      "clause_heading": "viii. The service provider undertakes to co-operate with the relevant authoritie",
+      "verbatim_text": "viii. The service provider undertakes to co-operate with the relevant authorities in case of \ninsolvency/ resolution of IPPB.",
+      "clause_number": "VIII",
+      "clause_title": "viii. The service provider undertakes to co-operate with the relevant authoritie",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "payment_xTheServiceProvideru_77303f94bab6b4a2",
+      "document_section": "payment",
+      "page_start": 7,
+      "page_end": 8,
+      "clause_heading": "x. The Service Provider understands that resources of service provider who provi",
+      "verbatim_text": "x. The Service Provider understands that resources of service provider who provide core \nservices are considered as “essential personnel” and the Service Provider undertakes to \nprovide staff necessary to operate critical functions can work on-site during exigencies \n(including pandemic situations) as desired by IPPB; \nxi. The Service Provider shall not do or omit to do or cause or allow to be done or omitted to \nbe done any act or thing which would result (or be likely to result) in a breach of this \nAgreement. \nxii. This Agreement constitutes a valid and binding obligation of Service Provider enforceable \nagainst it in accordance with its terms. \nxiii. No sums, in cash or kind, have been paid or shall be paid, by it or on its behalf, to any \nperson by way of fees, commission or otherwise for entering into this Agreement or for \ninfluencing or attempting to influence any officer or employee of the IPPB in connection \ntherewith.\nxiv. The Service Provider undertakes to store all data pertaining to IPPB , within the territory of \nIndia as per regulatory requirement. \n \nb. The Service Provider warrants and represents to the IPPB, that: \ni) The Service Provider is experienced in managing and providing works similar to the Services \nand that it shall perform the Services with all due skill, care and diligence so as to comply \nwith the conditions as stated in this Agreement. \nii) The Services shall be provided and rendered by appropriately qualified, trained and \nexperienced personnel. \niii) The Service Provider has and will have all necessary licenses, approvals, consents of third \nparties and all necessary technology, hardware and software to enable it to provide the \nServices. \niv) The Services will be supplied in conformance with all applicable laws, enactments, orders \nand regulations. \nv) In the event that such warranties cannot be enforced by the IPPB, the Service Provider will \nenforce such warranties on behalf of the IPPB and pass on to the IPPB, the benefit of the \nsame and any other remedy received in relation to such warranties. \nvi) IPPB shall have the right to seek information from the service provider about the third parties  \nengaged by the Service Provider to provide services under this agreement.  \nvii) IPPB reserves the right to recall data with Service Provider.  \nviii) Service Providers agrees to take prior approvals for making changes in the application, if any.  \nix) The Service Provider undertakes to comply with Regulatory and Statutory guidelines and requirements .  \nNotwithstanding what has been stated elsewhere in this Agreement, in the event the Service \nProvider is unable to meet the obligations pursuant to this Agreement, the IPPB will have the \noption to invoke and forfeit the Performance Bank Guarantee.",
+      "clause_number": "X",
+      "clause_title": "x. The Service Provider understands that resources of service provider who provi",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "liability_COMPLIANCEWITHLAWS_01aeb0237648626b",
+      "document_section": "liability",
+      "page_start": 8,
+      "page_end": 9,
+      "clause_heading": "COMPLIANCE WITH LAWS:",
+      "verbatim_text": "14.  COMPLIANCE WITH LAWS:  \ni) Each Party to this Agreement accepts that its individual conduct shall (to the extent \napplicable to it) at all times comply with all applicable laws, rules and regulations. For the \navoidance of doubt, the obligations of the Parties to this Agreement are subject to their \nrespective compliance with all applicable laws and regulations. \nii) The Service Provider shall be responsible for ensuring that the Services comply with all \napplicable laws and regulations. \niii) The Service Provider shall direct all enquiries from a Financial Regulator relating to this \nAgreement to the IPPB unless the enquiry is specifically addressed to the Service Provider \nby a Financial Regulator or otherwise agreed in writing by the parties. \niv) Where the Service Provider is responsible for dealing with any enquiry by a Financial \nRegulator, in accordance with this clause, it shall, unless contrary to the Financial\nRegulator’s directions, as soon as practicable notify and consult fully with the IPPB \nregarding such matters as are relevant to this Agreement prior to responding to the \nenquiry. \nv) Each Party shall provide to the other party all reasonable assistance in connection with \nany investigation by any Financial Regulator, the provision of any information relating to \nthe Services reasonably requested by the other party or by the relevant Regulator which is \nin its possession or control, and shall use reasonable endeavours to ensure that its affiliates \nand agents do the same.",
+      "clause_number": "14",
+      "clause_title": "COMPLIANCE WITH LAWS:",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_VicariousLiability_4f13a1bb34fd4359",
+      "document_section": "unknown",
+      "page_start": 9,
+      "page_end": 9,
+      "clause_heading": "Vicarious Liability",
+      "verbatim_text": "15. Vicarious Liability \nThe Service Provider shall be the principal employer of the employees, trainers, agents, \ncontractors, subcontractors, etc., engaged by it and shall be vicariously liable for all the \nacts, deeds, matters or things, whether the same is within the scope of power or outside \nthe scope of power, vested under the contract. No right of any employment in the Bank \nshall accrue or arise, by virtue of engagement of employees, agents, contractors, \nsubcontractors etc., by the Service Provider, for any assignment under the contract. All \nremuneration, claims, wages dues etc., of such employees, agents, trainers, contractors, \nsub-contractors etc., of the  Service Provider shall be paid by the  Service Provider alone \nand the IPPB shall not have any direct or indirect liability or obligation, to pay any charges, \nclaims or wages of any of the Service Provider’s employees, agents, trainers, contractors, \nsubcontractors etc. The Service Provider shall agree to hold the IPPB, its successors, assigns \nand administrators  fully indemnified, and harmless against loss or liability, claims, actions or \nproceedings, if any,  whatsoever nature that may arise or caused to the IPPB through the \naction of  Service Provider ’s  employees, agents, trainers, contractors, subcontractors, etc.",
+      "clause_number": "15",
+      "clause_title": "Vicarious Liability",
+      "legal_category": "payment",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "multiple_section_matches",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "liability_INDEMNITIESANDOTHERP_8d1c720968b4ed46",
+      "document_section": "liability",
+      "page_start": 9,
+      "page_end": 9,
+      "clause_heading": "INDEMNITIES AND OTHER PROVISIONS",
+      "verbatim_text": "16. INDEMNITIES AND OTHER PROVISIONS \nA. The Service Provider (the \"Indemnifying Party\") undertakes to indemnify bank (the \n\"Indemnified Party\") from and against all Losses, damages, bodily injury, death or damage \nto tangible personal property arising in favour of any person, corporation or other entity \n(including the Indemnified Party) attributable to the Indemnifying Party's act, negligence \nor willful default in performance or non-performance under this Agreement. If the \nIndemnified Party notifies Indemnifying Party in writing of a third-party claim against \nIndemnified Party that any Service provided by the Indemnifying Party infringes a \ncopyright, trade secret or patents incorporated in India of any third party, Indemnifying \nParty will defend such claim at its expense and will pay any costs or damages that may \nbe finally awarded against Indemnified Party.  \n \n Further, Indemnifying Party will indemnify the Indemnified Party , if the loss on account of \nodily injury, death or damage to  property arising in favour of the indemnified party,  is \ncaused by",
+      "clause_number": "16",
+      "clause_title": "INDEMNITIES AND OTHER PROVISIONS",
+      "legal_category": "indemnity",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "liability_ivinfringementofanyp_fb68c355d7bb8238",
+      "document_section": "liability",
+      "page_start": 9,
+      "page_end": 10,
+      "clause_heading": "iv. infringement of any patent, trademarks, copyrights etc. or such other",
+      "verbatim_text": "iv. infringement of any patent, trademarks, copyrights etc. or such other \nstatutory infringements in respect of all components provided to fulfil\nthe scope of the work herein Service Provider shall further indemnify the \nBank against any loss or damage to the Bank’s premises or property, \nBank’s data, loss of life, etc., due to the acts of the Service Provider’s \nemployees, agents or representatives.  \nThe Service Provider shall further indemnify the Bank against any loss or \ndamage arising out of loss of data, claims of infringement of third-party \ncopyright, patents, or other intellectual property rights, and third-party \nclaims on the Bank deliverables at all points of time. \nB. The indemnities set out in point A above shall be subject to the following \nconditions:",
+      "clause_number": "IV",
+      "clause_title": "iv. infringement of any patent, trademarks, copyrights etc. or such other",
+      "legal_category": "indemnity",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_INDEPENDENTSERVICEPR_aefc8d3ea0efed68",
+      "document_section": "unknown",
+      "page_start": 10,
+      "page_end": 11,
+      "clause_heading": "INDEPENDENT SERVICE PROVIDER",
+      "verbatim_text": "17. INDEPENDENT SERVICE PROVIDER \nThis Agreement is on a principal-to-principal basis between the parties hereto. Nothing \ncontained in this Agreement shall be construed or deemed to create any association, \npartnership or joint venture or employer-employee relationship or principal-agent \nrelationship in any manner whatsoever between the parties. The Service Provider \nacknowledges that its rendering of services is solely within its own control, subject to the \nterms and conditions agreed upon and agrees not to hold itself out to be an employee, \nagent or servant of the IPPB or any subsidiary or affiliate thereof.",
+      "clause_number": "17",
+      "clause_title": "INDEPENDENT SERVICE PROVIDER",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "liability_ItheIndemnifiedParty_3bfad4f22cb369ab",
+      "document_section": "liability",
+      "page_start": 10,
+      "page_end": 10,
+      "clause_heading": "I. the Indemnified Party, as promptly as practicable, informs the",
+      "verbatim_text": "I. the Indemnified Party, as promptly as practicable, informs the \nIndemnifying Party in writing of the claim or proceedings and provides all \nrelevant evidence, documentary or otherwise;",
+      "clause_number": "I",
+      "clause_title": "I. the Indemnified Party, as promptly as practicable, informs the",
+      "legal_category": "indemnity",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "liability_IItheIndemnifiedPart_4f615072f4c4342f",
+      "document_section": "liability",
+      "page_start": 10,
+      "page_end": 10,
+      "clause_heading": "II. the Indemnified Party shall, at the cost of the Indemnifying Party, give the",
+      "verbatim_text": "II. the Indemnified Party shall, at the cost of the Indemnifying Party, give the \nIndemnifying Party all reasonable assistance in the defence of such claim \nincluding reasonable access to all relevant information, documentation \nand personnel provided that the Indemnified Party may, at its sole cost \nand expense, reasonably participate, through its attorneys or otherwise, \nin such defence;",
+      "clause_number": "II",
+      "clause_title": "II. the Indemnified Party shall, at the cost of the Indemnifying Party, give the",
+      "legal_category": "indemnity",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "liability_IIIiftheIndemnifying_c3c9c4bf86f02db4",
+      "document_section": "liability",
+      "page_start": 10,
+      "page_end": 10,
+      "clause_heading": "III. if the Indemnifying Party does not assume full control over the defence of",
+      "verbatim_text": "III. if the Indemnifying Party does not assume full control over the defence of \na claim as provided in this Clause, the Indemnified Party may participate \nin such defence at its sole cost and expense, and the Indemnified Party \nwill have the right to defend the claim in such manner as it may deem \nappropriate, and the cost and expense of the Indemnified Party will be \nrecoverable from the Indemnifying Party;",
+      "clause_number": "III",
+      "clause_title": "III. if the Indemnifying Party does not assume full control over the defence of",
+      "legal_category": "indemnity",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "liability_IVtheIndemnifiedPart_cff21cb6e7805a47",
+      "document_section": "liability",
+      "page_start": 10,
+      "page_end": 10,
+      "clause_heading": "IV. the Indemnified Party shall not prejudice, pay or accept any proceedings",
+      "verbatim_text": "IV. the Indemnified Party shall not prejudice, pay or accept any proceedings \nor claim, or compromise any proceedings or claim, without the written \nconsent of the Indemnifying Party, provided that such consent shall not \nbe unreasonably withheld;",
+      "clause_number": "IV",
+      "clause_title": "IV. the Indemnified Party shall not prejudice, pay or accept any proceedings",
+      "legal_category": "indemnity",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "liability_vallsettlementsofcla_12ace6721b3b699d",
+      "document_section": "liability",
+      "page_start": 10,
+      "page_end": 10,
+      "clause_heading": "v. all settlements of claims subject to indemnification under this Clause will",
+      "verbatim_text": "v. all settlements of claims subject to indemnification under this Clause will  \na. be entered into only with the consent of the Indemnified Party, which \nconsent will not be unreasonably withheld and include an unconditional \nrelease to the Indemnified Party from the claimant or plaintiff for all \nliability in respect of such claim; and  \nb. include any appropriate confidentiality agreement prohibiting disclosure \nof the terms of such settlement;",
+      "clause_number": "V",
+      "clause_title": "v. all settlements of claims subject to indemnification under this Clause will",
+      "legal_category": "liability",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "liability_vitheIndemnifiedPart_546f5111dc95a640",
+      "document_section": "liability",
+      "page_start": 10,
+      "page_end": 10,
+      "clause_heading": "vi. the Indemnified Party shall account to the Indemnifying Party for all awards",
+      "verbatim_text": "vi. the Indemnified Party shall account to the Indemnifying Party for all awards, \nsettlements, damages and costs (if any) finally awarded in favour of the \nIndemnified Party which are to be paid to it in connection with any such \nclaim or proceedings;  \nvii. the Indemnified Party shall take steps that the Indemnifying Party may \nreasonably require to mitigate or reduce its loss as a result of such a claim \nor proceedings;",
+      "clause_number": "VI",
+      "clause_title": "vi. the Indemnified Party shall account to the Indemnifying Party for all awards",
+      "legal_category": "indemnity",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_ASSIGNMENT_9747e3937ed5c8c3",
+      "document_section": "unknown",
+      "page_start": 11,
+      "page_end": 11,
+      "clause_heading": "ASSIGNMENT:",
+      "verbatim_text": "18. ASSIGNMENT: \nThe Service Provider shall not assign its obligations to perform under this Agreement to a \nthird party, in whole or in part.",
+      "clause_number": "18",
+      "clause_title": "ASSIGNMENT:",
+      "legal_category": "assignment",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_INSPECTIONANDRIGHTTO_e54b89d723a31430",
+      "document_section": "unknown",
+      "page_start": 11,
+      "page_end": 11,
+      "clause_heading": "INSPECTION AND RIGHT TO AUDIT",
+      "verbatim_text": "20. INSPECTION AND RIGHT TO AUDIT \ni) The Service Provider shall provide unrestricted access to its premises and  records being \nmaintained with regard to the job being performed as per its contract with the IPPB,  to \nthe authorized personnel of the IPPB / its auditors (internal and external)/ any statutory / \nregulatory authority / authorized personnel from RBI to carry out any kind of process of \naudit including that of its operations and records related to IPPB and to obtain the copy of \nthe any audit or review reports and findings made about the service provider in \nconjunction with the services performed under this agreement. \nii) All the clauses specified under this clauses 20 shall be applicable and extended to any \nentity to which the Service Provider has outsourced or sub-contracted. It shall be the \nresponsibility of the Service Provider to ensure unrestricted access to the authorities/officials \nas mentioned above to the places where such services are outsourced, for inspection and \nverification. In accessing Service Provider’s premises, the IPPB shall however comply with \nany and all rules, regulations, policies and procedures relating to the access, entry, safety \nand security of Service Provider's premises, subject to acceptance by the IPPB and a copy \nof the rules & regulations be provided to the IPPB prior to visit. In addition, the IPPB shall \nkeep confidential any information in the possession or custody of Service Provider and shall \nnot disturb or prevent Service Provider's performance of activity. \niii) The Service Provider shall allow IPPB, Reserve Bank of India  & other regulators and statutory \nauthorities to  access the documents, records of transaction or any other information given \nto, stored or  processed by the Service Provider relating to this agreement, within a \nreasonable time failing which  Service Provider will be liable to pay any charges/ penalty \nlevied by RBI. The Service Provider shall  allow the Reserve Bank of India to conduct audits",
+      "clause_number": "20",
+      "clause_title": "INSPECTION AND RIGHT TO AUDIT",
+      "legal_category": "liability",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "multiple_section_matches",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_SUBCONTRACTORS_aa470e5031a94290",
+      "document_section": "unknown",
+      "page_start": 11,
+      "page_end": 11,
+      "clause_heading": "SUB-CONTRACTORS",
+      "verbatim_text": "19. SUB-CONTRACTORS  \nThe Service provider shall not assign or transfer this contract or part thereof to any other \nparty without written consent of IPPB and in case, it is allowed by IPPB, for the purpose as \nmentioned under this agreement, the service provider will be considered as a solely liable \nfor delivery of all the services under this agreement and the scope of work. \n \n The IPPB, at its absolute discretion, may deny such permission. However, such prior written permission \ngiven by the IPPB shall not be construed as waiver of any accrued rights and/or liabilities and the Service \nProvider shall remain fully responsible for all acts and omissions of its contractors, sub-contractors, or \nagents. \nNothing in this Agreement shall be construed as creation of any contractual or other relationship between \nthe IPPB and any such contractor/sub-contractor or agent, nor any obligation on the part of the IPPB to pay \nor see to the payment of any money due to any contractor / sub-contractor / agent. \n \nThe Service Provider shall be liable and responsible to IPPB for the acts of the assignee/ sub-contractor, for \nand in respect of the due performance of the Contract and the Service Providers obligations there under. \n \nIPPB shall reserve the right to seek information from the service provider about the sub-\ncontractors or  third parties assigned or engaged or contracted by service provider to \nperform its obligations under this agreement. \n \nThe service provider undertakers that it shall be contractually liable for the performance and risk \nmanagement practices of its sub-contractors.",
+      "clause_number": "19",
+      "clause_title": "SUB-CONTRACTORS",
+      "legal_category": "payment",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "multiple_section_matches",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_Miscellaneous_44a05e0c82eeb516",
+      "document_section": "unknown",
+      "page_start": 12,
+      "page_end": 12,
+      "clause_heading": "Miscellaneous",
+      "verbatim_text": "23. Miscellaneous \nThe service provider undertakes and ensures that :",
+      "clause_number": "23",
+      "clause_title": "Miscellaneous",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_StatutoryLegalCompli_b8cf7c8f2579bea5",
+      "document_section": "unknown",
+      "page_start": 12,
+      "page_end": 12,
+      "clause_heading": "Statutory/ Legal Compliances",
+      "verbatim_text": "21. Statutory/ Legal Compliances  \nThe Service Provider agrees, undertakes and confirms absolutely, irrevocably, \nunconditionally that the entire obligation with regard to: (i) Payment of minimum wages; (ii) \nPayment of bonus; (iii) Payment of gratuity; and (iv) Any other statuary remittances, which \nmay be applicable from time to time to the resources engaged by the Service Provider shall \nbe principally with the Service Provider and the Service Provider shall also be liable for \npayment to the resources engaged by him/them any revision in aforesaid laws affected by \nappropriate Government and liability and duty of the Bank shall be limited only to the extent \nof reimbursement of the bills properly raised and not otherwise. If any liability, obligation, \nburden, claim or cost are suffered or incurred by IPPB on account of breach by the Service \nProvider of the provisions of this clause, the Service Provider shall forthwith reimburse the \nsame to the Bank without any demur or protest whatsoever.  \nThe Service Provider hereby indemnifies IPPB against any harm or cost or claim incurred or \nsuffered by the Bank due to breach of the Service Provider in terms of the obligations herein. \nThe Service Provider will furnish proof of compliance of all labour laws requirements including \nobtaining licenses, filing of monthly/ quarterly and annual returns and any other statutory \nrequirement within 15 days from the due date and furnish calculations and proof of \npayments made to all Government/Statutory Authorities under PF, ESIC, Labour Welfare \nFund Act, Payment of Bonus Act, Minimum Wages Act, Payment of Wages Act, etc., within \n15 days of the statutory time limit allowed under the respective Acts. \nNotwithstanding anything contained in this AGREEMENT or in any other documents  \ni) Under no circumstances shall IPPB be liable to the Service Provider for direct, indirect, \nincidental, consequential, special or exemplary damages arising from termination of \nthe Agreement, even if IPPB has been advised of the possibility of such damages, such \nas, but not limited to, loss of revenue or anticipated profits or lost business;  \nii) IPPB shall not have any liability whatsoever in case of any third party claims, demands, \nsuit, actions or other proceedings against the Service Provider or its Personnel or any \nother person engaged by the Service Provider in the course of performance of the \nService Provider’s obligations under this AGREEMENT",
+      "clause_number": "21",
+      "clause_title": "Statutory/ Legal Compliances",
+      "legal_category": "payment",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "multiple_section_matches",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_Taxes_c9e60e5d94bee3a9",
+      "document_section": "unknown",
+      "page_start": 12,
+      "page_end": 12,
+      "clause_heading": "Taxes",
+      "verbatim_text": "22. Taxes \nThe Service Provider, its directors and employees shall be solely liable for the payment of \nall taxes, duties, fines, penalties, etc., by whatever name called as may become due \nand payable under the local, State and / or central laws, rules and / or regulations as \nmay be prevalent and as amended from time to time in relation to the Services rendered \npursuant to this AGREEMENT. \nNotwithstanding anything contained in this AGREEMENT, the Bank shall not be liable nor \nresponsible for collection and/ or payment of any such taxes, duties, fines, penalties etc., \nby whatever name called, that are due and payable by the Service Provider under the \nlocal, State and / or central laws, rules and / or regulations as may be prevalent and as \namended from time to time.",
+      "clause_number": "22",
+      "clause_title": "Taxes",
+      "legal_category": "payment",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "multiple_section_matches",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_Penalties_ace43772093ac501",
+      "document_section": "unknown",
+      "page_start": 13,
+      "page_end": 14,
+      "clause_heading": "Penalties",
+      "verbatim_text": "24. Penalties \n \nThe penalties shall be as per Schedule-B to this agreement.",
+      "clause_number": "24",
+      "clause_title": "Penalties",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "terminatio_ITheserviceproviders_1c4a955223c356b8",
+      "document_section": "termination",
+      "page_start": 13,
+      "page_end": 13,
+      "clause_heading": "I. The service provider shall also be required to brief the Top Management of IP",
+      "verbatim_text": "I. The service provider shall also be required to brief the Top Management of IPPB via \npresentations on the findings of the Report  \nJ. The service provider shall also be required to impart two days training to IPPB team on various \naspects of IS Audit, IS Security, Threats, attacks & vulnerabilities and technology for protection \nof Information Assets.  \nK. Any type of formation of consortium, sub-contracting and joint assignments for the service \nprovider will not be allowed/considered during the period of this agreement.  \nL. On termination of this agreement and any subsequent agreement, each party must immediately \nreturn to the other party or delete or destroy all confidential information of the other party and all \nnotes and memoranda (including copies of them) containing confidential information of the other \nparty in its possession or control where Confidential Information relates to IPPB’s data or data of \nthe customers, including but not limited to the customers other than IPPB customers or the IPPB \nemployee’s personal data or such other information as IPPB is required by banking secrecy or \nsuch other laws to protect for an indefinite period, such confidential information shall be protected \nby the receiving party until such time when the receiving party no longer has access to the \nConfidential Information and has returned or destroyed all Confidential Information in its \npossession.",
+      "clause_number": "I",
+      "clause_title": "I. The service provider shall also be required to brief the Top Management of IP",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_NONEXCLUSIVEAGREEMEN_9544f8519aff9c34",
+      "document_section": "unknown",
+      "page_start": 14,
+      "page_end": 14,
+      "clause_heading": "NON-EXCLUSIVE AGREEMENT:",
+      "verbatim_text": "27. NON-EXCLUSIVE AGREEMENT:  \nThis Agreement is on non-exclusive basis and the Service Provider shall not have any \nexclusive right to provide the Services to the IPPB. The IPPB shall be free to engage any \nother Service Provider/s or may entrust services similar to the Services or any part thereof \nto any person/s or company or firm etc.",
+      "clause_number": "27",
+      "clause_title": "NON-EXCLUSIVE AGREEMENT:",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_PROPRIETARYRIGHTS_602516cc97fa319b",
+      "document_section": "unknown",
+      "page_start": 14,
+      "page_end": 14,
+      "clause_heading": "PROPRIETARY RIGHTS:",
+      "verbatim_text": "25. PROPRIETARY RIGHTS:  \ni) All deliverables and the intellectual property rights (whether registered or not) relating to \nthe said services provided under this Agreement shall be the proprietary of IPPB and shall \nbe subject to the confidentiality provisions of this Agreement. \n  \nii) This Agreement shall in no way be construed to grant any right, license or authorization nor \nshall it any way be deemed to create any interests, charge or lien in favour of the IPPB to \nuse the computer programs, software, and/ or related documentation used or supplied by \nService Provider for any purpose except as permitted in this Agreement.  \n \niii) The IPPB master file as well as the transaction data file and related files, reports, studies \nsupplied by the IPPB under this Agreement are subject to the proprietary rights of the IPPB, \nas well as the Confidentiality provision of this Agreement.",
+      "clause_number": "25",
+      "clause_title": "PROPRIETARY RIGHTS:",
+      "legal_category": "confidentiality",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "liability_RelationshipofthePar_9ad484c4fcfbdcaa",
+      "document_section": "liability",
+      "page_start": 14,
+      "page_end": 14,
+      "clause_heading": "Relationship of the Parties:",
+      "verbatim_text": "28. Relationship of the Parties: \nThis Agreement, which is a Contract for Service, shall not constitute the appointment of \neither Party as the legal representative or agent of the other Party. No Party to this \nAgreement shall have any right or authority to assume, create or incur any liability or any \nobligation of any kind, express or implied, against or in the name of or on behalf of the \nother Party to this Agreement except as may be specifically provided in this Agreement, \nneither party shall assume or be responsible for any liability or obligation that arises from \nany act or omission to act of, the other party however or whenever arising.",
+      "clause_number": "28",
+      "clause_title": "Relationship of the Parties:",
+      "legal_category": "liability",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "terminatio_TerminationofContrac_7b569587f0f1c60e",
+      "document_section": "termination",
+      "page_start": 14,
+      "page_end": 15,
+      "clause_heading": "Termination of Contract",
+      "verbatim_text": "29. Termination of Contract  \n \n Bank shall have the option to terminate this agreement any time or at any stage in the \nscenarios listed below. \no Non delivery of services by the service provider \no Service levels committed not met with by the service provider  \no Breach of obligations of the service provider or any act of the service provider \namounting to financial loss, damages, penalties levied on bank by regulator or \nany statutory authority  \n It is clarified that the service provider shall not terminate this Agreement for \nconvenience. \n IPPB reserves the right to recover any dues payable by the service provider from any \namount outstanding to the credit of the service provider, including the pending bills \nand/or invoking & forfeiting the Bank Guarantee, if any, under this agreement.\nIPPB may also terminate this agreement , on convenience, at its own discretion by \nproviding prior written notice of ______ (__) days to the Service Provider without assigning \nany reasons.",
+      "clause_number": "29",
+      "clause_title": "Termination of Contract",
+      "legal_category": "termination",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_LIQUIDATEDDAMAGES_2809ac120794e1b4",
+      "document_section": "unknown",
+      "page_start": 15,
+      "page_end": 16,
+      "clause_heading": "LIQUIDATED DAMAGES",
+      "verbatim_text": "34.  LIQUIDATED DAMAGES  \nIf the Service Provider fails to comply with the terms of this agreement, IPPB shall, without \nprejudice to its other remedies under the agreement, deduct from the order value, as \nliquidated damages, a sum equivalent to 0.5% of the services for each week or part thereof \nof delay until actual delivery or performance up to a maximum deduction of 10% of the \norder value. Once the maximum is reached Bank may consider cancellation of the order \nor termination of the agreement and the Performance Security submitted may be invoked \n& forfeited. \n \nThe payment or deduction of such Liquidated Damages shall not relieve the Service \nProvider from his obligations to complete its obligations under this Agreement.   \nThe parties agree that the Liquidated Damages set out hereunder are genuine pre- \nestimate of costs and losses likely to be incurred by IPPB due to a failure to comply with the \nterms of the agreement.",
+      "clause_number": "34",
+      "clause_title": "LIQUIDATED DAMAGES",
+      "legal_category": "payment",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "multiple_section_matches",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "payment_BLACKLISTING_f1ffbb97e4031c17",
+      "document_section": "payment",
+      "page_start": 15,
+      "page_end": 15,
+      "clause_heading": "BLACKLISTING",
+      "verbatim_text": "30. BLACKLISTING \n If the Service Provider fails to perform the obligations as per this agreement or his/her \nperformance is found to be unsatisfactory by the Bank (India Post Payments Bank Ltd.), the \nBank may at its sole discretion blacklist the Service Provider from participating in any offer \nby the Bank calling Bids, for a period of __ years.",
+      "clause_number": "30",
+      "clause_title": "BLACKLISTING",
+      "legal_category": "payment",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "terminatio_EFFECTSOFTERMINATION_0907ee822f8928c3",
+      "document_section": "termination",
+      "page_start": 15,
+      "page_end": 15,
+      "clause_heading": "EFFECTS OF TERMINATION",
+      "verbatim_text": "32. EFFECTS OF TERMINATION \nIn the event that the IPPB terminates this Agreement pursuant to failure on the part of the \nService Provider to comply with the conditions as contained in this agreement and \ndepending on the event of default, Performance Guarantee furnished by Service Provider \nshall be invoked/forfeited.",
+      "clause_number": "32",
+      "clause_title": "EFFECTS OF TERMINATION",
+      "legal_category": "termination",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "terminatio_MATERIALBREACH_40b92e7b48d176da",
+      "document_section": "termination",
+      "page_start": 15,
+      "page_end": 15,
+      "clause_heading": "MATERIAL BREACH",
+      "verbatim_text": "31. MATERIAL BREACH \nIn the event that either Party believes that the other Party is in Material Breach of its \nobligations under this Agreement, such aggrieved Party may terminate this Agreement \nupon giving a _____ (___) days’ notice for curing the Material Breach to the other Party. In \ncase the Material Breach continues, after the notice period, the IPPB or the Service \nProvider, as the case may be will have the option to terminate the Agreement. Any notice \nserved pursuant to this Clause shall give reasonable details of the Material Breach, and the \ntermination will become effective.",
+      "clause_number": "31",
+      "clause_title": "MATERIAL BREACH",
+      "legal_category": "termination",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "terminatio_Terminationduetobank_32ea95fa9786c6a5",
+      "document_section": "termination",
+      "page_start": 15,
+      "page_end": 15,
+      "clause_heading": "Termination due to bankruptcy of Service Provider, if Service Provider files for",
+      "verbatim_text": "33. Termination due to bankruptcy of Service Provider, if Service Provider files for declaration \nof  bankruptcy before the appropriate forum. \nThe IPPB may serve written notice on the Service Provider at any time to terminate this \nAgreement with immediate effect in the event that the Service Provider reporting an \napprehension of bankruptcy to the IPPB or its nominated agencies.",
+      "clause_number": "33",
+      "clause_title": "Termination due to bankruptcy of Service Provider, if Service Provider files for",
+      "legal_category": "termination",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_ForceMajeure_cfe749809ea6938d",
+      "document_section": "unknown",
+      "page_start": 16,
+      "page_end": 16,
+      "clause_heading": "Force Majeure",
+      "verbatim_text": "37. Force Majeure \nA Force Majeure (FM) means extraordinary events or circumstance beyond human control \nsuch as an event described as an act of God (like a natural calamity) or events such as a \nwar, strike, riots, crimes (but not including negligence or wrong-doing, \npredictable/seasonal rain and any other events specifically excluded in the clause). In \ncase of a FM, the contract frees both parties (bank & the vendor) from contractual liability \nor obligation when prevented by such events from fulfilling their obligations under the \ncontract. However, this does not excuse a party’s non-performance entirely, but only \nsuspends it for the duration of the FM. The parties have to give notice of FM as soon as it \noccurs and it cannot be claimed ex-post facto. If the performance in whole or in part or \nany obligation under this contract is prevented or delayed by any reason of FM for a period \nexceeding ________ (_______________________) days, IPPB may at its option terminate the \ncontract.  \nNotwithstanding the punitive provisions contained in the contract for delay or breach of \ncontract, the vendor would not be liable for imposition of any such sanction so long as the \ndelay and/or failure of the vendor in fulfilling its obligations under the contract is the result \nof an event covered in the FM clause.",
+      "clause_number": "37",
+      "clause_title": "Force Majeure",
+      "legal_category": "termination",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "multiple_section_matches",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_IntellectualProperty_8638973c0d791b9d",
+      "document_section": "unknown",
+      "page_start": 16,
+      "page_end": 16,
+      "clause_heading": "Intellectual Property Rights",
+      "verbatim_text": "38. Intellectual Property Rights \nThe name, logo, design, and other intellectual property of IPPB is solely the property of the \nIPPB and in no case the Service Provider shall use the same, except for the purposes \nmentioned under this agreement and exclusively for the IPPB only.",
+      "clause_number": "38",
+      "clause_title": "Intellectual Property Rights",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "terminatio_Confidentiality_a3ad190889a57265",
+      "document_section": "termination",
+      "page_start": 16,
+      "page_end": 18,
+      "clause_heading": "Confidentiality",
+      "verbatim_text": "39. Confidentiality  \n“Confidential Information” shall mean and includes, without limitation, any and all information, data(including but not \nlimited to customer data/information of IPPB), knowledge, and know-how, whether pertaining to commercial, \ntechnical, scientific, operational, administrative, financial, marketing or business affairs, or intellectual property, or \notherwise (in whatever form and however communicated) relating, directly or indirectly, to the Provider, which the \nProvider or its employees, directors, officers, agents, consultants etc., would have disclosed or delivered prior to the \ndate of this Agreement, or is disclosed or delivered after the date of this Agreement, to the Recipient or to any third \nparty on the request of the Recipient, in writing, electronically, verbally, or through visual means, either with the \ndisclaimer of confidentiality or not, or which the Recipient (or such third party) learns, obtains or derives, orally, through \nobservation or through analysis, interpretations, compilations, studies, or evaluations of such information, data, \nknowledge, or know-how; for clarity, the information, data, knowledge, and know-how includes, without limitation, \nthose in the nature of, or pertaining to, business plans, marketing and financial plans, strategy, projections, policy\ndetails, client details, various products, details regarding pricing, technical know-how etc. in respect of such products, \nand also the documents, registers, books, photographs, notes, renderings, journals, notebooks, computer programs, \ncomputer readable video, audio or sound files, and samples relating thereto;;  \ni) The Service Provider recognises that during the Term of this Agreement, data, documents \nand/or information, including but not limited to Proprietary Information (“Confidential \nInformation”) will be procured and made available to it. Disclosure or usage of the data \nby any such recipient may constitute a breach of applicable Laws causing harm to the \nconcerned customers of the IPPB. The Service Provider hereby convents to, not disclose \nany such Confidential Information to any Third Party and demonstrate utmost care, \nsensitivity and strict confidentiality with regard to any such Confidential Information. Any \nbreach of this Clause will result in the IPPB and its nominees receiving a right to seek \ninjunctive relief and damages without any limit, from the and/or also seek termination, in \nits sole discretion. \nii) Each Party agrees as to any Confidential Information disclosed by a Party to this \nAgreement (“Discloser”) to the other Party to this Agreement (“Recipient”): \na) To take such steps necessary to protect the Discloser's Confidential Information from \nunauthorised use, reproduction and disclosure as the Recipient takes in relation to its own \nConfidential Information of the same type, but in no event less than reasonable care. \nb) To use such Confidential Information only for the purposes of this Agreement or as otherwise \nexpressly permitted or expressly required by this Agreement or as otherwise permitted by \nthe Discloser in writing. \nc) Not, without the Discloser's prior written consent, to copy the Confidential Information or \ncause or allow it to be copied, directly or indirectly, in whole or in part, except as otherwise \nexpressly provided in this Agreement, or as required about Recipient's use as permitted \nunder this Clause, or as needed for the purposes of this Agreement, provided that any \nproprietary legends and notices (whether of the Discloser or of a Third Party) are not \nremoved or obscured. \nd) Not, without the Discloser's prior written consent, to disclose, transfer, publish or \ncommunicate the Confidential Information in any manner to any person except as \npermitted under this Agreement. \ne) Promptly destroy all Confidential Information in its possession, to the satisfaction of the \nDiscloser, upon fulfilment of its obligations under this Agreement. \niii) The restrictions of this clause shall not apply to Confidential Information that: \na) is or becomes generally available to the any Third Party through no breach of this Clause \nby the Recipient; \nb) was in the Recipient's possession free of any obligation of confidence prior to the time of \nreceipt of it by the Recipient hereunder, provided the same has been rightfully obtained; \nc) is developed by the Recipient independently of any of Discloser’s Confidential Information; \nd) is rightfully obtained by the Recipient from Third Parties authorised at that time to make \nsuch disclosure without restriction; \ne) is identified in writing by the Discloser as no longer proprietary or confidential;\nf) is required to be disclosed by Law, regulation or order of a court or any other regulatory \nauthority in India or to be furnished to the Parliament and/or its Committees, provided that \nthe Recipient gives prompt written notice to the Discloser of such legal and regulatory \nrequirement to disclose so as to allow the Discloser reasonable opportunity to contest such \ndisclosure. \niv) To the extent that such disclosure is required for the purposes of this Agreement, either Party \nmay disclose Confidential Information, with the prior written consent of the other Party, \nwhich shall not be unreasonably withheld, to: \na. its employees, agents and independent contractors and to any of its Affiliates and their \nrespective independent contractors or employees but all of them should in turn be bound \nto maintain the confidentiality referred to herein on their part; and \nb. its professional advisors and auditors, who require access for the purposes of this \nAgreement, whom the relevant Party has informed of its obligations under this Clause and \nin respect of whom the relevant Party has used commercially reasonable efforts to ensure \nthat they are contractually obliged to keep such Confidential Information confidential on \nterms substantially the same as set forth in this Article. Either Party may also disclose \nConfidential Information to any entity with the other Party's prior written consent. \nv) The provisions of this clause 39 shall survive the expiration or any earlier termination of this \nAgreement. \nvi) Confidential Information shall be and remain the property of the Discloser and nothing in \nthis clause shall be construed to grant either Party any right or license with respect to the \nother Party’s Confidential Information otherwise than as is expressly set out in this \nAgreement. \nvii) Subject as otherwise expressly provided in this Agreement all Confidential Information in \ntangible or electronic form under the control of the Recipient shall either be destroyed, \nerased or returned to the Discloser promptly upon the earlier of: (i) the written request of \nthe Discloser, or, (ii) termination or expiry of this Agreement.  \nviii) Both Parties agree that monetary damages would not be a sufficient remedy for any \nbreach of this Clause by the other Party and that the IPPB and Service Provider, as \nappropriate, shall be entitled to equitable relief, including injunction and specific \nperformance as a remedy for any such breach. Such remedies shall not be deemed to be \nthe exclusive remedies for a breach by a Party of this Clause, but shall be in addition to all \nother remedies available at Law or equity to the damaged Party.",
+      "clause_number": "39",
+      "clause_title": "Confidentiality",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "terminatio_FraudbyServiceProvid_f4f9a96ea14edd04",
+      "document_section": "termination",
+      "page_start": 16,
+      "page_end": 16,
+      "clause_heading": "Fraud by Service Providers Personnel",
+      "verbatim_text": "35. Fraud by Service Providers Personnel \nThe IPPB reserves its right to initiate criminal action against the agents/ employees of the \nService Provider for fraud or misappropriation, besides stringent penalties Under the \napplicable laws, the IPPB may call for termination of this Agreement if the IPPB, in its sole \ndiscretion finds it necessary to do so. The Service Provider agrees that any decision of the \nIPPB in this respect shall be final and binding on the Service Provider.",
+      "clause_number": "35",
+      "clause_title": "Fraud by Service Providers Personnel",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_Personnel_a98fbee8a5005acf",
+      "document_section": "unknown",
+      "page_start": 18,
+      "page_end": 19,
+      "clause_heading": "Personnel",
+      "verbatim_text": "40. Personnel \ni) Personnel assigned by the Service Provider to perform the Services shall be employees/sub-\ncontractors/consultants of the Service Provider, and under no circumstances will such \npersonnel be considered employees of IPPB. The Service Provider shall have the sole \nresponsibility for supervision and control of its personnel and for payment of such \npersonnel's entire compensation, including salary, withholding of income taxes and other \napplicable taxes, worker's compensation, employee and disability benefits and the like \nand shall be responsible for all IPPB obligations under all applicable laws. \nii) Each Party shall be responsible for the performance of all its obligations under this \nAgreement and shall be liable for the acts and omissions of its employees and agents in \nconnection therewith.",
+      "clause_number": "40",
+      "clause_title": "Personnel",
+      "legal_category": "payment",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "multiple_section_matches",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_Changeinconstitution_ca27291f2b91b5a0",
+      "document_section": "unknown",
+      "page_start": 19,
+      "page_end": 19,
+      "clause_heading": "Change in constitution or change in management",
+      "verbatim_text": "41. Change in constitution or change in management \nPrior intimation to IPPB shall be required by the Service Provider for any change in the \nPartner or its constitution.  \nChange in management and the key persons monitoring the obligations of the service \nprovider under this contract are to be timely informed to IPPB by Service Provider to ensure \ncontinuity of operations. Further, the deployed management/ resources should be in line \nwith the expertise requirements to carry out the activities and as per the terms & conditions \nof this contract and upto the satisfaction of IPPB.",
+      "clause_number": "41",
+      "clause_title": "Change in constitution or change in management",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_TransitionRequiremen_b18903e350928346",
+      "document_section": "unknown",
+      "page_start": 19,
+      "page_end": 19,
+      "clause_heading": "Transition Requirement",
+      "verbatim_text": "44. Transition Requirement  \nIn the event of failure of the Service Provider to render the Services or in the event of termination of agreement \nor expiry of term or otherwise, without prejudice to any other right, IPPB may at its sole discretion may make \nalternate arrangement for getting the Services contracted with another vendor/ service provider. In such case, \nIPPB shall give prior notice to the existing Service Provider. The existing Service Provider shall continue to provide \nservices as per the terms of contract until a New Service Provider or New Vendor completely takes over the \nwork. During the transition phase, the existing Service Provider shall render all reasonable assistance to the new \nService Provider within such period prescribed by IPPB, at no extra cost to IPPB, for ensuring smooth switch over \nand continuity of services. If existing Service Provider breaches this obligation under clause 44, it shall be liable \nfor paying a penalty of Rs.___________on demand to IPPB, which may be settled from the payment of invoices \nfor the contracted period or by forfeiture of Performance Bank Guarantee.",
+      "clause_number": "44",
+      "clause_title": "Transition Requirement",
+      "legal_category": "payment",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "multiple_section_matches",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "liability_LimitationofLiabilit_ea11b723f0b0f788",
+      "document_section": "liability",
+      "page_start": 19,
+      "page_end": 19,
+      "clause_heading": "Limitation of Liability",
+      "verbatim_text": "42. Limitation of Liability \nExcept in cases of criminal negligence or willful misconduct, the aggregate liability of the Service \nProvider to IPPB, whether under the contract, in tort or otherwise, shall be limited to the total \nContract Price. Provided that this limitation shall not apply to any obligation of the Service Provider, \nto indemnify the Bank under clause 16 or due to breach of Intellectual Property Rights under clause \n25 & 38 or breach of  confidentiality obligations under clause 39  . \n \nIn addition, under no circumstances shall either party to this agreement be liable to the other \nparty for indirect, incidental, consequential, special or exemplary damages, loss of revenue or \nloss of anticipated profits or lost business.",
+      "clause_number": "42",
+      "clause_title": "Limitation of Liability",
+      "legal_category": "conduct",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "terminatio_Notices_a4bed359e3aba60f",
+      "document_section": "termination",
+      "page_start": 19,
+      "page_end": 19,
+      "clause_heading": "Notices",
+      "verbatim_text": "45. Notices \ni) Any notice or other document, which may be given by either Party under this Agreement \nto the other Party (“Notice”), shall be given in writing in person or by registered post or by \nfacsimile transmission.",
+      "clause_number": "45",
+      "clause_title": "Notices",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "terminatio_PerformanceMonitorin_e4aa422eb4615dfc",
+      "document_section": "termination",
+      "page_start": 19,
+      "page_end": 19,
+      "clause_heading": "Performance Monitoring",
+      "verbatim_text": "43. Performance Monitoring \nThe performance of the service provider shall be continuous monitored and assessed at a regular \ninterval of _____ months/quarterly/half-yearly. \nIn case of any deficiency in services by the service provider or non-adherence to the timelines \nas mentioned under this agreement , IPPB may provide a cure period of _____ days to the \nservice provider to improve its services or adhere to the timelines. In case, the there is no \nimprovement on the part of Service Provider, then IPPB may terminate this agreement at its \nown discretion.",
+      "clause_number": "43",
+      "clause_title": "Performance Monitoring",
+      "legal_category": "termination",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_SURVIVAL_4b3d5266c7b028af",
+      "document_section": "unknown",
+      "page_start": 21,
+      "page_end": 22,
+      "clause_heading": "SURVIVAL",
+      "verbatim_text": "52. SURVIVAL \nCancellation, expiration or earlier termination of the Agreement (i) shall not relieve any \nParty of any obligations here under which expressly or by implication survive termination \nhereof; and (ii) except as otherwise provided in any provision of the Agreement expressly \nlimiting the liability of either Party, shall not relieve either Party of any obligations or liabilities \nfor (a) loss or damage to the other Party arising out of or caused by acts or omissions of\nsuch Party prior to the effectiveness of such termination or arising out of such termination; \nand (b) warranties, remedies, promises of indemnity and confidentiality.",
+      "clause_number": "52",
+      "clause_title": "SURVIVAL",
+      "legal_category": "termination",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "multiple_section_matches",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_VARIATIONSANDFURTHER_37a02ebdd5ac4775",
+      "document_section": "unknown",
+      "page_start": 21,
+      "page_end": 21,
+      "clause_heading": "VARIATIONS AND FURTHER ASSURANCE",
+      "verbatim_text": "50. VARIATIONS AND FURTHER ASSURANCE \ni) No amendment, variation or other change to this Agreement shall be valid unless made in \nwriting and signed by the duly authorised representatives of the Parties to this Agreement. \nii) Each Party to this Agreement agrees to enter into or execute, without limitation, whatever \nother agreement, document, consent and waiver and to do all other things which shall or \nmay be reasonably required to complete and deliver the obligations set out in this \nAgreement.",
+      "clause_number": "50",
+      "clause_title": "VARIATIONS AND FURTHER ASSURANCE",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "terminatio_SEVERABILITYANDWAIVE_14b2a7fc3554c70c",
+      "document_section": "termination",
+      "page_start": 21,
+      "page_end": 21,
+      "clause_heading": "SEVERABILITY AND WAIVER",
+      "verbatim_text": "51. SEVERABILITY AND WAIVER \ni) No waiver of any provision of this Agreement or consent to any departure from it by any \nparty shall be effective unless it is in writing. A waiver or consent shall be effective only for \nthe purpose for which it is given. No default or delay on the part of any Party in exercising \nany rights, powers or privileges operates a waiver of any right, nor does a single or partial \nexercise of a right preclude any exercise of other rights, powers or privileges \nii) Failure or delays on the part of any party in exercising any right, power or privilege under \nthis Agreement and no course of dealing between the Parties shall operate as a waiver \nthereof; nor shall any single or partial exercise of any right, power or privilege hereunder \nshall not preclude any other or further exercise thereof or the exercise of any other right, \npower and privilege hereunder. The rights, powers and remedies herein expressly provided \nare cumulative and not exclusive of any rights, powers or remedies, which the parties \nwould otherwise have. No notice to or further notice or demand in similar or other \ncircumstances or constitute a waiver of the rights of any of the other parties to any other \nor further action in any circumstances without notice or demand. \n \niii) If any provision of this Agreement, or any part thereof, shall be found by any court or \nadministrative body of competent jurisdiction to be illegal, invalid or unenforceable the \nillegality, invalidity or unenforceability of such provision or part provision shall not affect the \nother provisions of this Agreement and the remainder of the provisions in question which \nshall remain in full force and effect.  \niv) No failure to exercise or enforce and no delay in exercising or enforcing on the part of \neither Party to this Agreement of any right, remedy or provision of this Agreement shall \noperate as a waiver of such right, remedy or provision in any future application nor shall \nany single or partial exercise or enforcement of any right, remedy or provision preclude \nany other or further exercise or enforcement of such right, remedy or provision or the \nexercise or enforcement of any other right, remedy or provision. No waiver of any of the \nterms or conditions hereof shall be valid or binding unless made in writing and duly \nexecuted by both the parties.",
+      "clause_number": "51",
+      "clause_title": "SEVERABILITY AND WAIVER",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_ArrangementbetweenSe_3983dc5e76974213",
+      "document_section": "unknown",
+      "page_start": 22,
+      "page_end": 22,
+      "clause_heading": "Arrangement between Service Provider & OEM",
+      "verbatim_text": "54. Arrangement between Service Provider & OEM  \n \nThe service provider shall have back-to-back arrangement with the OEM for fulfilling the \nobligations under this agreement.",
+      "clause_number": "54",
+      "clause_title": "Arrangement between Service Provider & OEM",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_PUBLICITYANDBRANDING_85eef96eb3fc433b",
+      "document_section": "unknown",
+      "page_start": 22,
+      "page_end": 22,
+      "clause_heading": "PUBLICITY AND BRANDING",
+      "verbatim_text": "53. PUBLICITY AND BRANDING \ni) The Service Provider shall not, without the prior written consent of the IPPB, which shall not \nbe unreasonably withheld or delayed, make any press announcements or publicise this \nAgreement or any other contract with the IPPB or their respective contents or the business \npractices of the Parties in any way; or use the IPPB name or brand in any promotion or \nmarketing or announcement of orders. \nii) Each party acknowledges to the other that nothing in this Agreement either expressly or \nby implication constitutes an endorsement of any products or services of the other party \nand each party agrees not to conduct itself in such a way as to imply or express any such \napproval or endorsement.",
+      "clause_number": "53",
+      "clause_title": "PUBLICITY AND BRANDING",
+      "legal_category": "conduct",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_PrecedenceofDocument_5cce6be19e02f6f6",
+      "document_section": "unknown",
+      "page_start": 22,
+      "page_end": 22,
+      "clause_heading": "Precedence of Documents",
+      "verbatim_text": "55. Precedence of Documents   \nIf there is any inconsistency between the terms of this  agreement & the RFQ then, the terms \nof the RFQ will prevail to the extent of any inconsistency.",
+      "clause_number": "55",
+      "clause_title": "Precedence of Documents",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_Resolutionofdisputes_f397236fb7d229d6",
+      "document_section": "unknown",
+      "page_start": 22,
+      "page_end": 23,
+      "clause_heading": "Resolution of disputes and arbitration",
+      "verbatim_text": "56. Resolution of disputes and arbitration \nThe bank and the Service Provider shall make every effort to resolve any \ndisagreement or dispute amicably, arising in connection with this agreement, \nby direct and informal negotiation between the designated officer of the bank \nand designated representative of the Service Provider. If designated officer of \nthe bank and representative of Service Provider are unable to resolve the \ndispute within a reasonable period as deemed fit by the Bank, they shall \nimmediately escalate the dispute to the senior authorized personnel \ndesignated by the Bank and Service Provider respectively. If the parties fail to \nresolve the dispute within 21 (Twenty-One) days after the commencement of \nsuch negotiations, the Bank can:  \nA. Refer the dispute for arbitration, whereby one Arbitrator each shall be \nappointed by each party and the third Arbitrator shall be appointed by \nmutual consent of both arbitrators. This third Arbitrator shall preside over the \nArbitration proceedings.   \nB. Within thirty (30) days of the receipt of the said notice, the arbitrators shall be \nappointed in writing.   \nC. The Arbitrators shall have its seat in New Delhi or such other place in India as \nmay be mutually agreed to between the parties.   \nD. The arbitration proceedings shall be conducted under the Indian Arbitration \nand Conciliation Act, 1996 and the award of such Arbitration Tribunal shall \nbe enforceable in Indian Courts only.   \nE. Each party shall bear its own cost of preparing and presenting its case. The \ncost of arbitration including the fees and expenses shall be shared equally \nby the parties, unless otherwise awarded by the arbitrator.\nF. The parties shall continue to perform their respective obligations under this \ncontract during the pendency of the arbitration proceedings except in so \nfar as such obligations are the subject matter of the said arbitration \nproceedings.",
+      "clause_number": "56",
+      "clause_title": "Resolution of disputes and arbitration",
+      "legal_category": "arbitration",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "multiple_section_matches",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_Applicablelawandjuri_b54983458e0d6563",
+      "document_section": "unknown",
+      "page_start": 23,
+      "page_end": 23,
+      "clause_heading": "Applicable law and jurisdiction of court",
+      "verbatim_text": "57. Applicable law and jurisdiction of court \nThis agreement shall be governed in accordance with the Laws of India for  the time \nbeing in force and will be subject to the exclusive jurisdiction of Courts at Delhi (with the  \nexclusion of all other Courts).",
+      "clause_number": "57",
+      "clause_title": "Applicable law and jurisdiction of court",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "unknown_PREVENTIONOFCORRUPTI_f642aa5cdd03b6ab",
+      "document_section": "unknown",
+      "page_start": 23,
+      "page_end": 23,
+      "clause_heading": "PREVENTION OF CORRUPTION",
+      "verbatim_text": "58. PREVENTION OF CORRUPTION \ni) The Service Provider shall not: \nI. offer or agree to give any person working for or engaged by the IPPB any gift or other \nconsideration, which could act as an inducement or a reward for any act or failure to \nact connected to this Agreement, or any other agreement between the Service \nProvider and the IPPB or any Governmental Authority; nor",
+      "clause_number": "58",
+      "clause_title": "PREVENTION OF CORRUPTION",
+      "legal_category": "other",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "terminatio_IIenterintothisAgree_300758f9225efac7",
+      "document_section": "termination",
+      "page_start": 23,
+      "page_end": 23,
+      "clause_heading": "II. enter into this Agreement if it has knowledge that, in connection with it, a",
+      "verbatim_text": "II. enter into this Agreement if it has knowledge that, in connection with it, any money has \nbeen, or will be, paid to any person working for or engaged by the IPPB or any other \nGovernmental Authority by or for the Service Provider, or that an agreement has been \nreached to that effect, unless details of any such arrangement have been disclosed in \nwriting to the IPPB before execution of this Agreement. \nii) If the Service Provider (including any employee, Partner, or agent, in all cases whether \nor not acting with the Service Provider’s knowledge) breaches the above provisions of \nClause 58(i) ,I & II and/or the Prevention of Corruption Act, 1988 in relation to this \nAgreement or any other contract with the IPPB, the IPPB may terminate this Agreement \nby written notice with immediate effect. \niii) Any termination under the above clause 58 (i) & (ii)  shall be without prejudice to any \nright or remedy that has already accrued, or subsequently accrues, to the IPPB. \nNotwithstanding, what has been stated above, for the purpose of interpretation of the \nresponsibilities of the Service Provider under this Agreement, all the terms & conditions  of \nthis agreement shall prevail and shall be binding upon the Service Provider. \n \nIN WITNESS WHEREOF the Parties have by duly authorised representatives set their \nrespective hands and seal on the date first above written in the presence of:",
+      "clause_number": "II",
+      "clause_title": "II. enter into this Agreement if it has knowledge that, in connection with it, a",
+      "legal_category": "termination",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    }
+  ],
+  "defined_terms": {}
+}

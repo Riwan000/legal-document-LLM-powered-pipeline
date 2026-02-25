@@ -43,6 +43,13 @@ class ChatSession(BaseModel):
     last_clause_id: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_active_at: datetime = Field(default_factory=datetime.utcnow)
+    # Phase 1 — RAG 5-Layer Upgrade: richer session state
+    conversation_goal: Optional[str] = None
+    identified_terms: List[str] = Field(default_factory=list)
+    risk_flags: List[str] = Field(default_factory=list)
+    # Cross-turn consistency: document-level facts extracted from LLM answers
+    # Keys: "document_type", "jurisdiction", "party_names" (List[str])
+    established_facts: Dict[str, Any] = Field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------

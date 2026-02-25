@@ -574,6 +574,23 @@ class ChatOrchestratorService:
         document_id = session.document_id
         mode = mode_override or session.mode
 
+        # Cross-turn consistency: build established facts context for generation
+        established_facts = getattr(session, "established_facts", {})
+        established_facts_context: Optional[str] = None
+        if established_facts:
+            parts = []
+            if "document_type" in established_facts:
+                parts.append(f"Document type: {established_facts['document_type']}")
+            if "jurisdiction" in established_facts:
+                parts.append(f"Governing jurisdiction: {established_facts['jurisdiction']}")
+            if "party_names" in established_facts:
+                parts.append(f"Parties: {', '.join(established_facts['party_names'])}")
+            if parts:
+                established_facts_context = (
+                    "ESTABLISHED FACTS (do not re-derive):\n"
+                    + "\n".join(f"- {p}" for p in parts)
+                )
+
         # Enforce limits
         try:
             self._session_manager.enforce_limits(session_id)
@@ -630,8 +647,13 @@ class ChatOrchestratorService:
         # #endregion
 
         # Generation (with token budget enforcement)
+        # Prepend established facts to the generation query only; retrieval + audit use user_message
+        generation_query = (
+            f"{established_facts_context}\n\nUser question: {user_message}"
+            if established_facts_context else user_message
+        )
         answer, structured_citations, exact_chunks = self._generation.generate(
-            query=user_message,
+            query=generation_query,
             chunks=chunks,
             history=relevant_history,
             document_id=document_id,

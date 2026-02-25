@@ -7,6 +7,26 @@ from datetime import datetime
 from enum import Enum
 
 
+class DocumentClassification(str, Enum):
+    LEGAL_CONTRACT = "legal_contract"
+    LEGAL_NON_CONTRACT = "legal_non_contract"
+    NON_LEGAL = "non_legal"
+    UNCERTAIN = "uncertain"
+
+
+class ClassificationResult(BaseModel):
+    is_legal: bool
+    is_contract: bool
+    classification: DocumentClassification
+    confidence: float                        # Stage 1 legal confidence
+    contract_confidence: Optional[float] = None  # Stage 2 contract confidence
+    reasoning: Optional[str] = None          # from Ollama LLM
+    method: str                              # "llm+distilbert" | "heuristic+distilbert" | "llm_only"
+    error: Optional[str] = None
+    detected_contract_type: Optional[str] = None  # "employment" | "nda" | "msa" | "other"
+    detected_jurisdiction: Optional[str] = None   # "KSA" | "UAE" | "Generic GCC" | "International"
+
+
 class LegalHierarchyLevel(str, Enum):
     """Legal hierarchy levels for clause classification."""
     LAW = "law"  # External law, statute, regulation
@@ -68,13 +88,18 @@ LegalAnswerResponse = AnswerResponse
 
 class DocumentChunk(BaseModel):
     """Represents a chunk of text from a document with metadata."""
-    
+
     text: str = Field(..., description="The chunk text content")
     page_number: int = Field(..., description="Page number where chunk appears")
     chunk_index: int = Field(..., description="Index of chunk within document")
     document_id: str = Field(..., description="Unique identifier for the source document")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
     clause_id: Optional[str] = Field(None, description="Unique identifier for the clause (if chunk represents a clause)")
+    # Phase 1 — RAG 5-Layer Upgrade
+    parent_clause_id: Optional[str] = Field(None, description="clause_id of parent for sub-chunks")
+    unit_type: Optional[str] = Field(None, description="clause | clause_subchunk | definition | page_chunk")
+    legal_category: Optional[str] = Field(None, description="One of 14 taxonomy slugs from ClauseTaxonomyService")
+    clause_number: Optional[str] = Field(None, description="Clause number e.g. '5', '5.1', 'Article III'")
 
 
 class DocumentMetadata(BaseModel):

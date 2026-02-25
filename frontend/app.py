@@ -63,7 +63,7 @@ def check_backend_health() -> bool:
     try:
         response = requests.get(f"{API_BASE_URL}/api/health", timeout=5)
         return response.status_code == 200
-    except:
+    except Exception:
         return False
 
 
@@ -424,6 +424,17 @@ def delete_chat_session_api(session_id: str) -> bool:
         return False
 
 
+def get_document_classification_api(document_id: str) -> Optional[Dict]:
+    """Fetch stored classification for a document from the registry."""
+    try:
+        resp = requests.get(f"{API_BASE_URL}/api/documents/{document_id}/classification", timeout=10)
+        if resp.status_code == 200:
+            return resp.json()
+        return None
+    except Exception:
+        return None
+
+
 # Mandatory disclaimer for workflow outputs
 WORKFLOW_DISCLAIMER = "This system does not provide legal advice. All outputs are for review purposes only."
 
@@ -437,7 +448,12 @@ st.sidebar.markdown("---")
 # Health gate
 if not check_backend_health():
     st.sidebar.error("⚠️ Backend not available. Please start the FastAPI server.")
-    st.error("**Backend Connection Error**\n\nPlease ensure the FastAPI backend is running:\n```bash\npython run_backend.py\n```")
+    st.error(
+        "**Backend Connection Error**\n\n"
+        f"Cannot reach the backend at **{API_BASE_URL}**. Please ensure:\n"
+        "1. The FastAPI backend is running: `python run_backend.py` (from the project root).\n"
+        "2. If the backend runs on a different host/port, set the **BACKEND_URL** environment variable before starting Streamlit (e.g. `BACKEND_URL=http://127.0.0.1:8000`)."
+    )
     st.stop()
 else:
     st.sidebar.success("✅ Backend connected")
@@ -446,7 +462,6 @@ else:
 page = st.sidebar.selectbox(
     "Navigate",
     [
-        "📋 Contract Review",
         "🔍 Document Explorer",
         "📤 Upload Document",
         "ℹ️ About",
@@ -454,301 +469,572 @@ page = st.sidebar.selectbox(
 )
 
 # -----------------------------------------------------------------------------
-# Page: Contract Review (workflow)
+# Page: Document Explorer — 3-step guided workflow
+# Step 1: Upload  →  Step 2: Classification  →  Step 3: Exploration (Q&A)
 # -----------------------------------------------------------------------------
-if page == "📋 Contract Review":
-    st.markdown('<div class="main-header">📋 Contract Review</div>', unsafe_allow_html=True)
-    st.markdown("Identify risks, missing clauses, and evidence for senior review. No legal advice.")
-    st.caption(WORKFLOW_DISCLAIMER)
-    documents = get_documents()
-    if not documents:
-        st.warning("Upload a contract first.")
-    else:
-        doc_options = {d["document_id"]: d.get("display_name", d["document_id"]) for d in documents}
-        contract_id = st.selectbox("Contract", options=list(doc_options.keys()), format_func=lambda x: doc_options[x])
-        contract_type = st.selectbox("Contract type", ["employment", "nda", "msa"])
-        jurisdiction = st.selectbox("Jurisdiction", [None, "Generic GCC", "KSA", "UAE"], format_func=lambda x: x or "—")
-        review_depth = st.selectbox("Review depth", ["standard", "quick"])
-        if st.button("Run Contract Review", type="primary"):
-            with st.spinner("Running contract review..."):
-                result = contract_review(contract_id, contract_type, jurisdiction, review_depth)
-            if result:
-                if result.get("status") == "failed":
-                    err = result.get("error", {})
-                    st.error(f"**{err.get('code', 'Error')}:** {err.get('message', '')}")
-                    if err.get("details"):
-                        st.json(err["details"])
-                else:
-                    ir = result.get("intermediate_results", {}) or {}
-                    resp = ir.get("contract_review.response") or {}
-                    if not isinstance(resp, dict) or not resp:
-                        st.warning("Workflow completed but no Contract Review response was found in intermediate results.")
-                        st.json(result)
-                    else:
-                        st.success("Contract review completed.")
-
-                        doc_warning = (resp.get("document_classification_warning") or "").strip()
-                        if doc_warning:
-                            st.warning(f"⚠️ {doc_warning}")
-
-                        # Metadata
-                        meta_cols = st.columns(4)
-                        meta_cols[0].metric("Workflow ID", str(resp.get("workflow_id", ""))[:12] + "…")
-                        meta_cols[1].metric("Document", resp.get("document_id", ""))
-                        meta_cols[2].metric("Contract type", resp.get("contract_type", ""))
-                        meta_cols[3].metric("Jurisdiction", resp.get("jurisdiction") or "—")
-
-                        st.markdown("---")
-                        # Risks table (use display_status: Detected / Detected (Weak Evidence) / Not Detected)
-                        risks = resp.get("risks", []) or []
-                        st.subheader("Risk table")
-                        if not risks:
-                            st.info("No risks were identified for the selected profile and evidence.")
-                        else:
-                            def _display_status(s):
-                                if s == "detected": return "Detected"
-                                if s == "uncertain": return "Detected (Weak Evidence)"
-                                if s == "detected_implicit": return "Detected (Implicit Reference)"
-                                if s == "detected_distributed": return "Detected (Distributed Provisions)"
-                                if s == "detected_weak": return "Detected (Limited Coverage)"
-                                return "Not Detected"
-                            rows = []
-                            for r in risks:
-                                if not isinstance(r, dict):
-                                    continue
-                                display_names = r.get("display_names", []) or []
-                                clause_label = ", ".join(display_names) if display_names else ", ".join(r.get("clause_ids", []) or [])
-                                rows.append(
-                                    {
-                                        "severity": r.get("severity", ""),
-                                        "evidence state": _display_status(r.get("status", "")),
-                                        "description": r.get("description", ""),
-                                        "clause_types": ", ".join(r.get("clause_types", []) or []),
-                                        "clauses": clause_label,
-                                        "pages": ", ".join([str(p) for p in (r.get("page_numbers", []) or [])]),
-                                    }
-                                )
-                            st.dataframe(rows, use_container_width=True, hide_index=True)
-                            st.caption("Weak evidence indicates that a clause was found but may lack commonly expected details.")
-
-                        st.markdown("")
-                        # Clauses Not Detected (explicit list)
-                        not_detected = resp.get("not_detected_clauses", []) or []
-                        contract_type_label = (resp.get("contract_type") or "Contract").strip()
-                        if contract_type_label and contract_type_label[0].islower():
-                            contract_type_label = contract_type_label[0].upper() + contract_type_label[1:]
-                        st.subheader("Clauses Not Detected (Based on " + contract_type_label + " Contract Profile)")
-                        if resp.get("used_implicit_or_distributed_logic"):
-                            st.caption("Global contracts may express obligations implicitly or across multiple provisions. This review surfaces such structures conservatively.")
-                        if not_detected:
-                            for name in not_detected:
-                                st.markdown(f"- {name}")
-                            st.caption("Not detected means no supporting evidence was found in the document. This does not confirm absence.")
-                        else:
-                            st.info("All expected clauses for this profile were detected or had weak evidence.")
-
-                        implicitly_covered = resp.get("implicitly_covered_clauses", []) or []
-                        coverage_notes = resp.get("implicit_coverage_notes") or {}
-                        if implicitly_covered:
-                            st.markdown("")
-                            st.subheader("Implicitly covered")
-                            st.caption("No standalone clause detected. Related obligations appear implicitly across other provisions.")
-                            for name in implicitly_covered:
-                                note = coverage_notes.get(name)
-                                if note:
-                                    st.markdown(f"- **{name}**: {note}")
-                                else:
-                                    st.markdown(f"- {name}")
-
-                        st.markdown("---")
-
-                        # Evidence blocks
-                        evidence = resp.get("evidence", []) or []
-                        st.markdown("")
-                        st.subheader("Evidence by clause")
-                        if not evidence:
-                            st.info("No clause evidence blocks were produced.")
-                        else:
-                            for ev in evidence:
-                                if not isinstance(ev, dict):
-                                    continue
-                                display_name = ev.get("display_name") or ev.get("clause_id", "")
-                                page_num = ev.get("page_number", 0)
-                                semantic_label = ev.get("semantic_label")
-                                structure_class = ev.get("structure_class")
-                                if structure_class == "clause":
-                                    heading = f"Clause: {display_name} — Page {page_num}"
-                                elif structure_class == "provision":
-                                    heading = f"Provision: {display_name} — Page {page_num}"
-                                elif structure_class == "section_non_standard":
-                                    heading = f"Section (Non-standard): {semantic_label or display_name or '…'} — Page {page_num}"
-                                elif semantic_label:
-                                    heading = f"Section: {semantic_label} — Page {page_num}"
-                                elif ev.get("is_non_contractual"):
-                                    heading = f"Section (Non-contractual): {display_name} — Page {page_num}"
-                                else:
-                                    heading = f"Section (Non-standard): {display_name or '…'} — Page {page_num}"
-                                with st.expander(heading):
-                                    st.write("**Cleaned text:**")
-                                    st.write(ev.get("clean_text", ""))
-                                    st.write("**Raw text:**")
-                                    st.write(ev.get("raw_text", ""))
-
-                        st.markdown("")
-                        # Key Review Observations (grouped by category)
-                        st.subheader("Key Review Observations")
-                        exec_items = resp.get("executive_summary", []) or []
-                        if not exec_items:
-                            st.info("No executive summary items were produced.")
-                        else:
-                            by_cat = {}
-                            for item in exec_items:
-                                if not isinstance(item, dict):
-                                    continue
-                                cat = item.get("category") or "other"
-                                by_cat.setdefault(cat, []).append(item)
-                            for section_title, category_key in [
-                                ("Risks", "risk"),
-                                ("Findings", "finding"),
-                                ("Confirmations", "confirmation"),
-                            ]:
-                                group = by_cat.get(category_key, [])
-                                if group:
-                                    st.markdown(f"**{section_title}**")
-                                    for item in group:
-                                        sev = item.get("severity")
-                                        text = item.get("text", "")
-                                        if sev:
-                                            st.markdown(f"- **{sev}**: {text}")
-                                        else:
-                                            st.markdown(f"- {text}")
-                                    st.markdown("")
-                            other = by_cat.get("other", [])
-                            if other:
-                                st.markdown("**Other**")
-                                for item in other:
-                                    sev = item.get("severity")
-                                    text = item.get("text", "")
-                                    if sev:
-                                        st.markdown(f"- **{sev}**: {text}")
-                                    else:
-                                        st.markdown(f"- {text}")
-                        st.caption("This review prioritizes evidence recall and conservative interpretation; ambiguity is surfaced rather than resolved.")
-
-                        st.markdown("---")
-                        st.caption(resp.get("disclaimer", WORKFLOW_DISCLAIMER))
-
-                        with st.expander("Raw workflow output (JSON)"):
-                            st.json(resp)
-
-# -----------------------------------------------------------------------------
-# Page: Document Explorer (RAG answer + citations, with Conversational mode)
-# -----------------------------------------------------------------------------
-elif page == "🔍 Document Explorer":
+if page == "🔍 Document Explorer":
     st.markdown('<div class="main-header">🔍 Document Explorer</div>', unsafe_allow_html=True)
-    st.markdown("Ask focused questions about a single document and get a grounded answer with citations.")
+    st.markdown("Upload a document, classify it, then explore it with grounded Q&A.")
     st.caption(WORKFLOW_DISCLAIMER)
 
-    documents = get_documents()
-    if not documents:
-        st.warning("Upload a document first.")
-    else:
-        doc_options = {d["document_id"]: d.get("display_name", d["document_id"]) for d in documents}
+    # ── Session-state defaults ────────────────────────────────────────────────
+    if "wf_step" not in st.session_state:
+        st.session_state.wf_step = 1
+    if "wf_document_id" not in st.session_state:
+        st.session_state.wf_document_id = None
+    if "wf_classification" not in st.session_state:
+        st.session_state.wf_classification = None
+    if "wf_is_contract" not in st.session_state:
+        st.session_state.wf_is_contract = False
+    if "explorer_chat_mode" not in st.session_state:
+        st.session_state.explorer_chat_mode = "Evidence (Strict)"
+    if "explorer_session_id" not in st.session_state:
+        st.session_state.explorer_session_id = None
+    if "explorer_chat_history" not in st.session_state:
+        st.session_state.explorer_chat_history = []
+    # Agent state machine keys
+    if "wf_agent_state" not in st.session_state:
+        st.session_state.wf_agent_state = "idle"
+    if "wf_review_result" not in st.session_state:
+        st.session_state.wf_review_result = None
+    if "wf_review_done" not in st.session_state:
+        st.session_state.wf_review_done = False
+    if "wf_pdf_answered" not in st.session_state:
+        st.session_state.wf_pdf_answered = False
+    if "wf_contract_type" not in st.session_state:
+        st.session_state.wf_contract_type = "employment"
+    if "wf_jurisdiction" not in st.session_state:
+        st.session_state.wf_jurisdiction = None
 
-        # ── Session-state defaults ──────────────────────────────────────────
-        if "explorer_document_id" not in st.session_state:
-            st.session_state.explorer_document_id = list(doc_options.keys())[0]
-        if "explorer_chat_mode" not in st.session_state:
-            st.session_state.explorer_chat_mode = "Evidence (Strict)"
-        if "explorer_session_id" not in st.session_state:
-            st.session_state.explorer_session_id = None
-        if "explorer_chat_history" not in st.session_state:
-            st.session_state.explorer_chat_history = []
+    def _reset_workflow():
+        """Reset all wf_* and explorer_* session state keys."""
+        if st.session_state.get("explorer_session_id"):
+            delete_chat_session_api(st.session_state.explorer_session_id)
+        for key in [
+            "wf_step", "wf_document_id", "wf_classification", "wf_is_contract",
+            "explorer_chat_mode", "explorer_session_id", "explorer_chat_history",
+            "wf_agent_state", "wf_review_result", "wf_review_done", "wf_pdf_answered",
+            "wf_contract_type", "wf_jurisdiction",
+        ]:
+            if key in st.session_state:
+                del st.session_state[key]
 
-        # ── Document selector ───────────────────────────────────────────────
-        selected_doc = st.selectbox(
-            "Document",
-            options=list(doc_options.keys()),
-            format_func=lambda x: doc_options[x],
-            index=list(doc_options.keys()).index(st.session_state.explorer_document_id)
-            if st.session_state.explorer_document_id in doc_options else 0,
+    def _render_stepper(current: int):
+        """Render horizontal step badges."""
+        cols = st.columns(3)
+        steps = ["1  Upload", "2  Classification", "3  Exploration"]
+        for i, (col, label) in enumerate(zip(cols, steps), start=1):
+            if i < current:
+                badge = (
+                    f'<span style="background:#22c55e;color:white;padding:5px 14px;'
+                    f'border-radius:14px;font-weight:bold;">✓ {label}</span>'
+                )
+            elif i == current:
+                badge = (
+                    f'<span style="background:#3b82f6;color:white;padding:5px 14px;'
+                    f'border-radius:14px;font-weight:bold;">{label}</span>'
+                )
+            else:
+                badge = (
+                    f'<span style="background:#e5e7eb;color:#6b7280;padding:5px 14px;'
+                    f'border-radius:14px;">{label}</span>'
+                )
+            col.markdown(badge, unsafe_allow_html=True)
+        st.markdown("---")
+
+    # ── Helper: Render full contract review details (for chat expander) ──────
+    def _render_contract_review_details(resp: dict):
+        """Render the full contract review UI inside an expander."""
+        doc_warning = (resp.get("document_classification_warning") or "").strip()
+        if doc_warning:
+            st.warning(f"⚠️ {doc_warning}")
+
+        meta_cols = st.columns(4)
+        meta_cols[0].metric("Workflow ID", str(resp.get("workflow_id", ""))[:12] + "…")
+        meta_cols[1].metric("Document", resp.get("document_id", ""))
+        meta_cols[2].metric("Contract type", resp.get("contract_type", ""))
+        meta_cols[3].metric("Jurisdiction", resp.get("jurisdiction") or "—")
+
+        st.markdown("---")
+        risks = resp.get("risks", []) or []
+        st.subheader("Risk table")
+        if not risks:
+            st.info("No risks were identified.")
+        else:
+            def _display_status(s):
+                if s == "detected": return "Detected"
+                if s == "uncertain": return "Detected (Weak Evidence)"
+                if s == "detected_implicit": return "Detected (Implicit Reference)"
+                if s == "detected_distributed": return "Detected (Distributed Provisions)"
+                if s == "detected_weak": return "Detected (Limited Coverage)"
+                return "Not Detected"
+            rows = []
+            for r in risks:
+                if not isinstance(r, dict):
+                    continue
+                display_names = r.get("display_names", []) or []
+                clause_label = ", ".join(display_names) if display_names else ", ".join(r.get("clause_ids", []) or [])
+                rows.append({
+                    "severity": r.get("severity", ""),
+                    "evidence state": _display_status(r.get("status", "")),
+                    "description": r.get("description", ""),
+                    "clause_types": ", ".join(r.get("clause_types", []) or []),
+                    "clauses": clause_label,
+                    "pages": ", ".join([str(p) for p in (r.get("page_numbers", []) or [])]),
+                })
+            st.dataframe(rows, use_container_width=True, hide_index=True)
+            st.caption("Weak evidence: clause found but may lack commonly expected details.")
+            # ── Improvement 1 & 2: per-risk detail expanders ─────────────────
+            for r in risks:
+                if not isinstance(r, dict):
+                    continue
+                sev_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(r.get("severity", ""), "⚪")
+                exp_label = f"{sev_icon} **{r.get('severity', '').capitalize()}** — {r.get('description', '')}"
+                with st.expander(exp_label, expanded=False):
+                    # Severity reason
+                    if r.get("severity_reason"):
+                        st.caption(f"ℹ️ {r['severity_reason']}")
+                    # Verbatim evidence
+                    snippets = r.get("verbatim_evidence", []) or []
+                    if snippets:
+                        st.markdown("**Evidence found in document:**")
+                        for snippet in snippets:
+                            name = snippet.get("display_name") or snippet.get("clause_id", "")
+                            page = snippet.get("page_number", "")
+                            text = snippet.get("text", "")
+                            st.markdown(
+                                f"> **{name}** (p.{page})\n"
+                                f"> *\"{text}\"*"
+                            )
+                    # Recommendation
+                    if r.get("recommendation"):
+                        st.info(f"💡 **Recommendation:** {r['recommendation']}")
+
+        not_detected = resp.get("not_detected_clauses", []) or []
+        ct_label = (resp.get("contract_type") or "Contract").strip()
+        ct_label = ct_label[0].upper() + ct_label[1:] if ct_label else "Contract"
+        st.subheader(f"Clauses Not Detected ({ct_label} Profile)")
+        if not_detected:
+            for name in not_detected:
+                st.markdown(f"- {name}")
+        else:
+            st.info("All expected clauses were detected.")
+
+        implicitly_covered = resp.get("implicitly_covered_clauses", []) or []
+        coverage_notes = resp.get("implicit_coverage_notes") or {}
+        if implicitly_covered:
+            st.subheader("Implicitly Covered")
+            for name in implicitly_covered:
+                note = coverage_notes.get(name)
+                st.markdown(f"- **{name}**: {note}" if note else f"- {name}")
+
+        st.markdown("---")
+        exec_items = resp.get("executive_summary", []) or []
+        st.subheader("Key Review Observations")
+        if exec_items:
+            by_cat: dict = {}
+            for item in exec_items:
+                if isinstance(item, dict):
+                    by_cat.setdefault(item.get("category") or "other", []).append(item)
+            for section_title, cat_key in [("Risks", "risk"), ("Findings", "finding"), ("Confirmations", "confirmation")]:
+                group = by_cat.get(cat_key, [])
+                if group:
+                    st.markdown(f"**{section_title}**")
+                    for item in group:
+                        sev = item.get("severity")
+                        txt = item.get("text", "")
+                        st.markdown(f"- **{sev}**: {txt}" if sev else f"- {txt}")
+            if by_cat.get("other"):
+                st.markdown("**Other**")
+                for item in by_cat["other"]:
+                    sev = item.get("severity")
+                    txt = item.get("text", "")
+                    st.markdown(f"- **{sev}**: {txt}" if sev else f"- {txt}")
+
+    # ── Helper: Call POST /api/contract-review ────────────────────────────────
+    def _run_contract_review(doc_id: str, contract_type: str, jurisdiction) -> Optional[dict]:
+        """Call contract review API; return the response dict or None on failure."""
+        result = contract_review(doc_id, contract_type, jurisdiction, "standard")
+        if not result:
+            return None
+        if result.get("status") == "failed":
+            err = result.get("error", {})
+            st.error(f"**{err.get('code', 'Error')}:** {err.get('message', '')}")
+            return None
+        ir = result.get("intermediate_results", {}) or {}
+        resp = ir.get("contract_review.response") or {}
+        return resp if isinstance(resp, dict) else None
+
+    # ── Helper: Format short review summary for Agent 1 chat bubble ──────────
+    def _format_review_summary(resp: dict) -> str:
+        lines = []
+        ct = resp.get("contract_type") or "contract"
+        jur = resp.get("jurisdiction") or "—"
+        lines.append(f"**Contract Review Complete** — Type: `{ct}` | Jurisdiction: `{jur}`\n")
+
+        exec_items = resp.get("executive_summary", []) or []
+        risks_exec = [i for i in exec_items if isinstance(i, dict) and i.get("category") == "risk"][:5]
+        findings = [i for i in exec_items if isinstance(i, dict) and i.get("category") == "finding"][:3]
+
+        if risks_exec:
+            lines.append("**Key Risks:**")
+            for item in risks_exec:
+                sev = item.get("severity", "")
+                txt = item.get("text", "")
+                lines.append(f"- **{sev}**: {txt}" if sev else f"- {txt}")
+
+        not_detected = resp.get("not_detected_clauses", []) or []
+        if not_detected:
+            lines.append(f"\n**Clauses Not Detected:** {', '.join(not_detected[:5])}" +
+                         (" …and more" if len(not_detected) > 5 else ""))
+
+        if findings:
+            lines.append("\n**Findings:**")
+            for item in findings:
+                lines.append(f"- {item.get('text', '')}")
+
+        lines.append(f"\n*{resp.get('disclaimer', WORKFLOW_DISCLAIMER)}*")
+        return "\n".join(lines)
+
+    # ── Helper: Generate PDF report with reportlab ────────────────────────────
+    def _generate_pdf_buffer(resp: dict):
+        """Build PDF in-memory; return BytesIO. Raises on failure."""
+        from io import BytesIO
+        try:
+            from reportlab.lib.pagesizes import A4
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.units import cm
+            from reportlab.lib import colors
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        except ImportError as exc:
+            raise RuntimeError(f"reportlab not installed: {exc}") from exc
+
+        buf = BytesIO()
+        doc = SimpleDocTemplate(buf, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+        styles = getSampleStyleSheet()
+        h1 = styles["Heading1"]
+        h2 = styles["Heading2"]
+        normal = styles["Normal"]
+        story = []
+
+        # Title page
+        story.append(Paragraph("Contract Review Report", h1))
+        story.append(Spacer(1, 0.4*cm))
+        ct = resp.get("contract_type") or "—"
+        jur = resp.get("jurisdiction") or "—"
+        doc_id = resp.get("document_id") or "—"
+        story.append(Paragraph(f"Contract type: {ct} | Jurisdiction: {jur}", normal))
+        story.append(Paragraph(f"Document: {doc_id}", normal))
+        story.append(Spacer(1, 0.6*cm))
+
+        # Executive Summary
+        exec_items = resp.get("executive_summary", []) or []
+        if exec_items:
+            story.append(Paragraph("Executive Summary", h2))
+            by_cat: dict = {}
+            for item in exec_items:
+                if isinstance(item, dict):
+                    by_cat.setdefault(item.get("category") or "other", []).append(item)
+            for section_title, cat_key in [("Risks", "risk"), ("Findings", "finding"), ("Confirmations", "confirmation")]:
+                group = by_cat.get(cat_key, [])
+                if group:
+                    story.append(Paragraph(f"<b>{section_title}</b>", normal))
+                    for item in group:
+                        sev = item.get("severity", "")
+                        txt = item.get("text", "")
+                        bullet = f"• [{sev}] {txt}" if sev else f"• {txt}"
+                        story.append(Paragraph(bullet, normal))
+            story.append(Spacer(1, 0.4*cm))
+
+        # Risk Table
+        risks = resp.get("risks", []) or []
+        if risks:
+            story.append(Paragraph("Risk Analysis Table", h2))
+            table_data = [["Severity", "Description", "Status", "Clauses", "Pages", "Recommendation"]]
+            for r in risks:
+                if not isinstance(r, dict):
+                    continue
+                display_names = r.get("display_names", []) or r.get("clause_ids", []) or []
+                pages = r.get("page_numbers", []) or []
+                table_data.append([
+                    r.get("severity", ""),
+                    r.get("description", "")[:60],
+                    r.get("status", ""),
+                    ", ".join(display_names[:3]),
+                    ", ".join(str(p) for p in pages[:3]),
+                    (r.get("recommendation") or "")[:80],
+                ])
+            tbl = Table(table_data, repeatRows=1, colWidths=[1.6*cm, 5*cm, 3*cm, 2.5*cm, 1.5*cm, 4.4*cm])
+            tbl.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("FONTSIZE", (0, 0), (-1, -1), 7),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.black),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("WORDWRAP", (0, 0), (-1, -1), True),
+            ]))
+            story.append(tbl)
+            story.append(Spacer(1, 0.4*cm))
+            # Verbatim evidence sub-section
+            has_snippets = any(r.get("verbatim_evidence") for r in risks if isinstance(r, dict))
+            if has_snippets:
+                story.append(Paragraph("Evidence Excerpts", h2))
+                for r in risks:
+                    if not isinstance(r, dict):
+                        continue
+                    snippets = r.get("verbatim_evidence", []) or []
+                    if not snippets:
+                        continue
+                    story.append(Paragraph(f"<b>{r.get('description', '')[:80]}</b>", normal))
+                    if r.get("severity_reason"):
+                        story.append(Paragraph(f"<i>{r['severity_reason']}</i>", normal))
+                    for snippet in snippets:
+                        s_name = snippet.get("display_name") or snippet.get("clause_id", "")
+                        s_page = snippet.get("page_number", "")
+                        s_text = snippet.get("text", "")[:300]
+                        story.append(Paragraph(
+                            f"<b>{s_name}</b> (p.{s_page}): \"{s_text}\"",
+                            ParagraphStyle("evidence", parent=normal, leftIndent=12, fontSize=7, textColor=colors.darkblue)
+                        ))
+                    story.append(Spacer(1, 0.2*cm))
+
+        # Not Detected
+        not_detected = resp.get("not_detected_clauses", []) or []
+        if not_detected:
+            story.append(Paragraph("Clauses Not Detected", h2))
+            for name in not_detected:
+                story.append(Paragraph(f"• {name}", normal))
+            story.append(Spacer(1, 0.3*cm))
+
+        # Disclaimer
+        story.append(Spacer(1, 0.6*cm))
+        story.append(Paragraph(resp.get("disclaimer", WORKFLOW_DISCLAIMER), ParagraphStyle("small", parent=normal, fontSize=8)))
+
+        doc.build(story)
+        buf.seek(0)
+        return buf
+
+    # ── Helper: Render action buttons for current agent state ─────────────────
+    def _render_agent_action_buttons(state: str):
+        """Render the correct set of 'what next?' buttons for the current agent state."""
+        if state in ("reviewed",):
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("📄 Generate PDF report", key="btn_pdf_from_reviewed", use_container_width=True):
+                    st.session_state.wf_agent_state = "pdf_pending"
+                    st.rerun()
+            with col2:
+                if st.button("💬 Ask me questions about this contract", key="btn_qa_from_reviewed", use_container_width=True):
+                    st.session_state.wf_agent_state = "qa_active"
+                    st.rerun()
+
+        elif state == "pdf_pending":
+            if st.button("💬 Ask me questions about this contract", key="btn_qa_from_pdf", use_container_width=True):
+                st.session_state.wf_agent_state = "qa_active"
+                st.rerun()
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # STEP 1: Upload
+    # ═══════════════════════════════════════════════════════════════════════════
+    if st.session_state.wf_step == 1:
+        _render_stepper(1)
+        st.subheader("Upload a document")
+        uploaded_file = st.file_uploader(
+            "Choose a PDF or DOCX file",
+            type=["pdf", "docx", "doc"],
+            help="Upload the legal document you want to explore.",
         )
-        # Reset session when document changes
-        if selected_doc != st.session_state.explorer_document_id:
-            if st.session_state.explorer_session_id:
-                delete_chat_session_api(st.session_state.explorer_session_id)
-            st.session_state.explorer_document_id = selected_doc
-            st.session_state.explorer_session_id = None
-            st.session_state.explorer_chat_history = []
+        if st.button("Upload & Classify", type="primary", disabled=uploaded_file is None):
+            if uploaded_file:
+                with st.spinner("Uploading and classifying… Please wait, do not click again."):
+                    result = upload_document(uploaded_file, "document")
+                if result:
+                    doc_status = result.get("status", "")
+                    doc_id = result.get("document_id", "")
+                    if doc_status == "rejected":
+                        # Non-legal: skip classification fetch, go to step 2 with rejection data
+                        st.session_state.wf_document_id = doc_id
+                        st.session_state.wf_classification = {"classification": "non_legal"}
+                        st.session_state.wf_is_contract = False
+                        st.session_state.wf_step = 2
+                        st.rerun()
+                    elif doc_id:
+                        # Fetch classification from registry
+                        cls_data = get_document_classification_api(doc_id)
+                        st.session_state.wf_document_id = doc_id
+                        st.session_state.wf_classification = cls_data or {"classification": "uncertain"}
+                        st.session_state.wf_is_contract = bool((cls_data or {}).get("is_contract", False))
+                        st.session_state.wf_step = 2
+                        st.rerun()
 
-        document_id = st.session_state.explorer_document_id
+    # ═══════════════════════════════════════════════════════════════════════════
+    # STEP 2: Classification result
+    # ═══════════════════════════════════════════════════════════════════════════
+    elif st.session_state.wf_step == 2:
+        _render_stepper(2)
+        cls = st.session_state.wf_classification or {}
+        classification = cls.get("classification", "uncertain")
+        confidence = cls.get("classification_confidence") or cls.get("confidence")
+        method = cls.get("classification_method") or cls.get("method", "—")
 
-        # ── Mode toggle ─────────────────────────────────────────────────────
-        mode_choice = st.radio(
-            "Mode",
-            ["Evidence (Strict)", "Conversational (Evidence-Grounded)"],
-            index=0 if st.session_state.explorer_chat_mode == "Evidence (Strict)" else 1,
-            horizontal=True,
-            help=(
-                "**Evidence (Strict)**: stateless RAG answer per query — identical to the original explorer.\n\n"
-                "**Conversational**: session-based with query rewriting, dual retrieval, and evidence guardrails."
-            ),
-        )
-        # Reset session when mode changes
-        if mode_choice != st.session_state.explorer_chat_mode:
-            if st.session_state.explorer_session_id:
-                delete_chat_session_api(st.session_state.explorer_session_id)
-            st.session_state.explorer_chat_mode = mode_choice
-            st.session_state.explorer_session_id = None
-            st.session_state.explorer_chat_history = []
+        if classification == "non_legal":
+            st.error(
+                "**Document rejected — not a legal document.**\n\n"
+                "Only contracts, NDAs, statutes, and similar legal instruments are accepted."
+            )
+            if st.button("Upload a different document"):
+                _reset_workflow()
+                st.rerun()
+
+        elif classification == "legal_contract":
+            st.success("**Legal contract detected.** Confirm the detected details, then proceed.")
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Type", "Contract")
+            m2.metric("Confidence", f"{confidence:.0%}" if confidence is not None else "—")
+            m3.metric("Method", method)
+            st.markdown("")
+            st.markdown("**📋 Detected contract details — confirm or adjust before proceeding:**")
+            _cls = st.session_state.wf_classification or {}
+            detected_type = _cls.get("detected_contract_type") or "employment"
+            detected_juris = _cls.get("detected_jurisdiction") or "(none)"
+            _ct_options = ["employment", "nda", "msa", "other"]
+            _jur_options = ["(none)", "Generic GCC", "KSA", "UAE", "International"]
+            col1, col2 = st.columns(2)
+            with col1:
+                _ct_idx = _ct_options.index(detected_type) if detected_type in _ct_options else 0
+                wf_contract_type_sel = st.selectbox(
+                    "Contract type", _ct_options, index=_ct_idx, key="wf_contract_type_select",
+                    help="Automatically detected from document text",
+                )
+                if _cls.get("detected_contract_type"):
+                    st.caption(f"🤖 Auto-detected: **{_cls['detected_contract_type']}**")
+                else:
+                    st.caption("⚠️ Auto-detection unavailable")
+            with col2:
+                _jur_idx = _jur_options.index(detected_juris) if detected_juris in _jur_options else 0
+                wf_jurisdiction_sel = st.selectbox(
+                    "Jurisdiction", _jur_options, index=_jur_idx, key="wf_jurisdiction_select",
+                    help="Inferred from governing law clauses or party references",
+                )
+                if _cls.get("detected_jurisdiction") and detected_juris != "(none)":
+                    st.caption(f"🤖 Auto-detected: **{_cls['detected_jurisdiction']}**")
+                else:
+                    st.caption("⚠️ Auto-detection unavailable")
+            st.session_state.wf_contract_type = wf_contract_type_sel
+            st.session_state.wf_jurisdiction = None if wf_jurisdiction_sel == "(none)" else wf_jurisdiction_sel
+            if st.button("Continue to Exploration →", type="primary"):
+                st.session_state.wf_step = 3
+                st.rerun()
+
+        elif classification == "legal_non_contract":
+            st.info(
+                "**Legal document detected** (not classified as a contract).\n\n"
+                "Clause-specific analysis may be limited; general Q&A is fully supported."
+            )
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Type", "Legal Doc")
+            m2.metric("Confidence", f"{confidence:.0%}" if confidence is not None else "—")
+            m3.metric("Method", method)
+            if st.button("Continue to Exploration →", type="primary"):
+                st.session_state.wf_step = 3
+                st.rerun()
+
+        else:  # uncertain
+            st.warning(
+                "**Classification uncertain.** The document could not be confidently classified.\n\n"
+                "You can proceed anyway, but results may vary."
+            )
+            col_proceed, col_restart = st.columns(2)
+            with col_proceed:
+                if st.button("Proceed to Exploration →", type="primary"):
+                    st.session_state.wf_step = 3
+                    st.rerun()
+            with col_restart:
+                if st.button("Start Over"):
+                    _reset_workflow()
+                    st.rerun()
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # STEP 3: Exploration — Agent state machine (contracts) or direct Q&A
+    # ═══════════════════════════════════════════════════════════════════════════
+    elif st.session_state.wf_step == 3:
+        _render_stepper(3)
+
+        document_id = st.session_state.wf_document_id
+
+        # Classification badge + Start Over
+        badge_col, over_col = st.columns([6, 1])
+        with badge_col:
+            if st.session_state.wf_is_contract:
+                st.markdown(
+                    '<span style="background:#22c55e;color:white;padding:3px 10px;border-radius:10px;font-size:0.85rem;">CONTRACT</span>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    '<span style="background:#3b82f6;color:white;padding:3px 10px;border-radius:10px;font-size:0.85rem;">LEGAL DOC</span>',
+                    unsafe_allow_html=True,
+                )
+            st.caption(f"Document: `{document_id}`")
+        with over_col:
+            if st.button("Start Over", key="btn_start_over"):
+                _reset_workflow()
+                st.rerun()
 
         st.markdown("---")
 
-        # ════════════════════════════════════════════════════════════════════
-        # STRICT MODE — original evidence + answer explorer
-        # ════════════════════════════════════════════════════════════════════
-        if mode_choice == "Evidence (Strict)":
-            top_k = st.slider("Max results", min_value=1, max_value=25, value=10)
-            query = st.text_input(
-                "Query",
-                placeholder="Where is… / Show clauses related to…",
-                key="strict_query",
-            )
+        # ── Helper: render chat history (handles all message types) ──────────
+        def _render_chat_history():
+            for turn in st.session_state.explorer_chat_history:
+                role = turn.get("role", "user")
+                msg_type = turn.get("msg_type", "default")
+                with st.chat_message(role):
+                    if msg_type == "contract_review":
+                        st.markdown(turn.get("content", ""))
+                        st.markdown("**📄 Full review details**")
+                        _render_contract_review_details(turn.get("review_result", {}))
+                    elif msg_type == "agent_prompt":
+                        st.markdown(turn.get("content", ""))
+                    elif msg_type == "risk_analysis":
+                        st.markdown(turn.get("content", ""))
+                    elif msg_type == "agent_result":
+                        st.markdown(turn.get("content", ""))
+                    else:
+                        st.write(turn.get("content", ""))
+                        if role == "assistant":
+                            meta_parts = []
+                            ev_score = turn.get("evidence_score")
+                            guardrail = turn.get("guardrail_decision")
+                            rewritten = turn.get("rewritten_query")
+                            status = turn.get("status")
+                            if ev_score:
+                                score_emoji = {"strong": "🟢", "moderate": "🟡", "weak": "🟠", "none": "🔴"}.get(ev_score, "⚪")
+                                meta_parts.append(f"{score_emoji} Evidence: **{ev_score}**")
+                            if guardrail:
+                                meta_parts.append(f"Guardrail: `{guardrail}`")
+                            if status == "refused":
+                                meta_parts.append("⚠️ Response refused — insufficient evidence")
+                            if rewritten and rewritten != turn.get("original_query"):
+                                meta_parts.append(f"*Query rewritten:* {rewritten}")
+                            if meta_parts:
+                                st.caption(" · ".join(meta_parts))
+                            sources = turn.get("sources") or []
+                            if sources:
+                                with st.expander(f"Sources ({len(sources)})"):
+                                    for src in sources[:8]:
+                                        pg = src.get("page_number") or src.get("page")
+                                        snippet = src.get("text_snippet") or src.get("text") or ""
+                                        label = f"Page {pg}" if pg else "Source"
+                                        st.markdown(f"**{label}** — {snippet[:300]}{'…' if len(snippet) > 300 else ''}")
 
-            if st.button("Get answer", type="primary", key="btn_answer"):
-                if not query or not query.strip():
-                    st.warning("Enter a query.")
-                else:
-                    with st.spinner("Generating answer..."):
-                        result = explore_answer(document_id, query, top_k=top_k)
-                    if result is not None:
-                        st.subheader("Answer")
-                        st.write(result.get("answer") or "No answer generated.")
-                        st.caption(
-                            f"Status: {result.get('status', '—')} | Confidence: {result.get('confidence', '—')}"
-                        )
-                        sources = result.get("sources", []) or []
-                        if sources:
-                            st.subheader("Sources / citations")
-                            for i, src in enumerate(sources[:10], 1):
-                                with st.expander(f"Source {i} — Page {src.get('page_number', 0)}"):
-                                    text = src.get("text", "") or ""
-                                    st.write(text[:800] + ("..." if len(text) > 800 else ""))
-                                    st.caption(
-                                        f"Document: {src.get('display_name', src.get('document_id', '—'))}"
-                                    )
-
-        # ════════════════════════════════════════════════════════════════════
-        # CONVERSATIONAL MODE — session-based chat with guardrails
-        # ════════════════════════════════════════════════════════════════════
-        else:
-            # ── Session status bar ──────────────────────────────────────────
+        # ── Helper: Q&A conversational chat loop (Agent 4) ───────────────────
+        def _run_qa_chat():
             session_col, reset_col = st.columns([5, 1])
             with session_col:
                 if st.session_state.explorer_session_id:
                     st.caption(
                         f"Session active · ID: `{st.session_state.explorer_session_id[:12]}…` · "
-                        f"{len(st.session_state.explorer_chat_history) // 2} turn(s)"
+                        f"{len([m for m in st.session_state.explorer_chat_history if m.get('role') == 'user'])} turn(s)"
                     )
                 else:
                     st.caption("No session yet — send a message to start.")
@@ -758,51 +1044,21 @@ elif page == "🔍 Document Explorer":
                         delete_chat_session_api(st.session_state.explorer_session_id)
                     st.session_state.explorer_session_id = None
                     st.session_state.explorer_chat_history = []
+                    if st.session_state.wf_is_contract:
+                        st.session_state.wf_agent_state = "idle"
+                        st.session_state.wf_review_done = False
+                        st.session_state.wf_review_result = None
                     st.rerun()
 
-            # ── Chat thread (render history) ────────────────────────────────
-            for turn in st.session_state.explorer_chat_history:
-                role = turn.get("role", "user")
-                with st.chat_message(role):
-                    st.write(turn.get("content", ""))
-                    if role == "assistant":
-                        meta_parts = []
-                        ev_score = turn.get("evidence_score")
-                        guardrail = turn.get("guardrail_decision")
-                        rewritten = turn.get("rewritten_query")
-                        status = turn.get("status")
-                        if ev_score:
-                            score_emoji = {"strong": "🟢", "moderate": "🟡", "weak": "🟠", "none": "🔴"}.get(ev_score, "⚪")
-                            meta_parts.append(f"{score_emoji} Evidence: **{ev_score}**")
-                        if guardrail:
-                            meta_parts.append(f"Guardrail: `{guardrail}`")
-                        if status == "refused":
-                            meta_parts.append("⚠️ Response refused — insufficient evidence")
-                        if rewritten and rewritten != turn.get("original_query"):
-                            meta_parts.append(f"*Query rewritten:* {rewritten}")
-                        if meta_parts:
-                            st.caption(" · ".join(meta_parts))
-                        # Sources expander
-                        sources = turn.get("sources") or []
-                        if sources:
-                            with st.expander(f"Sources ({len(sources)})"):
-                                for src in sources[:8]:
-                                    pg = src.get("page_number") or src.get("page")
-                                    snippet = src.get("text_snippet") or src.get("text") or ""
-                                    label = f"Page {pg}" if pg else "Source"
-                                    st.markdown(f"**{label}** — {snippet[:300]}{'…' if len(snippet) > 300 else ''}")
+            _render_chat_history()
 
-            # ── Chat input ──────────────────────────────────────────────────
             user_input = st.chat_input("Ask a question about the document…")
             if user_input and user_input.strip():
                 user_msg = user_input.strip()
-
-                # Render user bubble immediately
                 with st.chat_message("user"):
                     st.write(user_msg)
                 st.session_state.explorer_chat_history.append({"role": "user", "content": user_msg})
 
-                # Ensure we have a session
                 if not st.session_state.explorer_session_id:
                     with st.spinner("Starting session…"):
                         sess = create_chat_session(document_id, mode="conversational")
@@ -810,7 +1066,6 @@ elif page == "🔍 Document Explorer":
                         st.stop()
                     st.session_state.explorer_session_id = sess["session_id"]
 
-                # Send message
                 with st.spinner("Thinking…"):
                     resp = send_chat_message(
                         st.session_state.explorer_session_id,
@@ -826,8 +1081,6 @@ elif page == "🔍 Document Explorer":
                     sources = resp.get("sources") or []
                     trace = resp.get("trace") or {}
                     rewritten = trace.get("rewritten_query")
-
-                    # Render assistant bubble
                     with st.chat_message("assistant"):
                         st.write(answer)
                         meta_parts = []
@@ -849,8 +1102,6 @@ elif page == "🔍 Document Explorer":
                                     snippet = src.get("text_snippet") or src.get("text") or ""
                                     label = f"Page {pg}" if pg else "Source"
                                     st.markdown(f"**{label}** — {snippet[:300]}{'…' if len(snippet) > 300 else ''}")
-
-                    # Persist to history
                     st.session_state.explorer_chat_history.append({
                         "role": "assistant",
                         "content": answer,
@@ -861,6 +1112,133 @@ elif page == "🔍 Document Explorer":
                         "rewritten_query": rewritten,
                         "original_query": user_msg,
                     })
+
+        # ════════════════════════════════════════════════════════════════════
+        # CONTRACT PATH — Agent state machine
+        # ════════════════════════════════════════════════════════════════════
+        if st.session_state.wf_is_contract:
+            agent_state = st.session_state.wf_agent_state
+
+            # ── Agent 1: Contract Analysis (auto-runs on entry) ───────────
+            if not st.session_state.wf_review_done:
+                st.session_state.wf_agent_state = "reviewing"
+                with st.spinner("Running contract analysis…"):
+                    review_result = _run_contract_review(
+                        document_id,
+                        st.session_state.wf_contract_type,
+                        st.session_state.wf_jurisdiction,
+                    )
+                if review_result:
+                    st.session_state.wf_review_result = review_result
+                    summary_md = _format_review_summary(review_result)
+                    st.session_state.explorer_chat_history.append({
+                        "role": "assistant",
+                        "content": summary_md,
+                        "msg_type": "contract_review",
+                        "review_result": review_result,
+                    })
+                    st.session_state.explorer_chat_history.append({
+                        "role": "assistant",
+                        "content": "✅ Contract review complete. What would you like to do next?",
+                        "msg_type": "agent_prompt",
+                    })
+                    st.session_state.wf_review_done = True
+                    st.session_state.wf_agent_state = "reviewed"
+                else:
+                    # Agent 1 failed — show error, offer PDF (blank) and Q&A
+                    st.error("Contract review could not be completed. You can still explore the document via Q&A.")
+                    st.session_state.wf_review_done = True
+                    st.session_state.wf_agent_state = "reviewed"
+                st.rerun()
+
+            # ── Render chat history ───────────────────────────────────────
+            _render_chat_history()
+
+            # ── Show action buttons per current state ─────────────────────
+            agent_state = st.session_state.wf_agent_state
+
+            if agent_state == "reviewed":
+                st.markdown("**What would you like to do next?**")
+                _render_agent_action_buttons("reviewed")
+
+            elif agent_state == "pdf_pending":
+                # ── Agent 3: PDF ──────────────────────────────────────────
+                try:
+                    pdf_buf = _generate_pdf_buffer(st.session_state.wf_review_result or {})
+                    st.download_button(
+                        label="⬇️ Download PDF Report",
+                        data=pdf_buf,
+                        file_name="contract_review_report.pdf",
+                        mime="application/pdf",
+                        use_container_width=True,
+                    )
+                    if not st.session_state.wf_pdf_answered:
+                        st.session_state.explorer_chat_history.append({
+                            "role": "assistant",
+                            "content": "📄 PDF report generated. Click the button above to download it.",
+                            "msg_type": "agent_result",
+                        })
+                        st.session_state.wf_pdf_answered = True
+                except Exception as pdf_err:
+                    st.error(f"Could not generate PDF: {pdf_err}")
+                _render_agent_action_buttons("pdf_pending")
+
+            elif agent_state == "qa_active":
+                # ── Agent 4: Q&A ──────────────────────────────────────────
+                _run_qa_chat()
+
+        # ════════════════════════════════════════════════════════════════════
+        # NON-CONTRACT PATH — Mode toggle + Q&A
+        # ════════════════════════════════════════════════════════════════════
+        else:
+            mode_choice = st.radio(
+                "Mode",
+                ["Evidence (Strict)", "Conversational (Evidence-Grounded)"],
+                index=0 if st.session_state.explorer_chat_mode == "Evidence (Strict)" else 1,
+                horizontal=True,
+                help=(
+                    "**Evidence (Strict)**: stateless RAG answer per query.\n\n"
+                    "**Conversational**: session-based with query rewriting, dual retrieval, and evidence guardrails."
+                ),
+            )
+            if mode_choice != st.session_state.explorer_chat_mode:
+                if st.session_state.explorer_session_id:
+                    delete_chat_session_api(st.session_state.explorer_session_id)
+                st.session_state.explorer_chat_mode = mode_choice
+                st.session_state.explorer_session_id = None
+                st.session_state.explorer_chat_history = []
+
+            if mode_choice == "Evidence (Strict)":
+                top_k = st.slider("Max results", min_value=1, max_value=25, value=10)
+                query = st.text_input(
+                    "Query",
+                    placeholder="Where is… / Show clauses related to…",
+                    key="strict_query",
+                )
+                if st.button("Get answer", type="primary", key="btn_answer"):
+                    if not query or not query.strip():
+                        st.warning("Enter a query.")
+                    else:
+                        with st.spinner("Generating answer..."):
+                            result = explore_answer(document_id, query, top_k=top_k)
+                        if result is not None:
+                            st.subheader("Answer")
+                            st.write(result.get("answer") or "No answer generated.")
+                            st.caption(
+                                f"Status: {result.get('status', '—')} | Confidence: {result.get('confidence', '—')}"
+                            )
+                            sources = result.get("sources", []) or []
+                            if sources:
+                                st.subheader("Sources / citations")
+                                for i, src in enumerate(sources[:10], 1):
+                                    with st.expander(f"Source {i} — Page {src.get('page_number', 0)}"):
+                                        text = src.get("text", "") or ""
+                                        st.write(text[:800] + ("..." if len(text) > 800 else ""))
+                                        st.caption(
+                                            f"Document: {src.get('display_name', src.get('document_id', '—'))}"
+                                        )
+            else:
+                _run_qa_chat()
 
 # -----------------------------------------------------------------------------
 # Page: Upload Document

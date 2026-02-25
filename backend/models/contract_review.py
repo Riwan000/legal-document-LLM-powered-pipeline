@@ -19,6 +19,15 @@ RiskSeverity = Literal["high", "medium", "low"]
 RiskStatus = Literal["detected", "not_detected", "uncertain", "implicitly_covered"]
 
 
+class VerbatimSnippet(BaseModel):
+    """Verbatim text excerpt from a matching evidence block, attached to a RiskItem."""
+
+    clause_id: str = Field(..., description="Clause identifier the snippet comes from.")
+    display_name: Optional[str] = Field(default=None, description="Human-readable clause name.")
+    page_number: int = Field(..., description="Page where the snippet appears.")
+    text: str = Field(..., description="clean_text from ClauseEvidenceBlock, truncated to 400 chars.")
+
+
 class RiskItem(BaseModel):
     """
     Single risk entry in the contract review risk table.
@@ -55,6 +64,20 @@ class RiskItem(BaseModel):
     coverage_note: Optional[str] = Field(
         default=None,
         description="When status is implicitly_covered, optional note describing where related obligations appear.",
+    )
+    # ── Improvement 1: verbatim evidence per risk ──────────────────────────────
+    verbatim_evidence: List[VerbatimSnippet] = Field(
+        default_factory=list,
+        description="Up to 3 verbatim text snippets from matching evidence blocks (only for detected clauses).",
+    )
+    # ── Improvement 2: severity reason + recommendation ───────────────────────
+    severity_reason: Optional[str] = Field(
+        default=None,
+        description="1–2 sentences explaining why this severity was assigned (from static templates).",
+    )
+    recommendation: Optional[str] = Field(
+        default=None,
+        description="Actionable guidance for addressing this risk (from static templates).",
     )
 
 
@@ -109,6 +132,10 @@ class ExecutiveSummaryItem(BaseModel):
     related_risk_indices: List[int] = Field(
         default_factory=list,
         description="Indices into the risks array that this summary item relates to.",
+    )
+    recommendation: Optional[str] = Field(
+        default=None,
+        description="Actionable guidance for this summary item (from static templates, mirrors RiskItem.recommendation).",
     )
 
 

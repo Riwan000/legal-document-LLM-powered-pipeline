@@ -6,14 +6,20 @@ expected_clauses:
   - termination
   - dispute_resolution
   - confidentiality
+  - indemnification
+  - ip_ownership
+  - sla_obligations
 
 optional_clauses:
-  - indemnification
-  - limitation_of_liability
+  - limitation_of_liability  # contract_fixes1: moved from expected to optional
 
 risk_weights:
   governing_law: high
   liability: high
   termination: high
+  indemnification: high
+  limitation_of_liability: high
   dispute_resolution: medium
   confidentiality: medium
+  ip_ownership: medium
+  sla_obligations: medium

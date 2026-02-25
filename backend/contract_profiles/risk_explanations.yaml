@@ -1,0 +1,225 @@
+# Risk severity reasons and recommendations.
+# Keyed by clause_type → status → severity → { reason, recommendation }
+# Missing keys are silently skipped (graceful fallback).
+
+termination:
+  not_detected:
+    high:
+      reason: "Absence of a termination clause leaves both parties without defined exit rights, creating significant legal exposure."
+      recommendation: "Add a termination clause specifying permitted grounds, required notice period, and obligations upon termination."
+    medium:
+      reason: "No termination clause was identified; this may limit enforcement options."
+      recommendation: "Include a termination clause with clear grounds and notice requirements."
+  detected_weak:
+    medium:
+      reason: "Termination provisions were identified but lack specificity around notice periods or grounds for dismissal."
+      recommendation: "Clarify termination grounds and specify a minimum notice period aligned with applicable law."
+  detected:
+    low:
+      reason: "Standard termination provisions are present."
+      recommendation: null
+
+governing_law:
+  not_detected:
+    high:
+      reason: "Without a governing law clause, jurisdiction disputes may be resolved by courts in an unfavorable forum."
+      recommendation: "Insert a governing law clause specifying the applicable jurisdiction and legal framework."
+    medium:
+      reason: "No governing law clause was detected; dispute resolution jurisdiction is unclear."
+      recommendation: "Add a governing law and dispute resolution clause."
+  detected:
+    low:
+      reason: "Governing law and jurisdiction are clearly specified."
+      recommendation: null
+
+confidentiality:
+  not_detected:
+    medium:
+      reason: "No confidentiality clause was detected; sensitive information exchanged under this agreement may lack contractual protection."
+      recommendation: "Add a confidentiality clause defining the scope of protected information and the obligations of each party."
+    high:
+      reason: "The contract involves sensitive information but contains no confidentiality obligation, creating material disclosure risk."
+      recommendation: "Add a confidentiality clause with clear scope, duration, and exceptions."
+  detected:
+    low:
+      reason: "Confidentiality obligations are clearly defined."
+      recommendation: null
+
+liability:
+  not_detected:
+    medium:
+      reason: "No liability limitation clause was found; either party may face unlimited financial exposure."
+      recommendation: "Include a liability cap clause capping exposure at a defined amount such as the total contract value."
+  detected:
+    low:
+      reason: "Liability limitations are present."
+      recommendation: null
+
+indemnification:
+  not_detected:
+    high:
+      reason: "No indemnification clause was detected; parties are not protected against third-party claims arising from the other side's actions."
+      recommendation: "Add an indemnification clause specifying which party bears responsibility for third-party claims and under what circumstances."
+  detected:
+    low:
+      reason: "Indemnification obligations are defined."
+      recommendation: null
+
+limitation_of_liability:
+  not_detected:
+    high:
+      reason: "No limitation-of-liability clause was found; either party could face unlimited financial exposure."
+      recommendation: "Add a limitation-of-liability clause capping aggregate exposure, typically at the total fees paid under the contract."
+  detected:
+    low:
+      reason: "Liability cap provisions are in place."
+      recommendation: null
+
+ip_ownership:
+  not_detected:
+    medium:
+      reason: "Intellectual property ownership is not addressed; ownership of work product created under this contract may be disputed."
+      recommendation: "Add an IP ownership clause clarifying who owns deliverables, inventions, and derivative works."
+  detected:
+    low:
+      reason: "IP ownership is addressed in the contract."
+      recommendation: null
+
+dispute_resolution:
+  not_detected:
+    medium:
+      reason: "No dispute resolution mechanism (arbitration or litigation forum) is specified; parties may need to resolve disputes through default court rules."
+      recommendation: "Add a dispute resolution clause specifying arbitration or the chosen court, along with the applicable procedural rules."
+  detected:
+    low:
+      reason: "Dispute resolution procedures are defined."
+      recommendation: null
+
+payment_terms:
+  not_detected:
+    medium:
+      reason: "Payment terms are absent; amounts, timing, and currency are undefined, creating financial risk."
+      recommendation: "Include clear payment terms: amounts, due dates, currency, and late-payment consequences."
+  detected:
+    low:
+      reason: "Payment terms are defined in the contract."
+      recommendation: null
+
+# ── Employment-specific clauses ────────────────────────────────────────────────
+
+probation_period:
+  not_detected:
+    medium:
+      reason: "No probation period clause was identified; parties cannot rely on a defined trial period for early termination."
+      recommendation: "Add a probation period clause specifying duration, performance review expectations, and simplified termination rights during probation."
+  detected:
+    low:
+      reason: "Probation period terms are defined."
+      recommendation: null
+
+end_of_service_gratuity:
+  not_detected:
+    high:
+      reason: "End-of-service gratuity is a statutory obligation under KSA/UAE labor law. Its absence creates material legal non-compliance risk."
+      recommendation: "Include an end-of-service gratuity clause consistent with applicable labor law, specifying the calculation basis and conditions."
+    medium:
+      reason: "No end-of-service gratuity clause was detected; employees may be entitled to statutory gratuity depending on jurisdiction."
+      recommendation: "Add an end-of-service gratuity provision aligned with applicable labor regulations."
+  detected:
+    low:
+      reason: "End-of-service gratuity obligations are addressed."
+      recommendation: null
+
+non_compete:
+  not_detected:
+    low:
+      reason: "No non-compete clause is present; the employer's competitive interests may not be protected post-employment."
+      recommendation: "Consider adding a reasonable non-compete clause limited in scope, geography, and duration."
+  detected:
+    low:
+      reason: "Non-compete restrictions are specified."
+      recommendation: null
+
+annual_leave:
+  not_detected:
+    medium:
+      reason: "Annual leave entitlements are not specified; this may create disputes or require reliance on statutory minimums."
+      recommendation: "Add an annual leave clause specifying accrual, carryover, and payout on termination."
+  detected:
+    low:
+      reason: "Annual leave provisions are defined."
+      recommendation: null
+
+# ── NDA-specific clauses ───────────────────────────────────────────────────────
+
+carve_outs:
+  not_detected:
+    medium:
+      reason: "No standard carve-outs (public domain, prior knowledge, independent development) were detected; the NDA may be overly broad and unenforceable."
+      recommendation: "Add standard carve-out exceptions: information already public, known prior to disclosure, independently developed, or required by law."
+  detected:
+    low:
+      reason: "Standard confidentiality carve-outs are present."
+      recommendation: null
+
+mutual_vs_unilateral:
+  not_detected:
+    low:
+      reason: "The confidentiality obligations appear one-sided; review whether mutual obligations were intended."
+      recommendation: "Confirm whether the NDA should be mutual and update obligations for both parties if so."
+  detected:
+    low:
+      reason: "Mutual/unilateral scope of confidentiality is defined."
+      recommendation: null
+
+remedies_injunction:
+  not_detected:
+    low:
+      reason: "No injunctive relief provision was found; the disclosing party may face challenges in obtaining emergency court orders for breaches."
+      recommendation: "Consider adding a clause acknowledging that monetary damages may be insufficient and that injunctive relief is an appropriate remedy."
+  detected:
+    low:
+      reason: "Injunctive relief remedies are addressed."
+      recommendation: null
+
+return_of_information:
+  not_detected:
+    low:
+      reason: "No return or destruction of information obligation is specified; confidential materials may not be returned at contract end."
+      recommendation: "Add a clause requiring return or certified destruction of confidential information upon termination."
+  detected:
+    low:
+      reason: "Return/destruction of confidential information is addressed."
+      recommendation: null
+
+# ── MSA-specific clauses ───────────────────────────────────────────────────────
+
+sla_obligations:
+  not_detected:
+    medium:
+      reason: "No service level obligations (uptime, response time, availability) were detected; service quality expectations are undefined."
+      recommendation: "Add an SLA schedule specifying uptime targets, response time commitments, and remedies for SLA failures."
+  detected:
+    low:
+      reason: "Service level obligations are defined."
+      recommendation: null
+
+# ── Problematic language patterns ─────────────────────────────────────────────
+
+problematic_termination_no_notice:
+  detected:
+    high:
+      reason: "Language permitting termination without notice removes basic party protections and may be unenforceable in jurisdictions requiring statutory notice."
+      recommendation: "Replace 'without notice' with a defined notice period of at least 30 days or as required by applicable law."
+
+problematic_liability_unlimited:
+  detected:
+    high:
+      reason: "Unlimited liability exposure is a significant financial risk, particularly for service contracts."
+      recommendation: "Cap liability at a defined amount (e.g., total contract value) to limit financial exposure."
+
+problematic_confidentiality_perpetuity:
+  detected:
+    medium:
+      reason: "An obligation lasting 'in perpetuity' or 'forever' may be unenforceable and creates indefinite compliance burdens."
+      recommendation: "Replace perpetual confidentiality with a defined term (e.g., 5 years post-disclosure) that is commercially reasonable."

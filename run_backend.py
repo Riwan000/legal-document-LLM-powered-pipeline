@@ -1,6 +1,7 @@
 """
 Helper script to start the FastAPI backend.
 Run this to start the server with proper configuration.
+Uses backend.config (API_HOST, API_PORT) so the server is reachable at BACKEND_URL from Streamlit.
 """
 import os
 import subprocess
@@ -9,14 +10,17 @@ from pathlib import Path
 
 def main():
     """Start the FastAPI backend server."""
-    host = os.getenv("BACKEND_HOST", "127.0.0.1")
-    port = int(os.getenv("BACKEND_PORT", "8000"))
+    from backend.config import settings
+    host = os.getenv("BACKEND_HOST", settings.API_HOST)
+    port = int(os.getenv("BACKEND_PORT", str(settings.API_PORT)))
     reload_enabled = os.getenv("BACKEND_RELOAD", "1").lower() in {"1", "true", "yes"}
+    # 0.0.0.0 is a bind address only; browsers cannot open it. Use localhost for displayed URLs.
+    display_host = "127.0.0.1" if host == "0.0.0.0" else host
     print("="*70)
     print("  Starting FastAPI Backend Server")
     print("="*70)
-    print(f"\nServer will start at: http://{host}:{port}")
-    print(f"API Documentation: http://{host}:{port}/docs")
+    print(f"\nServer listening on {host}:{port}")
+    print(f"Open in browser — API docs: http://{display_host}:{port}/docs")
     print("\nPress CTRL+C to stop the server\n")
     print("="*70 + "\n")
     

@@ -16,6 +16,8 @@ from backend.config import settings
 if TYPE_CHECKING:
     from backend.services.translation_service import TranslationService
 
+from backend.services.retrieval_router import RetrievalRouter
+
 
 class RAGService:
     """Service for RAG-based query answering with citations."""
@@ -47,13 +49,16 @@ class RAGService:
         
         # Rule-guided / policy-layer services:
         # - Classify query intent and required safety constraints.
-        # - Apply lightweight “legal hierarchy” heuristics (law > contract > policy).
+        # - Apply lightweight "legal hierarchy" heuristics (law > contract > policy).
         self.query_classifier = QueryClassifier()
         self.legal_reasoning = LegalReasoningService()
         self.hierarchy_service = LegalHierarchyService()
         
         # Ollama client used for local LLM generation (no external API calls).
         self.ollama_client = ollama.Client(host=settings.OLLAMA_BASE_URL)
+
+        # Phase 3 — multi-engine retrieval router for document-scoped queries
+        self.retrieval_router = RetrievalRouter(vector_store, embedding_service)
     
     def search(
         self,
@@ -79,13 +84,35 @@ class RAGService:
         if top_k is not None and top_k <= 0:
             return []
 
-        # 1) Classify the query and choose “priority” clause types (boosting).
+        # 1) Classify the query and choose "priority" clause types (boosting).
         # `priority_clause_types` is a backward-compat parameter name; in this codebase it
         # is typically a weighted mapping: {clause_type: weight}.
         if priority_clause_types is None:
             classification = self.query_classifier.classify_query(query)
             priority_clause_types = self._get_priority_clause_types(classification)
-        
+        else:
+            classification = self.query_classifier.classify_query(query)
+
+        # Phase 3 — delegate to RetrievalRouter for document-scoped queries
+        if document_id_filter:
+            try:
+                routed = self.retrieval_router.route(
+                    query=query,
+                    classification=classification,
+                    document_id=document_id_filter,
+                    top_k=top_k or settings.TOP_K_RESULTS,
+                )
+                if routed:
+                    # Normalize score field (router fused scores are already 0-1)
+                    for r in routed:
+                        r.setdefault("score", 0.5)
+                    return self.hierarchy_service.rank_by_authority(routed)
+            except Exception as exc:
+                import logging as _log
+                _log.getLogger(__name__).warning(
+                    "RetrievalRouter failed (%s), falling back to standard search", exc
+                )
+
         # Normalize priority config to a weights dict.
         priority_weights: Optional[Dict[str, float]] = None
         if isinstance(priority_clause_types, dict):
@@ -97,7 +124,7 @@ class RAGService:
         # 2) Encode query into an embedding vector (multilingual model supports Arabic/English).
         query_embedding = self.embedding_service.embed_text(query)
         
-        # 3) Retrieve top-k chunks. If we have priority clause types, do a “boosted” re-ranking.
+        # 3) Retrieve top-k chunks. If we have priority clause types, do a "boosted" re-ranking.
         if priority_weights:
             results = self.vector_store.search_with_priority(
                 query_embedding=query_embedding,
@@ -448,7 +475,7 @@ class RAGService:
         """
         top_k = top_k or settings.TOP_K_RESULTS
         
-        # Extract “keywords” from query by removing stop-words and short tokens.
+        # Extract "keywords" from query by removing stop-words and short tokens.
         # This is intentionally simple: it’s a last-resort fallback when embeddings yield nothing.
         import re
         
@@ -515,7 +542,7 @@ class RAGService:
                     'document_id': metadata.get('document_id', ''),
                     'chunk_index': metadata.get('chunk_index', 0),
                     'score': relevance,  # Keyword-based relevance score (not a true embedding similarity).
-                    'distance': 1.0 - relevance,  # Inverse for compatibility with “distance”-expecting callers.
+                    'distance': 1.0 - relevance,  # Inverse for compatibility with "distance"-expecting callers.
                     'is_ocr': metadata.get('is_ocr', False),
                     'keyword_match': True,  # Flag to indicate keyword-based match
                     **{k: v for k, v in metadata.items() 

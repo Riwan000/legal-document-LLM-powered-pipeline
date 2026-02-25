@@ -184,7 +184,7 @@ class VectorStore:
             # chunk_type (clause | sentence) may already be in chunk.metadata from chunker
             if 'chunk_type' not in chunk_metadata:
                 chunk_metadata['chunk_type'] = 'sentence'
-            
+
             metadata_entry = {
                 'document_id': chunk.document_id,
                 'page_number': chunk.page_number,
@@ -200,7 +200,14 @@ class VectorStore:
                 metadata_entry['chunking_strategy'] = chunking_strategy
             if embedding_model_version:
                 metadata_entry['embedding_model_version'] = embedding_model_version
-            
+
+            # Phase 6 — write new top-level DocumentChunk fields into FAISS metadata
+            # so they are queryable by the RetrievalRouter without needing chunk objects.
+            for field in ("parent_clause_id", "unit_type", "legal_category", "clause_number"):
+                val = getattr(chunk, field, None)
+                if val is not None:
+                    metadata_entry[field] = val
+
             self.metadata.append(metadata_entry)
     
     def search(

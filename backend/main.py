@@ -27,7 +27,7 @@ from backend.services.comparison_service import ComparisonService
 from backend.services.summarization_service import SummarizationService
 from backend.services.translation_service import TranslationService
 from backend.services.document_registry import DocumentRegistry
-from backend.models.document import DocumentUploadResponse, AnswerResponse
+from backend.models.document import DocumentUploadResponse, AnswerResponse, DocumentChunk
 from backend.models.document_list import DocumentListResponse, DocumentListItem, DocumentRenameRequest, DocumentRenameResponse
 from backend.models.clause import StructuredClause
 from backend.services.clause_store import ClauseStore
@@ -59,6 +59,10 @@ from backend.services.evidence_guardrail_service import EvidenceGuardrailService
 from backend.services.query_rewriter import QueryRewriter
 from backend.services.chat_orchestrator import ChatOrchestratorService
 from backend.services.conversation_summarizer import ConversationSummarizer
+from backend.services.document_classification_service import DocumentClassificationService
+from backend.models.document import DocumentClassification
+from backend.services.structured_clause_extraction import StructuredClauseExtractionService
+from backend.utils.chunking import TextChunker
 
 
 # Lifespan handlers (replaces deprecated on_event startup/shutdown)
@@ -127,6 +131,13 @@ session_store: Optional[SessionStore] = None
 session_manager: Optional[SessionManager] = None
 chat_orchestrator: Optional[ChatOrchestratorService] = None
 
+# Document classification
+document_classification_service: Optional[DocumentClassificationService] = None
+structured_clause_extractor: Optional[StructuredClauseExtractionService] = None
+
+# Serialize uploads to avoid DB/vector-store races when user clicks "Upload & Classify" twice
+_upload_lock = threading.Lock()
+
 
 async def _initialize_services():
     """Initialize services on application startup."""
@@ -136,6 +147,7 @@ async def _initialize_services():
     global document_explorer_service, evidence_explorer_service, contract_review_service, workflow_orchestrator
     global extracted_clause_store, ingestion_metadata_store
     global session_store, session_manager, chat_orchestrator
+    global document_classification_service, structured_clause_extractor
     
     print("Initializing services...")
     
@@ -211,6 +223,14 @@ async def _initialize_services():
         query_rewriter=query_rewriter,
     )
     print("Conversational RAG services initialized (SessionStore, SessionManager, ChatOrchestrator)")
+
+    # Document classification service
+    document_classification_service = DocumentClassificationService()
+    print("Document classification service initialized")
+
+    # Structured clause extractor (for Phase 6 upload pipeline)
+    structured_clause_extractor = StructuredClauseExtractionService()
+    print("Structured clause extractor initialized")
 
     print("All services initialized successfully!")
 
@@ -578,6 +598,19 @@ async def upload_document(
         already_indexed = len(existing_chunks) > 0
         
         if already_indexed:
+            # For duplicate uploads, return stored classification if available
+            stored_cls = document_registry.get_classification(existing_doc['document_id'], existing_doc['version'])
+            if stored_cls and stored_cls.get("classification") == "non_legal":
+                return DocumentUploadResponse(
+                    document_id=existing_doc['document_id'],
+                    display_name=existing_doc['display_name'],
+                    original_filename=existing_doc['original_filename'],
+                    version=existing_doc['version'],
+                    status="rejected",
+                    message="Not a legal document. Only contracts, NDAs, statutes, and similar legal instruments are accepted.",
+                    chunks_created=0,
+                    pages_processed=0,
+                )
             return DocumentUploadResponse(
                 document_id=existing_doc['document_id'],
                 display_name=existing_doc['display_name'],
@@ -592,121 +625,243 @@ async def upload_document(
                 updated_at=datetime.fromisoformat(existing_doc['updated_at']) if isinstance(existing_doc['updated_at'], str) else existing_doc['updated_at']
             )
     
-    # Determine storage directory
-    if document_type == "template":
-        storage_dir = settings.TEMPLATES_PATH
-    else:
-        storage_dir = settings.DOCUMENTS_PATH
-    
-    # Register document in registry (creates new version if hash differs)
-    doc_record = document_registry.register_document(
-        document_hash=document_hash,
-        original_filename=file.filename,
-        document_type=document_type,
-        display_name=display_name
-    )
-    
-    document_id = doc_record['document_id']
-    version = doc_record['version']
-    
-    # Save uploaded file
-    file_path = storage_dir / f"{document_id}_v{version}{file_ext}"
-    try:
-        with open(file_path, "wb") as buffer:
-            buffer.write(file_content)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error saving file: {str(e)}")
-    
-    # Update registry with file path
-    with document_registry._get_connection() as conn:
-        conn.execute(
-            "UPDATE documents SET file_path = ? WHERE document_id = ? AND version = ?",
-            [str(file_path), document_id, version]
-        )
-    
-    # Ingest document (new pipeline: parse -> heuristic -> strategy -> chunk)
-    try:
-        chunks, ingest_ctx = ingestion_service.ingest_document(
-            file_path, document_id, document_type_hint=document_type
-        )
-        
-        if not chunks:
-            raise ValueError("No chunks created from document")
-        
-        # If this is a new version, remove old chunks for this document_id
-        if version > 1 and vector_store:
-            old_chunks = vector_store.get_chunks_by_document(document_id)
-            if old_chunks:
-                vector_store.delete_document(document_id)
-        
-        # Generate embeddings
-        texts = [chunk.text for chunk in chunks]
-        embeddings = embedding_service.embed_batch(texts)
-        
-        # Embedding model version for metadata (from config; service may use fallback)
-        embedding_model_version = getattr(
-            embedding_service, "model_name", None
-        ) or settings.EMBEDDING_MODEL
-        
-        # Add to vector store with display_name, document_hash, chunking_strategy, embedding_model_version
-        vector_store.add_chunks(
-            embeddings,
-            chunks,
-            display_name=doc_record['display_name'],
+    # Serialize full ingest to avoid DB/vector-store races on double-click
+    with _upload_lock:
+        # Determine storage directory
+        if document_type == "template":
+            storage_dir = settings.TEMPLATES_PATH
+        else:
+            storage_dir = settings.DOCUMENTS_PATH
+
+        # Register document in registry (creates new version if hash differs)
+        doc_record = document_registry.register_document(
             document_hash=document_hash,
-            chunking_strategy=ingest_ctx.strategy,
-            embedding_model_version=embedding_model_version,
+            original_filename=file.filename,
+            document_type=document_type,
+            display_name=display_name
         )
-        
-        # Save vector store
-        vector_store.save()
-        
-        ocr_chunks = sum(1 for chunk in chunks if (chunk.metadata or {}).get('is_ocr', False))
-        uses_ocr = ocr_chunks > 0
-        
-        # Update registry with page/chunk counts
+
+        document_id = doc_record['document_id']
+        version = doc_record['version']
+
+        # Save uploaded file
+        file_path = storage_dir / f"{document_id}_v{version}{file_ext}"
+        try:
+            with open(file_path, "wb") as buffer:
+                buffer.write(file_content)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error saving file: {str(e)}")
+
+        # Update registry with file path
         with document_registry._get_connection() as conn:
-            conn.execute("""
-                UPDATE documents 
-                SET total_pages = ?, total_chunks = ?, updated_at = CURRENT_TIMESTAMP
-                WHERE document_id = ? AND version = ?
-            """, [ingest_ctx.pages_processed, len(chunks), document_id, version])
-        
-        # Persist ingestion metadata for this document/version
-        if ingestion_metadata_store:
-            ingestion_metadata_store.save(IngestionMetadata(
-                document_id=document_id,
-                ingestion_version=version,
+            conn.execute(
+                "UPDATE documents SET file_path = ? WHERE document_id = ? AND version = ?",
+                [str(file_path), document_id, version]
+            )
+
+        # Ingest document (new pipeline: parse -> heuristic -> strategy -> chunk)
+        try:
+            chunks, ingest_ctx = ingestion_service.ingest_document(
+                file_path, document_id, document_type_hint=document_type
+            )
+
+            if not chunks:
+                raise ValueError("No chunks created from document")
+
+            # If this is a new version, remove old chunks for this document_id
+            if version > 1 and vector_store:
+                old_chunks = vector_store.get_chunks_by_document(document_id)
+                if old_chunks:
+                    vector_store.delete_document(document_id)
+
+            # Generate embeddings
+            texts = [chunk.text for chunk in chunks]
+            embeddings = embedding_service.embed_batch(texts)
+
+            # Embedding model version for metadata (from config; service may use fallback)
+            embedding_model_version = getattr(
+                embedding_service, "model_name", None
+            ) or settings.EMBEDDING_MODEL
+
+            # Add to vector store with display_name, document_hash, chunking_strategy, embedding_model_version
+            vector_store.add_chunks(
+                embeddings,
+                chunks,
+                display_name=doc_record['display_name'],
+                document_hash=document_hash,
                 chunking_strategy=ingest_ctx.strategy,
-                structure_detected=ingest_ctx.structure_detected,
-                estimated_clause_count=ingest_ctx.estimated_clause_count,
                 embedding_model_version=embedding_model_version,
-                created_at=datetime.now(),
-            ))
-        
-        # Build response (never include document_hash)
-        return DocumentUploadResponse(
-            document_id=document_id,
-            display_name=doc_record['display_name'],
-            original_filename=doc_record['original_filename'],
-            version=version,
-            status="success",
-            message=f"Document ingested and indexed successfully. {len(chunks)} chunks created." +
-                    (f" ({ocr_chunks} from OCR)." if uses_ocr else "."),
-            chunks_created=len(chunks),
-            pages_processed=ingest_ctx.pages_processed,
-            uses_ocr=uses_ocr,
-            ocr_chunks=ocr_chunks if uses_ocr else 0,
-            created_at=datetime.fromisoformat(doc_record['created_at']) if isinstance(doc_record['created_at'], str) else doc_record['created_at'],
-            updated_at=datetime.now()
-        )
-        
-    except Exception as e:
-        # Clean up file and registry entry on error
-        if file_path.exists():
-            file_path.unlink()
-        document_registry.delete_document(document_id, version)
-        raise HTTPException(status_code=500, detail=f"Error ingesting document: {str(e)}")
+            )
+
+            # Save vector store
+            vector_store.save()
+
+            ocr_chunks = sum(1 for chunk in chunks if (chunk.metadata or {}).get('is_ocr', False))
+            uses_ocr = ocr_chunks > 0
+
+            # Update registry with page/chunk counts
+            with document_registry._get_connection() as conn:
+                conn.execute("""
+                    UPDATE documents 
+                    SET total_pages = ?, total_chunks = ?, updated_at = CURRENT_TIMESTAMP
+                    WHERE document_id = ? AND version = ?
+                """, [ingest_ctx.pages_processed, len(chunks), document_id, version])
+
+            # Persist ingestion metadata for this document/version
+            if ingestion_metadata_store:
+                ingestion_metadata_store.save(IngestionMetadata(
+                    document_id=document_id,
+                    ingestion_version=version,
+                    chunking_strategy=ingest_ctx.strategy,
+                    structure_detected=ingest_ctx.structure_detected,
+                    estimated_clause_count=ingest_ctx.estimated_clause_count,
+                    embedding_model_version=embedding_model_version,
+                    created_at=datetime.now(),
+                ))
+
+            # ── Document classification ────────────────────────────────────────────
+            if document_classification_service:
+                text_sample = " ".join(chunk.text for chunk in chunks[:5])[:2000]
+                classification_result = document_classification_service.classify(text_sample, document_id)
+
+                if classification_result.classification == DocumentClassification.NON_LEGAL:
+                    # Reject: remove from vector store, file system, and registry
+                    try:
+                        vector_store.delete_document(document_id)
+                        vector_store.save()
+                    except Exception:
+                        pass
+                    try:
+                        file_path.unlink(missing_ok=True)
+                    except Exception:
+                        pass
+                    document_registry.delete_document(document_id, version)
+                    return DocumentUploadResponse(
+                        document_id=document_id,
+                        display_name=doc_record['display_name'],
+                        original_filename=doc_record['original_filename'],
+                        version=version,
+                        status="rejected",
+                        message="Not a legal document. Only contracts, NDAs, statutes, and similar legal instruments are accepted.",
+                        chunks_created=0,
+                        pages_processed=0,
+                    )
+                else:
+                    document_registry.save_classification(document_id, version, classification_result)
+
+            # ── Phase 6: Structure-first ingestion extras ──────────────────────────
+            # Run in a try/except so structural extraction failures never break upload.
+            try:
+                if structured_clause_extractor and extracted_clause_store:
+                    # 1. Extract structured clauses
+                    p6_clauses = structured_clause_extractor.extract_structured_clauses(
+                        str(file_path), document_id
+                    )
+
+                    # 2. Extract defined terms index
+                    defined_terms = structured_clause_extractor.extract_defined_terms(p6_clauses)
+
+                    # 3. Sub-chunk long clauses (> 2000 chars)
+                    extra_chunks = []
+                    for clause in p6_clauses:
+                        verbatim = getattr(clause, "verbatim_text", "") or ""
+                        if len(verbatim) > 2000:
+                            sub_chunks = TextChunker.subchunk_clause(
+                                clause_id=clause.clause_id,
+                                verbatim_text=verbatim,
+                                page_number=getattr(clause, "page_start", 0) or 0,
+                                document_id=document_id,
+                                legal_category=getattr(clause, "legal_category", None),
+                                clause_number=getattr(clause, "clause_number", None),
+                            )
+                            extra_chunks.extend(sub_chunks)
+
+                    # 4. Page-chunk fallback for pages not covered by any clause
+                    pages_with_clauses = {
+                        getattr(c, "page_start", None) for c in p6_clauses
+                    } - {None}
+                    covered_pages = {
+                        chunk.page_number for chunk in chunks if chunk.page_number is not None
+                    }
+                    # Collect text for uncovered pages from existing chunks
+                    page_text_map: dict = {}
+                    for chunk in chunks:
+                        pg = chunk.page_number
+                        if pg is not None and pg not in pages_with_clauses:
+                            page_text_map.setdefault(pg, []).append(chunk.text)
+                    for pg, texts in page_text_map.items():
+                        page_chunk = DocumentChunk(
+                            text=" ".join(texts)[:2000],
+                            page_number=pg,
+                            chunk_index=0,
+                            document_id=document_id,
+                            metadata={"unit_type": "page_chunk", "chunk_id": f"pg_{pg:04d}_{document_id[:8]}"},
+                            clause_id=None,
+                            unit_type="page_chunk",
+                        )
+                        extra_chunks.append(page_chunk)
+
+                    # 5. Embed and index extra chunks
+                    if extra_chunks:
+                        extra_texts = [c.text for c in extra_chunks]
+                        extra_embeddings = embedding_service.embed_batch(extra_texts)
+                        vector_store.add_chunks(
+                            extra_embeddings,
+                            extra_chunks,
+                            display_name=doc_record["display_name"],
+                            document_hash=document_hash,
+                            chunking_strategy="phase6_extra",
+                            embedding_model_version=embedding_model_version,
+                        )
+                        vector_store.save()
+
+                    # 6. Persist clause store with defined terms
+                    extracted_clause_store.save_document_clauses(
+                        document_id,
+                        [c.to_dict() for c in p6_clauses],
+                        defined_terms=defined_terms,
+                    )
+            except Exception as _p6_exc:
+                import logging as _log
+                _log.getLogger(__name__).warning(
+                    "Phase 6 extras failed for %s (non-fatal): %s", document_id, _p6_exc
+                )
+
+            # Build response (never include document_hash)
+            return DocumentUploadResponse(
+                document_id=document_id,
+                display_name=doc_record['display_name'],
+                original_filename=doc_record['original_filename'],
+                version=version,
+                status="success",
+                message=f"Document ingested and indexed successfully. {len(chunks)} chunks created." +
+                        (f" ({ocr_chunks} from OCR)." if uses_ocr else "."),
+                chunks_created=len(chunks),
+                pages_processed=ingest_ctx.pages_processed,
+                uses_ocr=uses_ocr,
+                ocr_chunks=ocr_chunks if uses_ocr else 0,
+                created_at=datetime.fromisoformat(doc_record['created_at']) if isinstance(doc_record['created_at'], str) else doc_record['created_at'],
+                updated_at=datetime.now()
+            )
+
+        except Exception as e:
+            # Clean up file and registry entry on error
+            if file_path.exists():
+                file_path.unlink()
+            document_registry.delete_document(document_id, version)
+            raise HTTPException(status_code=500, detail=f"Error ingesting document: {str(e)}")
+
+
+@app.get("/api/documents/{document_id}/classification")
+async def get_document_classification(document_id: str):
+    """Return stored classification for a document."""
+    global document_registry
+    if not document_registry:
+        raise HTTPException(status_code=500, detail="Document registry not initialized")
+    result = document_registry.get_classification(document_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Classification not found for this document")
+    return result
 
 
 @app.post("/api/search")

@@ -6,11 +6,14 @@ from user-facing display names.
 import sqlite3
 import hashlib
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, TYPE_CHECKING
 from datetime import datetime
 from contextlib import contextmanager
 
 from backend.config import settings
+
+if TYPE_CHECKING:
+    from backend.models.document import ClassificationResult
 
 
 class DocumentRegistry:
@@ -100,9 +103,21 @@ class DocumentRegistry:
                     # If copy fails (e.g., schema drift), keep old table for manual inspection.
                     pass
             
+            # Migration: add classification columns if missing
+            for col_ddl in [
+                "ALTER TABLE documents ADD COLUMN classification TEXT",
+                "ALTER TABLE documents ADD COLUMN classification_confidence REAL",
+                "ALTER TABLE documents ADD COLUMN is_contract BOOLEAN DEFAULT 0",
+                "ALTER TABLE documents ADD COLUMN classification_method TEXT",
+            ]:
+                try:
+                    conn.execute(col_ddl)
+                except Exception:
+                    pass  # Column already exists
+
             # Index for fast hash lookups
             conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_document_hash 
+                CREATE INDEX IF NOT EXISTS idx_document_hash
                 ON documents(document_hash)
             """)
             
@@ -397,6 +412,43 @@ class DocumentRegistry:
             
             return [dict(row) for row in rows]
     
+    def save_classification(self, document_id: str, version: int, result: "ClassificationResult") -> None:
+        """Persist classification result for a document version."""
+        with self._get_connection() as conn:
+            conn.execute("""
+                UPDATE documents
+                SET classification = ?,
+                    classification_confidence = ?,
+                    is_contract = ?,
+                    classification_method = ?,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE document_id = ? AND version = ?
+            """, [
+                result.classification.value,
+                result.confidence,
+                int(result.is_contract),
+                result.method,
+                document_id,
+                version,
+            ])
+
+    def get_classification(self, document_id: str, version: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        """Return stored classification fields for a document, or None if not yet classified."""
+        with self._get_connection() as conn:
+            if version:
+                row = conn.execute("""
+                    SELECT classification, classification_confidence, is_contract, classification_method
+                    FROM documents WHERE document_id = ? AND version = ?
+                """, [document_id, version]).fetchone()
+            else:
+                row = conn.execute("""
+                    SELECT classification, classification_confidence, is_contract, classification_method
+                    FROM documents WHERE document_id = ? AND is_latest = 1
+                """, [document_id]).fetchone()
+            if row and row["classification"]:
+                return dict(row)
+            return None
+
     def delete_document(self, document_id: str, version: Optional[int] = None) -> int:
         """
         Delete document(s).

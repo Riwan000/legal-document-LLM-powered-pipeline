@@ -1,0 +1,46 @@
+{
+  "schema_version": 2,
+  "document_id": "DOC-0016",
+  "extraction_version": "v1.0",
+  "clauses": [
+    {
+      "clause_id": "unknown_SubsequentTransfer_22b4a701de7cc89a",
+      "document_section": "unknown",
+      "page_start": 5,
+      "page_end": 5,
+      "clause_heading": "Subsequent Transfer",
+      "verbatim_text": "7. Subsequent Transfer    \n A. The Personal Data Importer shall not transfer or disclose the transferred Personal Data to a third party outside the Kingdom unless that party has acceded to these Clauses and in accordance with the appropriate template and the provisions of Clause (7) above.  \nB. Without prejudice to the provisions of Articles (8) and (15) of the Law and (17) of the Implementing Regulation of the Law, the provisions of the Law and Regulations shall apply to subsequent transfer of Personal Data that has been previously transferre d or disclosed to an \nentity outside the Kingdom.   8. Assigning Processors    \n The Personal Data Importer shall be obliged to select a Processor that provides sufficient guarantees for the protection of the transferred Personal Data, and the agreement with the Processor shall include all the requirements set out in Article (17) of th e Implementing \nRegulation, and the processing shall be based solely on the instructions of the Data Importer, provided that these instructions are consistent with the requirements set out in these Clauses.   9. Compliance with these Clauses    \n A. All parties shall demonstrate full compliance with these Clauses to the Competent Authority upon request, and the Personal Data Importer shall maintain documents related to the Personal Data processing activities conducted under its supervision, in addi tion to the records of \nPersonal Data processing activities as stipulated in Article (33) of the Regulation.",
+      "clause_number": "7",
+      "clause_title": "Subsequent Transfer",
+      "legal_category": "governing_law",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "no_keywords_found",
+        "section_confidence": "low",
+        "document_type": "contract"
+      }
+    },
+    {
+      "clause_id": "liability_Themeasuresbelowaree_40374ac8becf7342",
+      "document_section": "liability",
+      "page_start": 8,
+      "page_end": 10,
+      "clause_heading": "The measures below are examples only, and the parties should ensure that the des",
+      "verbatim_text": "2. The measures below are examples only, and the parties should ensure that the description in this Appendix corresponds to the applicable facts relevant to the transfer.  \n(i)  Controlling access to buildings and facilities (physical)      \n(ii)  IT system access control (by default)     \n \n(iii) Personal Data access control      \n(iv) Personal Data disclosure control       \n(v) Input Control       \n(vi) Functionality Control  \n(vii) Personal Data accessibility control     \n(viii) Personal Data segregation control     \n \nThis below section provides an overview of the key components of Information Security of the Data Importer and its group (“S&P”).  \n \nSecurity Measure   Summary   \nRisk Management Program \nOverview   S&P Global’s Risk Management program includes \nInformation Security to manage risk through three lines of \ndefense.    \nInformation Security \nOrganization and Governance \nStructure   The Chief Information Security Officer (CISO) manages \nand coordinates S&P Global’s Information Security \nProgram.    \nInformation Security Policy   S&P Global’s Information Security policies and standards \nare based on the best practices recommendations for \ninformation security management as published in ISO/IEC -\n27002 and NIST 800 Standards. The governance team uses \nthe NIST Cybersecurity Framework to assess, measure and \nmonitor the maturity of the organization’s Information \nSecurity practices and target state.   \nS&P Global’s Code of Business Ethics (COBE) defines the \nbehaviors expected of employees at S&P Global. S&P \nGlobal requires employees to personally reaffirm this code \non a yearly basis.    \nInformation Security Pillars: \nInformation Security \nAwareness & Training   S&P Global has an Information Security Awareness and \nTraining program that trains employees on information \nsecurity policies and security best practices. All employees \nare required to take annual computer -based information \nsecurity training and refresher c ourse(s), which reinforces \ninformation security policies and data privacy. Security\nawareness training for non -employees is available and \nlimited to those who have been identified as having access \nto the company’s global systems.   \nInformation Security Pillars: \nCyber Defense, Threat \nIntelligence & Monitoring   S&P Global’s cyber incident response program is managed \nby the Information Security Monitoring & Cyber Incident \nResponse Team (“CIRT”) in conjunction with the Security \nOperations Center (SOC) where security analysts monitor \nsecurity events and escalate val idated or suspicious security \nincidents for further probing and invoke Incident \nManagement Procedure as necessary.    \nInformation Security Pillars: \nApplication Security   S&P Global’s  Information Security Application Security \nProgram provides an operational governance role that \nmonitors, reports on and remediates vulnerabilities.   \nPenetration Testing and Related Independent Third -Party \nSecurity Reviews: S&P Global regularly sponsors and \nconducts independent security reviews of its computing \nenvironment.    \nInformation Security Pillars: \nSecurity Architecture   S&P Global’s  Information Security Program Security \nArchitecture provides an oversight and review of new \nplatforms/applications to ensure they conform to \nInformation Security policies, standards, procedures, and \nguidelines.    \nInformation Security Controls: \nInfrastructure Security   Key routing and switching components are located in \nphysically secured data centers or locations that provide \nphysical security and monitoring of events. Authentication \nand access to these key components are governed by the \ncompany’s authentication policie s. Once authenticated, \nS&P Global’s key core routing and switching components \nare managed by professional network service engineers.    \nInformation Security Controls: \nInformation Classification   The company classifies information into categories to \ndetermine how S&P Global protects, stores, and distributes \nthe information, including client data.   \nInformation Security Controls: \nProtection of Information in \nTransit   When the company is required to transmit or receive \nsensitive data via a public network, industry, best -practices \nstandard methods are used.   \nInformation Security Controls:   \nIdentity Management, \nAuthentication & \nAuthorization   The Identity Management Platform governs access for \ncustomers and employees and provides strong \nauthentication, providing for granular entitlements.   \nInformation Security Controls:   \nProtection Against Viruses & \nMalware   S&P Global employs a defense -in-depth approach to virus \nand malware protection, using the traditional signature and \nheuristics -based End Point Protection suite of virus and \nmalware prevention products and various gateway scanning \nproducts. Traditional and behavior -based end point \nprotection and detection software is installed on desktops \nand Windows servers.   \nInformation Security Controls: \nTechnology Change \nManagement   S&P Global’s technology change management process \nimplemented by its IT partners and various divisional IT \nOperations requires a consistent documentation and\napproval process with respect to changes that modify \ntechnical or applications environments, introduce risk, or \nrequire application downtime.    \nPhysical Security Program   S&P Global’s  Global Security & Crisis Management \n(“GSCM”) is responsible for overseeing the protection of \nthe corporation’s global physical assets and is headed by the \nVP and Chief Security Officer. S&P Global’s physical \nsecurity and security ID policy requires the is suance to, and \nuse of identification badges by, all employees and \ncontractors.",
+      "clause_number": "2",
+      "clause_title": "The measures below are examples only, and the parties should ensure that the des",
+      "legal_category": "conduct",
+      "unit_type": "clause",
+      "is_definition": false,
+      "parent_clause_id": null,
+      "metadata": {
+        "section_reason": "keyword_match",
+        "section_confidence": "medium",
+        "document_type": "contract"
+      }
+    }
+  ],
+  "defined_terms": {}
+}

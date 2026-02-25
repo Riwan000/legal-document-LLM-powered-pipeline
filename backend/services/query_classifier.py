@@ -9,7 +9,12 @@ from backend.config import settings
 
 class QueryClassifier:
     """Service for classifying user queries."""
-    
+
+    # First words that indicate a binary (yes/no) question
+    _BINARY_FIRST_WORDS = frozenset([
+        "is", "are", "does", "can", "has", "will", "did", "do", "was", "were"
+    ])
+
     def __init__(self):
         """Initialize the query classifier."""
         # Legal authority keywords (for hierarchy detection)
@@ -72,7 +77,30 @@ class QueryClassifier:
             "compensation": ["compensation", "salary", "wage", "payment", "pay", "remuneration"],
             "compliance": ["compliance", "comply", "requirement", "obligation", "must", "shall"],
             "notice": ["notice", "notification", "advance notice", "written notice"],
-            "probation": ["probation", "probationary", "trial period", "trial"]
+            "probation": ["probation", "probationary", "trial period", "trial"],
+            # Phase 3 — definition lookup intent
+            "definition_lookup": [
+                "what does", "definition of", "defined as", "what is", "meaning of",
+                "define", "what are", "means",
+            ],
+            # Summary intent — overview/high-level questions
+            "summary": [
+                "summarize", "summary", "overview", "what is this about",
+                "what does this contract cover", "give me a summary",
+                "briefly describe", "outline", "high-level",
+            ],
+            # Classification intent — document type identification
+            "classification": [
+                "what type of", "what kind of contract", "what kind of agreement",
+                "is this a", "classify", "identify the document type",
+                "what is this contract", "what agreement is this",
+            ],
+            # Clause lookup intent — direct structural clause reference
+            "clause_lookup": [
+                "what does clause", "what does article", "what does section",
+                "clause number", "article number", "show me clause",
+                "content of clause", "what is in clause",
+            ],
         }
         
         # Normalization map for word variations
@@ -151,17 +179,22 @@ class QueryClassifier:
     def _detect_query_types(self, query_lower: str) -> List[str]:
         """
         Detect all query intent types (multi-label detection).
-        
+
         query_types represent user intent - what they want to know.
         Returns list of all matching types, not just the first match.
         """
         detected = []
-        
+
+        # Binary (yes/no) question detection: first word is a question auxiliary + ends with "?"
+        first_word = query_lower.split()[0] if query_lower.split() else ""
+        if first_word in self._BINARY_FIRST_WORDS and query_lower.rstrip().endswith("?"):
+            detected.append("binary")
+
         # Check each query type pattern
         for query_type, patterns in self.query_type_patterns.items():
             if any(pattern in query_lower for pattern in patterns):
                 detected.append(query_type)
-        
+
         # Default to ["general"] if no specific type detected
         return detected if detected else ["general"]
     

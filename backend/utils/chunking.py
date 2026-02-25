@@ -335,6 +335,90 @@ class TextChunker:
         return chunks
     
     @staticmethod
+    def subchunk_clause(
+        clause_id: str,
+        verbatim_text: str,
+        page_number: int,
+        document_id: str,
+        legal_category: Optional[str] = None,
+        clause_number: Optional[str] = None,
+        chunk_overlap: int = None,
+        threshold: int = 2000,
+    ) -> List[DocumentChunk]:
+        """
+        Split a long clause (> threshold chars) into overlapping sub-chunks.
+
+        Each sub-chunk gets:
+          parent_clause_id  = clause_id
+          unit_type         = "clause_subchunk"
+          legal_category    = inherited from parent
+          clause_number     = inherited from parent
+
+        Sub-chunk IDs: f"sc_{clause_id}_{sub_index:04d}"
+        Overlap: chunk_overlap chars (defaults to settings.CHUNK_OVERLAP * 4).
+
+        Returns empty list if text is short enough (caller should use the full clause chunk).
+        """
+        import re as _re
+        if len(verbatim_text) <= threshold:
+            return []
+
+        char_overlap = (chunk_overlap or settings.CHUNK_OVERLAP) * 4
+        sentences = TextChunker._split_into_sentences(verbatim_text)
+
+        sub_chunks: List[DocumentChunk] = []
+        current = ""
+        sub_index = 0
+
+        for sentence in sentences:
+            if len(current) + len(sentence) > threshold and current:
+                sc_id = f"sc_{clause_id}_{sub_index:04d}"
+                chunk = DocumentChunk(
+                    text=current.strip(),
+                    page_number=page_number,
+                    chunk_index=sub_index,
+                    document_id=document_id,
+                    clause_id=clause_id,
+                    parent_clause_id=clause_id,
+                    unit_type="clause_subchunk",
+                    legal_category=legal_category,
+                    clause_number=clause_number,
+                    metadata={
+                        "chunk_id": sc_id,
+                        "chunk_type": "clause_subchunk",
+                        "char_length": len(current.strip()),
+                    },
+                )
+                sub_chunks.append(chunk)
+                sub_index += 1
+                # Overlap: keep last char_overlap chars
+                current = (current[-char_overlap:] if char_overlap and len(current) > char_overlap else "") + sentence
+            else:
+                current += sentence
+
+        if current.strip():
+            sc_id = f"sc_{clause_id}_{sub_index:04d}"
+            chunk = DocumentChunk(
+                text=current.strip(),
+                page_number=page_number,
+                chunk_index=sub_index,
+                document_id=document_id,
+                clause_id=clause_id,
+                parent_clause_id=clause_id,
+                unit_type="clause_subchunk",
+                legal_category=legal_category,
+                clause_number=clause_number,
+                metadata={
+                    "chunk_id": sc_id,
+                    "chunk_type": "clause_subchunk",
+                    "char_length": len(current.strip()),
+                },
+            )
+            sub_chunks.append(chunk)
+
+        return sub_chunks
+
+    @staticmethod
     def chunk_pages(
         pages: List[tuple],
         document_id: str,

@@ -30,22 +30,29 @@ class ExtractedClauseStore:
         self.store_path = store_path or settings.EXTRACTED_CLAUSES_PATH
         self.store_path.mkdir(parents=True, exist_ok=True)
 
-    def save_document_clauses(self, document_id: str, clauses: List[Dict[str, Any]]) -> None:
+    def save_document_clauses(
+        self,
+        document_id: str,
+        clauses: List[Dict[str, Any]],
+        defined_terms: Optional[Dict[str, str]] = None,
+    ) -> None:
         """
-        Save extracted clauses for a document.
+        Save extracted clauses (and optional defined_terms index) for a document.
 
         Args:
             document_id: Document identifier
             clauses: List of extraction dicts (verbatim evidence only)
+            defined_terms: Optional {term.lower(): definition_text} dict (Phase 4)
         """
         if not isinstance(clauses, list):
             raise ValueError("Extracted clauses must be a list")
 
         payload = {
-            "schema_version": 1,
+            "schema_version": 2,
             "document_id": document_id,
             "extraction_version": EXTRACTION_VERSION,
             "clauses": clauses,
+            "defined_terms": defined_terms or {},
         }
         path = self._document_path(document_id)
         with open(path, "w", encoding="utf-8") as f:
@@ -70,6 +77,28 @@ class ExtractedClauseStore:
         if not isinstance(clauses, list):
             return []
         return clauses
+
+    def get_defined_terms(self, document_id: str) -> Dict[str, str]:
+        """
+        Return the defined_terms index for a document.
+
+        Returns {} for schema_version=1 files or documents not yet processed.
+
+        Args:
+            document_id: Document identifier
+
+        Returns:
+            {term.lower(): definition_text} dict (may be empty)
+        """
+        path = self._document_path(document_id)
+        if not path.exists():
+            return {}
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+            return payload.get("defined_terms", {})
+        except Exception:
+            return {}
 
     def delete_document_clauses(self, document_id: str) -> int:
         """

@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 from backend.config import settings
 from backend.services.document_ingestion import DocumentIngestionService
+from backend.services.clause_taxonomy import ClauseTaxonomyService
 
 # Configure logger for clause extraction
 logger = logging.getLogger(__name__)
@@ -70,6 +71,13 @@ class ExtractedClause:
         self.verbatim_text = verbatim_text
         self.normalized_text = normalized_text
         self.metadata = metadata or {}
+        # Phase 2 — RAG 5-Layer Upgrade
+        self.clause_number: Optional[str] = None
+        self.clause_title: Optional[str] = None   # same as clause_heading but explicitly named
+        self.legal_category: Optional[str] = None
+        self.unit_type: str = "clause"            # "clause" | "definition" | "page_chunk"
+        self.is_definition: bool = False
+        self.parent_clause_id: Optional[str] = None
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API response (strict JSON schema)."""
@@ -78,8 +86,15 @@ class ExtractedClause:
             "document_section": self.document_section,
             "page_start": self.page_start,
             "page_end": self.page_end,
-            "clause_heading": self.clause_heading if self.clause_heading else None,  # null if not present
-            "verbatim_text": self.verbatim_text
+            "clause_heading": self.clause_heading if self.clause_heading else None,
+            "verbatim_text": self.verbatim_text,
+            # Phase 2 fields
+            "clause_number": getattr(self, "clause_number", None),
+            "clause_title": getattr(self, "clause_title", None),
+            "legal_category": getattr(self, "legal_category", None),
+            "unit_type": getattr(self, "unit_type", "clause"),
+            "is_definition": getattr(self, "is_definition", False),
+            "parent_clause_id": getattr(self, "parent_clause_id", None),
         }
         if self.normalized_text:
             result["normalized_text"] = self.normalized_text
@@ -144,6 +159,7 @@ class StructuredClauseExtractionService:
     def __init__(self):
         """Initialize structured clause extraction service."""
         self.ingestion_service = DocumentIngestionService()
+        self.taxonomy_service = ClauseTaxonomyService()
         self.last_document_type: Optional[DocumentType] = None
         
         # Section detection patterns (rule-based)
@@ -174,15 +190,19 @@ class StructuredClauseExtractionService:
             ],
         }
         
-        # Operative sections that can produce clauses
+        # Operative sections that can produce clauses.
+        # ANNEXURES_SCHEDULES must be included so that SLA/IP clauses defined
+        # in Schedule-A or Annexure sections are not silently dropped.
         self.operative_sections = {
             DocumentSection.CONTRACTUAL_TERMS,
             DocumentSection.JUDICIAL_REASONING,
             DocumentSection.STATUTORY_TEXT,
+            DocumentSection.ANNEXURES_SCHEDULES,
             DocumentSection.UNKNOWN,
         }
         
-        # Contract body entry gate patterns (must match at least two on the same page)
+        # Contract body entry gate patterns (must match at least two on the same page).
+        # Covers employment contracts, MSAs, NDAs, and generic service agreements.
         self.contract_entry_patterns = [
             r"\bemployment\s+agreement\b",
             r"\b(first|1st)\s+party\b",
@@ -190,6 +210,13 @@ class StructuredClauseExtractionService:
             r"\bthis\s+agreement\b",
             r"\bthe\s+first\s+party\s+shall\b",
             r"\bthe\s+second\s+party\s+shall\b",
+            # MSA / service contract patterns
+            r"\bmaster\s+service\s+agreement\b",
+            r"\bservice\s+provider\b",
+            r"\bhereinafter\s+(referred\s+to\s+as|called)\b",
+            r"\bthis\s+master\s+service\s+agreement\b",
+            r"\bclient\s+shall\b",
+            r"\bvendor\s+shall\b",
         ]
         
         # Administrative override markers (force administrative_material)
@@ -445,7 +472,8 @@ class StructuredClauseExtractionService:
                     current_clause_buffer = {
                         'heading': clause_start_info['heading'],
                         'text_lines': [line],
-                        'start_line': line_idx
+                        'start_line': line_idx,
+                        'clause_number': clause_start_info.get('clause_number'),
                     }
                     current_section = section
                     current_page_start = page_number
@@ -570,65 +598,76 @@ class StructuredClauseExtractionService:
             
             heading = None
             priority = None
-            
-            # Priority 1: Explicit numbering (^\\d+\\.)
-            match = re.match(r'^(\d+)\.\s*(.+)', line_stripped)
+            clause_number = None
+
+            # Priority 0.5: Sub-clauses (^\\d+\\.\\d+)  — before integer-only numbering
+            match = re.match(r'^(\d+\.\d+)\s*(.+)', line_stripped)
             if match:
+                clause_number = match.group(1)
                 heading = match.group(2).strip()
-                priority = 1
-            
+                priority = 1  # Same priority bucket as integer clauses (sorted by line)
+
+            # Priority 1: Explicit numbering (^\\d+\\.)
+            if not heading:
+                match = re.match(r'^(\d+)\.\s*(.+)', line_stripped)
+                if match:
+                    clause_number = match.group(1)
+                    heading = match.group(2).strip()
+                    priority = 1
+
             # Priority 2: Explicit numbering with parenthesis (^\\d+\\))
             if not heading:
                 match = re.match(r'^(\d+)\)\s*(.+)', line_stripped)
                 if match:
+                    clause_number = match.group(1)
                     heading = match.group(2).strip()
                     priority = 2
-            
+
             # Priority 3: Roman numerals (^I+\\.)
             if not heading:
                 match = re.match(r'^(I{1,4}|IV|IX|V|VI{0,3}|X{1,3})\.\s*(.+)', line_stripped, re.IGNORECASE)
                 if match:
+                    clause_number = match.group(1).upper()
                     heading = match.group(2).strip()
                     priority = 3
-            
+
             # Priority 4: Arabic numerals (^[٠-٩]+)
             if not heading:
                 match = re.match(r'^([٠-٩]+)[\.\)]\s*(.+)', line_stripped)
                 if match:
+                    clause_number = match.group(1)
                     heading = match.group(2).strip()
                     priority = 4
-            
+
             # Priority 5: ALL CAPS headings
             if not heading and line_stripped.isupper() and len(line_stripped) > 5:
                 heading = line_stripped
                 priority = 5
-            
+
             # Priority 6: Title Case headings (isolated by line breaks)
             if not heading:
-                # Check if line is Title Case and isolated
                 if (line_idx == 0 or not lines[line_idx - 1].strip()) and \
                    (line_idx == len(lines) - 1 or not lines[line_idx + 1].strip()):
                     words = line_stripped.split()
                     if words and all(w[0].isupper() for w in words if w):
                         heading = line_stripped
                         priority = 6
-            
+
             # Priority 7: Indentation heuristics (lowest priority)
             if not heading:
-                # Check for significant indentation (at least 4 spaces or tab)
                 if line.startswith('    ') or line.startswith('\t'):
-                    # Check if previous line was less indented
                     if line_idx > 0:
                         prev_line = lines[line_idx - 1]
                         if not prev_line.startswith('    ') and not prev_line.startswith('\t'):
                             heading = line_stripped
                             priority = 7
-            
+
             if heading:
                 clause_starts.append({
                     'line': line_idx,
                     'heading': heading,
-                    'priority': priority
+                    'priority': priority,
+                    'clause_number': clause_number,
                 })
         
         # Sort by line number (maintain document order)
@@ -796,7 +835,7 @@ class StructuredClauseExtractionService:
         # Normalization disabled - preserve verbatim text exactly
         normalized_text = self._normalize_text(verbatim_text)
         
-        return ExtractedClause(
+        extracted = ExtractedClause(
             clause_id=clause_id,
             document_section=classified_section,
             page_start=page_start,
@@ -810,6 +849,23 @@ class StructuredClauseExtractionService:
                 "document_type": document_type.value,
             }
         )
+
+        # Phase 2: set additional fields
+        extracted.clause_number = clause_buffer.get('clause_number')
+        extracted.clause_title = heading
+
+        # Definition detection
+        if self._detect_definition_block(heading or "", verbatim_text):
+            extracted.is_definition = True
+            extracted.unit_type = "definition"
+            extracted.legal_category = None
+        else:
+            extracted.unit_type = "clause"
+            extracted.legal_category = self.taxonomy_service.classify_legal_category(
+                verbatim_text, heading or ""
+            )
+
+        return extracted
     
     def _generate_clause_id(
         self,
@@ -915,6 +971,65 @@ class StructuredClauseExtractionService:
         # Downstream systems should use verbatim_text only
         return None
     
+    def _detect_definition_block(self, clause_heading: str, verbatim_text: str) -> bool:
+        """
+        Detect whether a clause is a definitions block.
+
+        Rules:
+        1. heading matches r'^definitions?\\b' (case-insensitive)
+        2. verbatim_text contains >= 3 occurrences of ' means ' or ' shall mean '
+        3. Quoted-term pattern found >= 2 times
+        """
+        if re.match(r'^definitions?\b', clause_heading.strip(), re.IGNORECASE):
+            return True
+        text_lower = verbatim_text.lower()
+        means_count = text_lower.count(" means ") + text_lower.count(" shall mean ")
+        if means_count >= 3:
+            return True
+        quoted_pattern = re.compile(
+            r'["\u201c]([A-Z][^"\u201d]+)["\u201d]\s+means\s', re.IGNORECASE
+        )
+        if len(quoted_pattern.findall(verbatim_text)) >= 2:
+            return True
+        return False
+
+    def extract_defined_terms(self, clauses: List["ExtractedClause"]) -> Dict[str, str]:
+        """
+        Build a {term.lower(): definition_text} dict from definition clauses.
+
+        Scans only clauses where is_definition=True. Applies two regex patterns
+        per line to extract term → definition text pairs.
+        """
+        terms: Dict[str, str] = {}
+        for clause in clauses:
+            if not getattr(clause, 'is_definition', False):
+                continue
+            text = clause.verbatim_text
+            for line in text.splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                # Pattern 1: "Term" means definition text.
+                m = re.match(
+                    r'["\u201c]([A-Z][^"\u201d]+)["\u201d]\s+(?:means|shall mean)\s+(.+)',
+                    line, re.IGNORECASE
+                )
+                if m:
+                    term = m.group(1).strip()
+                    definition = m.group(2).strip()
+                    terms[term.lower()] = definition
+                    continue
+                # Pattern 2: Term means definition text (unquoted, capitalized)
+                m = re.match(
+                    r'^([A-Z][A-Za-z\s]+)\s+(?:means|shall mean)\s+(.+)',
+                    line
+                )
+                if m:
+                    term = m.group(1).strip()
+                    definition = m.group(2).strip()
+                    terms[term.lower()] = definition
+        return terms
+
     def _deduplicate_clauses(
         self,
         clauses: List[ExtractedClause]
