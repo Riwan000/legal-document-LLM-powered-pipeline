@@ -26,8 +26,32 @@ logger = logging.getLogger(__name__)
 _LEGAL_KEYWORDS = [
     "whereas", "agreement", "contract", "jurisdiction", "clause",
     "party", "governing law", "indemnification", "arbitration", "termination notice",
+    # Employment-specific English terms common in Saudi/GCC bilingual contracts
+    "employee", "employer", "salary", "probation", "remuneration",
+    "employment agreement", "notice period",
 ]
 _KEYWORD_THRESHOLD = 3
+
+# Arabic legal keywords for Saudi/GCC employment contracts and agreements.
+# A lower threshold is used because each Arabic term is highly domain-specific.
+_ARABIC_LEGAL_KEYWORDS = [
+    "عقد عمل",        # employment contract
+    "عقد",            # contract
+    "اتفاقية",        # agreement
+    "الموظف",         # the employee
+    "صاحب العمل",     # the employer
+    "الراتب",         # salary
+    "الأجر",          # wage / remuneration
+    "مدة العقد",      # contract duration
+    "نظام العمل",     # Labor Law
+    "إنهاء العقد",    # contract termination
+    "فترة التجربة",   # probation period
+    "التعويض",        # compensation
+    "بدل",            # allowance
+    "المملكة العربية السعودية",  # Saudi Arabia
+]
+_ARABIC_KEYWORD_THRESHOLD = 2
+
 _LEGAL_CONFIDENCE_THRESHOLD = 0.6
 
 _OLLAMA_CLASSIFY_PROMPT = """You are a document classifier. Respond ONLY with JSON (no markdown, no extra text):
@@ -41,6 +65,11 @@ _OLLAMA_CLASSIFY_PROMPT = """You are a document classifier. Respond ONLY with JS
 
 Legal = contracts, NDAs, employment agreements, statutes, court orders, regulations, court judgments, tribunal decisions.
 Non-legal = invoices, news, emails, receipts, academic papers, marketing materials.
+
+MULTILINGUAL: The document may be written in Arabic, English, or both. Classify based on legal
+content, not language. Arabic employment contracts (عقد عمل) and Arabic agreements (اتفاقية) are
+legal documents. Saudi/GCC documents referencing نظام العمل (Labor Law) or containing الموظف /
+صاحب العمل (employee/employer) are legal.
 
 contract_type rules:
 - Only populate if is_legal=true AND the document is a contractual agreement between parties.
@@ -362,12 +391,19 @@ class DocumentClassificationService:
         return None  # Caller will fall back to heuristic
 
     def _keyword_classify(self, text: str):
-        """Simple keyword scan. Returns (is_legal, confidence)."""
+        """Bilingual keyword scan (English + Arabic). Returns (is_legal, confidence)."""
         lower = text.lower()
-        hits = sum(1 for kw in _LEGAL_KEYWORDS if kw in lower)
-        is_legal = hits >= _KEYWORD_THRESHOLD
-        # Rough confidence: proportion of keywords found, capped at 0.9
-        confidence = min(0.9, hits / len(_LEGAL_KEYWORDS))
+        en_hits = sum(1 for kw in _LEGAL_KEYWORDS if kw in lower)
+        # Arabic keywords are checked against the original text (case is irrelevant for Arabic)
+        ar_hits = sum(1 for kw in _ARABIC_LEGAL_KEYWORDS if kw in text)
+
+        en_legal = en_hits >= _KEYWORD_THRESHOLD
+        ar_legal = ar_hits >= _ARABIC_KEYWORD_THRESHOLD
+        is_legal = en_legal or ar_legal
+
+        en_conf = min(0.9, en_hits / len(_LEGAL_KEYWORDS))
+        ar_conf = min(0.9, ar_hits / len(_ARABIC_LEGAL_KEYWORDS))
+        confidence = max(en_conf, ar_conf)
         return is_legal, confidence
 
     # ── Stage 2 helper ──────────────────────────────────────────────────────────

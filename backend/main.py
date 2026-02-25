@@ -721,7 +721,15 @@ async def upload_document(
 
             # ── Document classification ────────────────────────────────────────────
             if document_classification_service:
-                text_sample = " ".join(chunk.text for chunk in chunks[:5])[:2000]
+                # Sample from start, middle, and end so Arabic contracts whose
+                # English clauses appear late are still covered.
+                _n = len(chunks)
+                if _n <= 9:
+                    _sample_idx = list(range(_n))
+                else:
+                    _mid = _n // 2
+                    _sample_idx = sorted({0, 1, 2, _mid - 1, _mid, _n - 2, _n - 1})
+                text_sample = " ".join(chunks[i].text for i in _sample_idx)[:2000]
                 classification_result = document_classification_service.classify(text_sample, document_id)
 
                 if classification_result.classification == DocumentClassification.NON_LEGAL:
