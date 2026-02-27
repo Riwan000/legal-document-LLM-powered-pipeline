@@ -109,6 +109,8 @@ class DocumentRegistry:
                 "ALTER TABLE documents ADD COLUMN classification_confidence REAL",
                 "ALTER TABLE documents ADD COLUMN is_contract BOOLEAN DEFAULT 0",
                 "ALTER TABLE documents ADD COLUMN classification_method TEXT",
+                "ALTER TABLE documents ADD COLUMN detected_contract_type TEXT",
+                "ALTER TABLE documents ADD COLUMN detected_jurisdiction TEXT",
             ]:
                 try:
                     conn.execute(col_ddl)
@@ -421,6 +423,8 @@ class DocumentRegistry:
                     classification_confidence = ?,
                     is_contract = ?,
                     classification_method = ?,
+                    detected_contract_type = ?,
+                    detected_jurisdiction = ?,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE document_id = ? AND version = ?
             """, [
@@ -428,6 +432,8 @@ class DocumentRegistry:
                 result.confidence,
                 int(result.is_contract),
                 result.method,
+                result.detected_contract_type,
+                result.detected_jurisdiction,
                 document_id,
                 version,
             ])
@@ -437,12 +443,14 @@ class DocumentRegistry:
         with self._get_connection() as conn:
             if version:
                 row = conn.execute("""
-                    SELECT classification, classification_confidence, is_contract, classification_method
+                    SELECT classification, classification_confidence, is_contract,
+                           classification_method, detected_contract_type, detected_jurisdiction
                     FROM documents WHERE document_id = ? AND version = ?
                 """, [document_id, version]).fetchone()
             else:
                 row = conn.execute("""
-                    SELECT classification, classification_confidence, is_contract, classification_method
+                    SELECT classification, classification_confidence, is_contract,
+                           classification_method, detected_contract_type, detected_jurisdiction
                     FROM documents WHERE document_id = ? AND is_latest = 1
                 """, [document_id]).fetchone()
             if row and row["classification"]:

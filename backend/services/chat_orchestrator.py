@@ -232,6 +232,7 @@ class GenerationPipeline:
         document_id: str,
         top_k: int,
         strict: bool = False,
+        response_language: Optional[str] = None,
     ) -> Tuple[str, List[int], List[Dict[str, Any]]]:
         """
         Assemble context, enforce token budget, then generate via RAGService.
@@ -264,6 +265,7 @@ class GenerationPipeline:
             document_id_filter=document_id,
             generate_response=True,
             chunks_override=sanitized if sanitized else None,
+            response_language=response_language,
         )
 
         answer: str = rag_result.get("answer") or ""
@@ -375,6 +377,7 @@ class ValidationPipeline:
         document_id: str,
         top_k: int,
         strict_mode: bool = False,
+        response_language: Optional[str] = None,
     ) -> Tuple[str, GuardrailResult, List[Dict[str, Any]]]:
         """
         Validate answer. If weak, attempt one regeneration pass.
@@ -404,6 +407,7 @@ class ValidationPipeline:
                 document_id_filter=document_id,
                 generate_response=True,
                 chunks_override=RetrievalStrategy.sanitize_chunks(exact_chunks),
+                response_language=response_language,
             )
             answer2 = rag_result2.get("answer") or ""
             citations2 = GenerationPipeline._extract_structured_citations(answer2)
@@ -591,6 +595,28 @@ class ChatOrchestratorService:
                     + "\n".join(f"- {p}" for p in parts)
                 )
 
+        # --- Arabic bilingual routing ---
+        _translation_svc = getattr(self._retrieval.rag_service, "translation_service", None)
+        response_language: Optional[str] = None
+        retrieval_query = user_message  # may be replaced by English translation
+
+        if _translation_svc:
+            query_language = _translation_svc.detect_language(user_message)
+            if query_language == "ar":
+                response_language = "ar"
+                doc_language = self._get_document_language(document_id)
+                if doc_language != "ar":  # English-only document
+                    try:
+                        retrieval_query = _translation_svc.translate_text(
+                            user_message, "ar", "en"
+                        )
+                        logger.info(
+                            "Arabic query on English document (%s): translating for retrieval",
+                            document_id,
+                        )
+                    except Exception:
+                        retrieval_query = user_message  # graceful fallback
+
         # Enforce limits
         try:
             self._session_manager.enforce_limits(session_id)
@@ -614,7 +640,7 @@ class ChatOrchestratorService:
         if mode == SessionMode.STRICT:
             # Stateless: no rewriting, no history
             chunks = self._retrieval.retrieve(
-                original_query=user_message,
+                original_query=retrieval_query,
                 rewritten_query=None,
                 document_id=document_id,
                 top_k=effective_top_k,
@@ -627,11 +653,11 @@ class ChatOrchestratorService:
             ]
             rewritten_query = self._rewriter.rewrite(
                 history=history_without_current,
-                question=user_message,
+                question=retrieval_query,
                 document_id=document_id,
             )
             chunks = self._retrieval.retrieve(
-                original_query=user_message,
+                original_query=retrieval_query,
                 rewritten_query=rewritten_query,
                 document_id=document_id,
                 top_k=effective_top_k,
@@ -659,6 +685,7 @@ class ChatOrchestratorService:
             document_id=document_id,
             top_k=effective_top_k,
             strict=(mode == SessionMode.STRICT),
+            response_language=response_language,
         )
 
         rag_status = "generated"
@@ -672,6 +699,7 @@ class ChatOrchestratorService:
             document_id=document_id,
             top_k=effective_top_k,
             strict_mode=(mode == SessionMode.STRICT),
+            response_language=response_language,
         )
 
         # Refusal: when guardrail fails with 0 chunks, RAG already returned a message (e.g. not_specified);
@@ -745,6 +773,19 @@ class ChatOrchestratorService:
             exact_chunks=final_chunks,
             trace=trace,
         )
+
+    def _get_document_language(self, document_id: str) -> str:
+        """
+        Return the stored language for *document_id* by scanning vector-store metadata.
+        Short-circuits on first matching chunk that has a non-empty 'language' field.
+        Defaults to 'en' when no language metadata is found.
+        """
+        vs = self._retrieval.rag_service.vector_store
+        if hasattr(vs, "metadata"):
+            for meta in vs.metadata:
+                if meta.get("document_id") == document_id and meta.get("language"):
+                    return meta["language"]
+        return "en"
 
     def _filter_relevant_history(
         self,

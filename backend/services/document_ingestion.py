@@ -9,8 +9,11 @@ from typing import List, Optional, Tuple
 
 from datetime import datetime
 
+import ollama
+
 from backend.utils.file_parser import FileParser
 from backend.utils.chunking import TextChunker
+from backend.utils.ocr_cleanup import OCRCleanupService
 from backend.models.document import DocumentChunk, DocumentMetadata, DocumentUploadResponse
 from backend.models.document_structure import (
     PageInfo,
@@ -63,6 +66,8 @@ class DocumentIngestionService:
         self.chunker = TextChunker()
         self.structure_heuristic = StructureHeuristicService()
         self.chunking_strategy_service = ChunkingStrategyService()
+        self.ocr_cleanup = OCRCleanupService()
+        self.ollama_client = ollama.Client(host=settings.OLLAMA_BASE_URL)
         settings.DOCUMENTS_PATH.mkdir(parents=True, exist_ok=True)
         settings.TEMPLATES_PATH.mkdir(parents=True, exist_ok=True)
 
@@ -83,6 +88,8 @@ class DocumentIngestionService:
         pages = self.parse_document(file_path)
         if not pages:
             raise ValueError("No text content found in document")
+
+        pages = self._postprocess_ocr_pages(pages)
 
         heuristics = self.structure_heuristic.detect(pages)
         strategy = self.chunking_strategy_service.select(heuristics, document_type_hint)
@@ -124,6 +131,57 @@ class DocumentIngestionService:
             ocr_chunks=ocr_chunks,
         )
         return chunks, ctx
+
+    def _postprocess_ocr_pages(self, pages: List[PageInfo]) -> List[PageInfo]:
+        """
+        Run deterministic OCR cleanup and optional LLM post-correction on OCR pages.
+        Non-OCR pages are returned unchanged.
+        """
+        processed = []
+        for page in pages:
+            if not page.is_ocr:
+                processed.append(page)
+                continue
+
+            # Step 1: Deterministic cleanup (de-hyphenation, artifact removal, SymSpell)
+            result = self.ocr_cleanup.normalize_text(page.text)
+            clean_text = result['clean_text']
+
+            # Step 2: LLM post-correction for low-confidence pages
+            if (
+                settings.ENABLE_LLM_OCR_CORRECTION
+                and page.ocr_confidence != -1.0
+                and page.ocr_confidence < settings.OCR_CONFIDENCE_THRESHOLD
+            ):
+                logger.info(
+                    "Page %s OCR confidence %.1f < %.1f — running LLM correction",
+                    page.page_number, page.ocr_confidence, settings.OCR_CONFIDENCE_THRESHOLD,
+                )
+                clean_text = self._llm_correct_ocr(clean_text)
+
+            page.text = clean_text
+            processed.append(page)
+        return processed
+
+    def _llm_correct_ocr(self, text: str) -> str:
+        """Use the configured LLM to fix clear OCR errors in extracted text."""
+        prompt = (
+            "You are a legal document OCR corrector.\n"
+            "Fix only clear OCR errors (garbled characters, split words, stray symbols).\n"
+            "Preserve all legal terms, numbers, dates, and document structure exactly.\n"
+            "Output only the corrected text with no explanation.\n\n"
+            f"Text:\n{text}"
+        )
+        try:
+            response = self.ollama_client.generate(
+                model=settings.OLLAMA_MODEL,
+                prompt=prompt,
+                options={"temperature": 0.0},
+            )
+            corrected = response.response if hasattr(response, 'response') else response.get('response', text)
+            return corrected.strip() if corrected.strip() else text
+        except Exception:
+            return text  # fallback to input on any error
 
     def _apply_safety_fallbacks(
         self,

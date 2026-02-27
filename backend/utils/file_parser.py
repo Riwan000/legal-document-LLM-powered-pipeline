@@ -67,15 +67,12 @@ class FileParser:
         if pages_needing_ocr and OCR_AVAILABLE:
             try:
                 ocr_results = FileParser._parse_pdf_with_ocr_selective(file_path, pages_needing_ocr)
-                for text, page_num in ocr_results:
-                    if text:
-                        text_pages.append(PageInfo(text=text, page_number=page_num, is_ocr=True))
+                text_pages.extend(ocr_results)
             except Exception:
                 if not text_pages:
                     try:
                         ocr_pages = FileParser._parse_pdf_with_ocr(file_path)
-                        for text, page_num in ocr_pages:
-                            text_pages.append(PageInfo(text=text.strip(), page_number=page_num, is_ocr=True))
+                        text_pages.extend(ocr_pages)
                     except Exception as full_ocr_error:
                         print(f"Warning: OCR extraction failed: {str(full_ocr_error)}")
                         print("Note: Install Tesseract OCR for scanned PDF support.")
@@ -86,22 +83,39 @@ class FileParser:
         return text_pages
     
     @staticmethod
-    def _parse_pdf_with_ocr_selective(file_path: Path, page_numbers: List[int]) -> List[Tuple[str, int]]:
+    def _preprocess_for_ocr(image):
+        """Grayscale → contrast boost → sharpen → binarize before Tesseract."""
+        from PIL import ImageFilter, ImageEnhance
+        image = image.convert("L")
+        image = ImageEnhance.Contrast(image).enhance(2.0)
+        image = image.filter(ImageFilter.SHARPEN)
+        image = image.point(lambda x: 0 if x < 140 else 255, '1')
+        return image
+
+    @staticmethod
+    def _ocr_confidence(image, lang: str) -> float:
+        """Return average word-level confidence (0-100) from Tesseract."""
+        data = pytesseract.image_to_data(image, lang=lang, output_type=pytesseract.Output.DICT)
+        confs = [int(c) for c in data['conf'] if str(c) != '-1' and int(c) >= 0]
+        return round(sum(confs) / len(confs), 1) if confs else -1.0
+
+    @staticmethod
+    def _parse_pdf_with_ocr_selective(file_path: Path, page_numbers: List[int]) -> List[PageInfo]:
         """
         Parse specific pages of PDF using OCR (for pages that failed text extraction).
-        
+
         Args:
             file_path: Path to PDF file
             page_numbers: List of page numbers (1-indexed) to process with OCR
-            
+
         Returns:
-            List of tuples: (text, page_number)
+            List of PageInfo with is_ocr=True and ocr_confidence populated.
         """
         if not OCR_AVAILABLE:
             return []
-        
-        text_pages = []
-        
+
+        text_pages: List[PageInfo] = []
+
         try:
             dpi = getattr(settings, "OCR_DPI", 200)
             images = convert_from_path(str(file_path), dpi=dpi, first_page=min(page_numbers), last_page=max(page_numbers))
@@ -112,21 +126,24 @@ class FileParser:
                 actual_page = page_map.get(img_idx)
                 if actual_page and actual_page in page_numbers:
                     try:
-                        text = pytesseract.image_to_string(image, lang=settings.OCR_LANGUAGE)
+                        conf = FileParser._ocr_confidence(image, lang=settings.OCR_LANGUAGE)
+                        preprocessed = FileParser._preprocess_for_ocr(image)
+                        custom_config = r'--oem 3 --psm 6'
+                        text = pytesseract.image_to_string(preprocessed, lang=settings.OCR_LANGUAGE, config=custom_config)
                         text = text.strip()
                         if text:
-                            text_pages.append((text, actual_page))
+                            text_pages.append(PageInfo(text=text, page_number=actual_page, is_ocr=True, ocr_confidence=conf))
                     except Exception as e:
                         print(f"Warning: OCR failed for page {actual_page}: {str(e)}")
                 del image  # release image before next to reduce peak memory
-            
+
         except Exception as e:
             print(f"Warning: Selective OCR failed: {str(e)}")
-        
+
         return text_pages
     
     @staticmethod
-    def _parse_pdf_with_ocr(file_path: Path) -> List[Tuple[str, int]]:
+    def _parse_pdf_with_ocr(file_path: Path) -> List[PageInfo]:
         """
         Parse PDF using OCR (for scanned/image-based PDFs).
         Processes in batches and uses configurable DPI to avoid MemoryError
@@ -134,17 +151,17 @@ class FileParser:
         """
         if not OCR_AVAILABLE:
             raise ImportError("OCR libraries not available. Install pytesseract, pdf2image, and Pillow.")
-        
-        text_pages: List[Tuple[str, int]] = []
+
+        text_pages: List[PageInfo] = []
         dpi = getattr(settings, "OCR_DPI", 200)
         batch_size = getattr(settings, "OCR_PAGES_PER_BATCH", 10)
-        
+
         try:
             with open(file_path, "rb") as f:
                 total_pages = len(pypdf.PdfReader(f).pages)
         except Exception as e:
             raise ValueError(f"Error reading PDF {file_path}: {e}") from e
-        
+
         first_page = 1
         while first_page <= total_pages:
             last_page = min(first_page + batch_size - 1, total_pages)
@@ -168,8 +185,13 @@ class FileParser:
                 for idx, image in enumerate(images):
                     page_num = first_page + idx
                     try:
-                        text = pytesseract.image_to_string(image, lang=settings.OCR_LANGUAGE)
-                        text_pages.append((text.strip(), page_num))
+                        conf = FileParser._ocr_confidence(image, lang=settings.OCR_LANGUAGE)
+                        preprocessed = FileParser._preprocess_for_ocr(image)
+                        custom_config = r'--oem 3 --psm 6'
+                        text = pytesseract.image_to_string(preprocessed, lang=settings.OCR_LANGUAGE, config=custom_config)
+                        text = text.strip()
+                        if text:
+                            text_pages.append(PageInfo(text=text, page_number=page_num, is_ocr=True, ocr_confidence=conf))
                     except pytesseract.TesseractNotFoundError:
                         raise RuntimeError(
                             "Tesseract OCR not found. Please install Tesseract:\n"
@@ -182,7 +204,7 @@ class FileParser:
             finally:
                 del images
             first_page = last_page + 1
-        
+
         return text_pages
     
     @staticmethod

@@ -463,7 +463,6 @@ page = st.sidebar.selectbox(
     "Navigate",
     [
         "🔍 Document Explorer",
-        "📤 Upload Document",
         "ℹ️ About",
     ],
 )
@@ -839,6 +838,7 @@ if page == "🔍 Document Explorer":
     if st.session_state.wf_step == 1:
         _render_stepper(1)
         st.subheader("Upload a document")
+        display_name_input = st.text_input("Display Name (optional)", placeholder="e.g., Employment Contract (2025)")
         uploaded_file = st.file_uploader(
             "Choose a PDF or DOCX file",
             type=["pdf", "docx", "doc"],
@@ -847,7 +847,11 @@ if page == "🔍 Document Explorer":
         if st.button("Upload & Classify", type="primary", disabled=uploaded_file is None):
             if uploaded_file:
                 with st.spinner("Uploading and classifying… Please wait, do not click again."):
-                    result = upload_document(uploaded_file, "document")
+                    result = upload_document(
+                        uploaded_file,
+                        "document",
+                        display_name=display_name_input.strip() or None,
+                    )
                 if result:
                     doc_status = result.get("status", "")
                     doc_id = result.get("document_id", "")
@@ -866,6 +870,30 @@ if page == "🔍 Document Explorer":
                         st.session_state.wf_is_contract = bool((cls_data or {}).get("is_contract", False))
                         st.session_state.wf_step = 2
                         st.rerun()
+
+        # ── Or use an existing document from the library ──────────────────────
+        _lib_docs = [d for d in get_documents() if d.get("document_type", "document") == "document"]
+        if _lib_docs:
+            st.markdown("---")
+            st.markdown("**Or select an existing document:**")
+            _doc_options = {
+                d.get("display_name") or d.get("document_id", "Unknown"): d.get("document_id")
+                for d in _lib_docs
+            }
+            _selected_label = st.selectbox(
+                "Choose from library",
+                list(_doc_options.keys()),
+                key="wf_library_select",
+            )
+            if st.button("Use selected document →", type="secondary", key="btn_use_library_doc"):
+                _selected_id = _doc_options[_selected_label]
+                with st.spinner("Loading classification…"):
+                    _cls_data = get_document_classification_api(_selected_id)
+                st.session_state.wf_document_id = _selected_id
+                st.session_state.wf_classification = _cls_data or {"classification": "uncertain"}
+                st.session_state.wf_is_contract = bool((_cls_data or {}).get("is_contract", False))
+                st.session_state.wf_step = 2
+                st.rerun()
 
     # ═══════════════════════════════════════════════════════════════════════════
     # STEP 2: Classification result
@@ -1240,70 +1268,17 @@ if page == "🔍 Document Explorer":
             else:
                 _run_qa_chat()
 
-# -----------------------------------------------------------------------------
-# Page: Upload Document
-# -----------------------------------------------------------------------------
-elif page == "📤 Upload Document":
-    st.markdown('<div class="main-header">📤 Document Upload</div>', unsafe_allow_html=True)
-    
-    st.markdown("""
-    Upload PDF or DOCX documents to the system. Documents will be:
-    - Parsed and chunked
-    - Embedded and indexed
-    - Made searchable via RAG
-    """)
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("Upload Document")
-        uploaded_file = st.file_uploader(
-            "Choose a file",
-            type=['pdf', 'docx', 'doc'],
-            help="Upload PDF or DOCX files"
-        )
-        
-        document_type = st.radio(
-            "Document Type",
-            ["document", "template"],
-            help="Regular document or firm template"
-        )
-        
-        # Optional display name input
-        display_name_input = st.text_input(
-            "Display Name (optional)",
-            help="User-friendly name for this document. If not provided, filename will be used.",
-            placeholder="e.g., Employment Contract (2023)"
-        )
-        
-        if st.button("Upload & Ingest", type="primary"):
-            if uploaded_file:
-                with st.spinner("Uploading and processing document..."):
-                    result = upload_document(
-                        uploaded_file, 
-                        document_type,
-                        display_name=display_name_input.strip() if display_name_input else None
-                    )
-                    
-                    if result:
-                        st.success("✅ Document uploaded successfully!")
-                        st.json(result)
-                    else:
-                        st.error("Failed to upload document")
-            else:
-                st.warning("Please select a file to upload")
-    
-    with col2:
-        st.subheader("Uploaded Documents")
-        documents = get_documents()
-        
-        if documents:
-            for doc in documents:
-                # Use display_name for expander title, show version if not latest
-                version_label = f" (v{doc.get('version', 1)})" if not doc.get('is_latest', True) else ""
-                expander_title = f"📄 {doc.get('display_name', doc.get('document_id', 'Unknown'))}{version_label}"
-                
-                with st.expander(expander_title):
+    if st.session_state.wf_step == 1:
+        # ── Document Library ─────────────────────────────────────────────────
+        st.markdown("---")
+        with st.expander("📁 Document Library", expanded=False):
+            all_docs = get_documents()
+            documents = [d for d in all_docs if d.get("document_type", "document") == "document"]
+            if documents:
+                for doc in documents:
+                    version_label = f" (v{doc.get('version', 1)})" if not doc.get('is_latest', True) else ""
+                    doc_title = f"📄 {doc.get('display_name', doc.get('document_id', 'Unknown'))}{version_label}"
+                    st.subheader(doc_title)
                     st.write(f"**Display Name:** {doc.get('display_name', 'N/A')}")
                     st.write(f"**Document ID:** {doc.get('document_id', 'N/A')}")
                     st.write(f"**Version:** {doc.get('version', 1)}")
@@ -1313,15 +1288,10 @@ elif page == "📤 Upload Document":
                     st.write(f"**Chunks:** {doc.get('total_chunks', 0)}")
                     st.write(f"**Pages:** {doc.get('total_pages', 0)}")
                     st.write(f"**Uploaded:** {doc.get('created_at', 'N/A')}")
-                    
-                    # Rename functionality
                     st.markdown("---")
                     with st.form(key=f"rename_{doc.get('document_id')}"):
-                        new_name = st.text_input(
-                            "Rename Document",
-                            value=doc.get('display_name', ''),
-                            key=f"rename_input_{doc.get('document_id')}"
-                        )
+                        new_name = st.text_input("Rename Document", value=doc.get('display_name', ''),
+                                                 key=f"rename_input_{doc.get('document_id')}")
                         if st.form_submit_button("Rename"):
                             if new_name and new_name.strip() != doc.get('display_name'):
                                 rename_result = rename_document(doc.get('document_id'), new_name.strip())
@@ -1330,29 +1300,21 @@ elif page == "📤 Upload Document":
                                     st.rerun()
                             else:
                                 st.warning("Please enter a different name")
-
-                    # Delete functionality
                     st.markdown("---")
-                    if st.button(
-                        "🗑️ Delete this document",
-                        key=f"delete_{doc.get('document_id')}",
-                        type="secondary",
-                    ):
+                    if st.button("🗑️ Delete this document", key=f"delete_{doc.get('document_id')}", type="secondary"):
                         doc_id = doc.get("document_id")
                         if doc_id:
                             confirm_key = f"confirm_delete_{doc_id}"
                             if not st.session_state.get(confirm_key):
-                                st.warning(
-                                    f"Click delete again to permanently remove {doc.get('display_name', doc_id)}. This action cannot be undone."
-                                )
+                                st.warning(f"Click delete again to permanently remove {doc.get('display_name', doc_id)}. This cannot be undone.")
                                 st.session_state[confirm_key] = True
                             else:
                                 if delete_document(doc_id):
                                     st.success("✅ Document deleted successfully.")
                                     st.session_state.pop(confirm_key, None)
                                     st.rerun()
-        else:
-            st.info("No documents uploaded yet")
+            else:
+                st.info("No documents uploaded yet.")
 
 # -----------------------------------------------------------------------------
 # Page: About
@@ -1460,7 +1422,7 @@ elif page == "ℹ️ About":
     ## Demo Script
     
     ### 5-Minute Walkthrough:
-    1. **Upload a Contract**: Navigate to Upload Document, upload a PDF/DOCX
+    1. **Upload a Contract**: Navigate to Document Explorer, upload a PDF/DOCX
     2. **Document Explorer**: Go to Document Explorer, ask \"Where are the payment terms?\" and review the answer + citations
     3. **Contract Review**: Run Contract Review workflow for risks and clause evidence
     4. **Clause Extraction**: Navigate to Clause Extraction, view extracted clauses

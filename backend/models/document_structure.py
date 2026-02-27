@@ -42,6 +42,7 @@ class PageInfo:
     text: str
     page_number: int
     is_ocr: bool = False
+    ocr_confidence: float = -1.0  # -1.0 = not measured; 0–100 from Tesseract
 
 
 # ---------------------------------------------------------------------------

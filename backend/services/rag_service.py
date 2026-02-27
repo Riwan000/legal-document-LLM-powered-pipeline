@@ -695,7 +695,13 @@ class RAGService:
 
         # Step 1: Classify query
         classification = self.query_classifier.classify_query(query)
-        
+
+        # Auto-detect response language from query if not provided by caller
+        if response_language is None and self.translation_service:
+            detected_lang = self.translation_service.detect_language(query)
+            if detected_lang == 'ar':
+                response_language = 'ar'
+
         # Step 2: Check scope and refuse if out of scope (skip when caller provided chunks)
         if chunks_override is None and self.query_classifier.is_out_of_scope(query):
             return {
@@ -1138,7 +1144,15 @@ class RAGService:
         bilingual_instruction = ""
         if response_language:
             if response_language == "ar":
-                bilingual_instruction = "\nLANGUAGE REQUIREMENT: Provide your answer in Arabic. Include citations in Arabic format: [المصدر N] or [Source N]. If the source text is in English, translate relevant parts to Arabic in your answer while maintaining accuracy and keeping citations clear."
+                bilingual_instruction = (
+                    "\nLANGUAGE REQUIREMENT: The user's question is in Arabic. "
+                    "Provide a BILINGUAL response in two clearly separated blocks:\n"
+                    "1. Write the COMPLETE answer in Arabic (with Arabic citations: [المصدر N - الصفحة P]).\n"
+                    "2. Then add a separator line '---'.\n"
+                    "3. Then write the COMPLETE English translation of your Arabic answer (with English citations: [Source N - Page P]).\n"
+                    "Do NOT mix languages within a single block — finish the entire Arabic answer first, "
+                    "then provide the entire English translation."
+                )
             elif response_language == "en":
                 bilingual_instruction = "\nLANGUAGE REQUIREMENT: Provide your answer in English. Include citations in English format: [Source N]."
         

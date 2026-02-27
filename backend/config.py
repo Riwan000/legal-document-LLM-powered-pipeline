@@ -60,8 +60,10 @@ class Settings(BaseSettings):
     
     # Language & Bilingual Configuration
     OCR_LANGUAGE: str = "eng+ara"  # Tesseract OCR language ('eng', 'ara', 'eng+ara' for multi)
-    OCR_DPI: int = 200  # DPI for PDF→image (lower reduces memory; 300 for higher accuracy)
+    OCR_DPI: int = 300  # DPI for PDF→image (lower reduces memory; 300 for higher accuracy)
     OCR_PAGES_PER_BATCH: int = 10  # Process OCR in batches to avoid MemoryError in subprocess reader
+    OCR_CONFIDENCE_THRESHOLD: float = 60.0  # Pages below this score trigger LLM post-correction
+    ENABLE_LLM_OCR_CORRECTION: bool = True  # Toggle LLM post-correction pass for low-confidence pages
     DEFAULT_RESPONSE_LANGUAGE: Optional[str] = None  # None = auto-detect, 'ar' = Arabic, 'en' = English
     LANGUAGE_DETECTION_THRESHOLD: float = 0.1  # Arabic character ratio threshold for language detection
     ENABLE_QUERY_TRANSLATION: bool = True  # Enable query translation to match document language
