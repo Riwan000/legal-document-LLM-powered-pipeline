@@ -3,6 +3,8 @@ Streamlit frontend for Legal Document Intelligence MVP.
 Multi-page application connecting to FastAPI backend.
 """
 import os
+import re as _re
+import pandas as _pd
 import streamlit as st
 import requests
 from typing import Dict, Any, Optional
@@ -255,7 +257,8 @@ def get_documents() -> list:
         response = requests.get(f"{API_BASE_URL}/api/documents", timeout=10)
         response.raise_for_status()
         return response.json().get("documents", [])
-    except:
+    except Exception as e:
+        st.warning(f"Could not load documents: {e}")
         return []
 
 
@@ -274,6 +277,27 @@ def delete_document(document_id: str) -> bool:
     except Exception as e:
         st.error(f"Error deleting document: {str(e)}")
         return False
+
+
+def get_vector_stats() -> dict:
+    """Return the vector_store sub-dict from GET /api/stats, or {} on failure."""
+    try:
+        response = requests.get(f"{API_BASE_URL}/api/stats", timeout=10)
+        response.raise_for_status()
+        return response.json().get("vector_store", {})
+    except Exception:
+        return {}
+
+
+def clear_all_documents() -> Optional[dict]:
+    """Call POST /api/admin/clear-all and return the response dict, or None on error."""
+    try:
+        response = requests.post(f"{API_BASE_URL}/api/admin/clear-all", timeout=60)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        st.error(f"Error clearing documents: {str(e)}")
+        return None
 
 
 def rename_document(document_id: str, new_display_name: str) -> Optional[Dict]:
@@ -468,6 +492,43 @@ page = st.sidebar.selectbox(
 )
 
 # -----------------------------------------------------------------------------
+# Sidebar: Database admin panel
+# -----------------------------------------------------------------------------
+with st.sidebar.expander("🗄️ Database", expanded=False):
+    # --- Stats row ---
+    stats = get_vector_stats()
+    col1, col2 = st.columns(2)
+    col1.metric("📄 Documents", stats.get("unique_documents", 0))
+    col2.metric("🧩 Chunks", stats.get("total_chunks", 0))
+    st.caption(f"📐 Vectors: {stats.get('total_vectors', 0)}")
+    if st.button("🔄 Refresh", key="db_refresh"):
+        st.rerun()
+
+    st.divider()
+
+    # --- Document list ---
+    docs = get_documents()
+    if docs:
+        for doc in docs:
+            name = doc.get("display_name") or doc.get("original_filename", doc.get("document_id"))
+            chunks = doc.get("total_chunks") or 0
+            st.caption(f"• {name} ({chunks} chunks)")
+    else:
+        st.caption("No documents indexed.")
+
+    st.divider()
+
+    # --- Clear All ---
+    confirm_clear = st.checkbox("I understand this will delete all indexed data", key="confirm_clear_all")
+    if st.button("🗑️ Clear All Documents", type="primary", key="clear_all_btn", disabled=not confirm_clear):
+        result = clear_all_documents()
+        if result:
+            n = result.get("documents_deleted", 0)
+            c = result.get("chunks_deleted", 0)
+            st.success(f"Cleared {n} document(s) and {c} chunk(s).")
+            st.rerun()
+
+# -----------------------------------------------------------------------------
 # Page: Document Explorer — 3-step guided workflow
 # Step 1: Upload  →  Step 2: Classification  →  Step 3: Exploration (Q&A)
 # -----------------------------------------------------------------------------
@@ -554,7 +615,104 @@ if page == "🔍 Document Explorer":
         meta_cols[2].metric("Contract type", resp.get("contract_type", ""))
         meta_cols[3].metric("Jurisdiction", resp.get("jurisdiction") or "—")
 
+        # Group 2b: overall risk score metrics
+        _all_risks = resp.get("risks", []) or []
+        _high_n = sum(1 for r in _all_risks if isinstance(r, dict) and r.get("severity") == "high")
+        _med_n  = sum(1 for r in _all_risks if isinstance(r, dict) and r.get("severity") == "medium")
+        _low_n  = sum(1 for r in _all_risks if isinstance(r, dict) and r.get("severity") == "low")
+        _rlabel = resp.get("risk_label", "low_risk")
+        _rlabel_display = {"high_risk": "🔴 High Risk", "medium_risk": "🟡 Medium Risk", "low_risk": "🟢 Low Risk"}.get(_rlabel, _rlabel)
+        score_cols = st.columns(4)
+        score_cols[0].metric("🔴 High", _high_n)
+        score_cols[1].metric("🟡 Medium", _med_n)
+        score_cols[2].metric("🟢 Low", _low_n)
+        score_cols[3].metric("Overall", _rlabel_display)
+
         st.markdown("---")
+
+        # Group 3: Clause Coverage Matrix (replaces flat not_detected list)
+        exec_items_for_matrix = resp.get("executive_summary", []) or []
+        if exec_items_for_matrix:
+            st.subheader("Clause Coverage")
+            matrix_rows = []
+            for item in exec_items_for_matrix:
+                if not isinstance(item, dict):
+                    continue
+                cat = item.get("category", "")
+                sev = item.get("severity") or "—"
+                if cat == "confirmation":
+                    status_icon = "✅ Detected"
+                elif cat == "finding":
+                    status_icon = "⚠️ Weak / Implicit"
+                else:
+                    status_icon = "❌ Not Detected"
+                matrix_rows.append({
+                    "Clause": item.get("text", ""),
+                    "Status": status_icon,
+                    "Severity": sev.capitalize() if sev != "—" else "—",
+                })
+            if matrix_rows:
+                st.dataframe(_pd.DataFrame(matrix_rows), use_container_width=True, hide_index=True)
+
+            # Group 7: statutory notes per clause (inline captions)
+            statutory_notes = resp.get("statutory_notes") or {}
+            if statutory_notes:
+                with st.expander("📜 Statutory References (jurisdiction-specific)", expanded=False):
+                    for clause_display, note in statutory_notes.items():
+                        if not isinstance(note, dict):
+                            continue
+                        art = note.get("article", "")
+                        text = note.get("text", "")
+                        src = note.get("source", "")
+                        st.caption(f"**{clause_display}** — {art}: \"{text}\" — *{src}*")
+
+            # Detailed sections (collapsed)
+            with st.expander("Details: Not Detected / Implicitly Covered", expanded=False):
+                not_detected = resp.get("not_detected_clauses", []) or []
+                ct_label = (resp.get("contract_type") or "Contract").strip()
+                ct_label = ct_label[0].upper() + ct_label[1:] if ct_label else "Contract"
+                st.markdown(f"**Clauses Not Detected ({ct_label} Profile)**")
+                if not_detected:
+                    for name in not_detected:
+                        st.markdown(f"- {name}")
+                else:
+                    st.info("All expected clauses were detected.")
+                implicitly_covered = resp.get("implicitly_covered_clauses", []) or []
+                coverage_notes = resp.get("implicit_coverage_notes") or {}
+                if implicitly_covered:
+                    st.markdown("**Implicitly Covered**")
+                    for name in implicitly_covered:
+                        note = coverage_notes.get(name)
+                        st.markdown(f"- **{name}**: {note}" if note else f"- {name}")
+        else:
+            # Fallback: original flat not_detected section when no executive_summary
+            not_detected = resp.get("not_detected_clauses", []) or []
+            ct_label = (resp.get("contract_type") or "Contract").strip()
+            ct_label = ct_label[0].upper() + ct_label[1:] if ct_label else "Contract"
+            st.subheader(f"Clauses Not Detected ({ct_label} Profile)")
+            if not_detected:
+                for name in not_detected:
+                    st.markdown(f"- {name}")
+            else:
+                st.info("All expected clauses were detected.")
+            implicitly_covered = resp.get("implicitly_covered_clauses", []) or []
+            coverage_notes = resp.get("implicit_coverage_notes") or {}
+            if implicitly_covered:
+                st.subheader("Implicitly Covered")
+                for name in implicitly_covered:
+                    note = coverage_notes.get(name)
+                    st.markdown(f"- **{name}**: {note}" if note else f"- {name}")
+
+        st.markdown("---")
+
+        # Contradiction risks section
+        contradiction_risks = resp.get("contradiction_risks", []) or []
+        if contradiction_risks:
+            st.subheader("Cross-Clause Observations")
+            for cr in contradiction_risks:
+                if isinstance(cr, dict):
+                    st.info(f"ℹ️ {cr.get('description', '')}")
+
         risks = resp.get("risks", []) or []
         st.subheader("Risk table")
         if not risks:
@@ -593,7 +751,7 @@ if page == "🔍 Document Explorer":
                     # Severity reason
                     if r.get("severity_reason"):
                         st.caption(f"ℹ️ {r['severity_reason']}")
-                    # Verbatim evidence
+                    # Verbatim evidence with keyword highlighting (Group 4b)
                     snippets = r.get("verbatim_evidence", []) or []
                     if snippets:
                         st.markdown("**Evidence found in document:**")
@@ -601,6 +759,11 @@ if page == "🔍 Document Explorer":
                             name = snippet.get("display_name") or snippet.get("clause_id", "")
                             page = snippet.get("page_number", "")
                             text = snippet.get("text", "")
+                            kw = snippet.get("matched_keyword") or ""
+                            if kw:
+                                idx = text.lower().find(kw.lower())
+                                if idx >= 0:
+                                    text = text[:idx] + "**" + text[idx:idx + len(kw)] + "**" + text[idx + len(kw):]
                             st.markdown(
                                 f"> **{name}** (p.{page})\n"
                                 f"> *\"{text}\"*"
@@ -608,24 +771,6 @@ if page == "🔍 Document Explorer":
                     # Recommendation
                     if r.get("recommendation"):
                         st.info(f"💡 **Recommendation:** {r['recommendation']}")
-
-        not_detected = resp.get("not_detected_clauses", []) or []
-        ct_label = (resp.get("contract_type") or "Contract").strip()
-        ct_label = ct_label[0].upper() + ct_label[1:] if ct_label else "Contract"
-        st.subheader(f"Clauses Not Detected ({ct_label} Profile)")
-        if not_detected:
-            for name in not_detected:
-                st.markdown(f"- {name}")
-        else:
-            st.info("All expected clauses were detected.")
-
-        implicitly_covered = resp.get("implicitly_covered_clauses", []) or []
-        coverage_notes = resp.get("implicit_coverage_notes") or {}
-        if implicitly_covered:
-            st.subheader("Implicitly Covered")
-            for name in implicitly_covered:
-                note = coverage_notes.get(name)
-                st.markdown(f"- **{name}**: {note}" if note else f"- {name}")
 
         st.markdown("---")
         exec_items = resp.get("executive_summary", []) or []
@@ -716,18 +861,46 @@ if page == "🔍 Document Explorer":
         normal = styles["Normal"]
         story = []
 
+        # ── 8a: Reusable cell paragraph styles ────────────────────────────────
+        cell_style = ParagraphStyle(
+            "cell", parent=normal,
+            fontSize=7, leading=9,
+            wordWrap="LTR",
+            spaceAfter=0, spaceBefore=0,
+        )
+        header_cell_style = ParagraphStyle(
+            "header_cell", parent=cell_style,
+            textColor=colors.whitesmoke, fontName="Helvetica-Bold",
+        )
+        toc_style = ParagraphStyle(
+            "toc", parent=normal, fontSize=9, leftIndent=12, spaceAfter=2,
+        )
+
         # Title page
         story.append(Paragraph("Contract Review Report", h1))
         story.append(Spacer(1, 0.4*cm))
         ct = resp.get("contract_type") or "—"
         jur = resp.get("jurisdiction") or "—"
         doc_id = resp.get("document_id") or "—"
+        risk_label = resp.get("risk_label", "low_risk")
+        risk_score = resp.get("risk_score", 0)
         story.append(Paragraph(f"Contract type: {ct} | Jurisdiction: {jur}", normal))
         story.append(Paragraph(f"Document: {doc_id}", normal))
+        story.append(Paragraph(f"Overall Risk: {risk_label.replace('_', ' ').title()} (score: {risk_score})", normal))
+        story.append(Spacer(1, 0.4*cm))
+
+        # ── 8h: Table of contents ─────────────────────────────────────────────
+        statutory_notes = resp.get("statutory_notes") or {}
+        exec_items = resp.get("executive_summary", []) or []
+        risks = resp.get("risks", []) or []
+        toc_items = ["Executive Summary", "Clause Coverage", "Risk Analysis", "Evidence Excerpts", "Clauses Not Detected"]
+        if statutory_notes:
+            toc_items.append("Statutory References")
+        for toc_name in toc_items:
+            story.append(Paragraph(f"• {toc_name}", toc_style))
         story.append(Spacer(1, 0.6*cm))
 
         # Executive Summary
-        exec_items = resp.get("executive_summary", []) or []
         if exec_items:
             story.append(Paragraph("Executive Summary", h2))
             by_cat: dict = {}
@@ -745,56 +918,123 @@ if page == "🔍 Document Explorer":
                         story.append(Paragraph(bullet, normal))
             story.append(Spacer(1, 0.4*cm))
 
-        # Risk Table
-        risks = resp.get("risks", []) or []
+        # ── 8f: Clause Coverage Table ─────────────────────────────────────────
+        if exec_items:
+            story.append(Paragraph("Clause Coverage", h2))
+            coverage_data = [[
+                Paragraph("Clause", header_cell_style),
+                Paragraph("Status", header_cell_style),
+                Paragraph("Severity", header_cell_style),
+            ]]
+            for item in exec_items:
+                if not isinstance(item, dict):
+                    continue
+                cat = item.get("category", "")
+                icon = "Confirmed" if cat == "confirmation" else ("Finding" if cat == "finding" else "Risk")
+                sev_text = (item.get("severity") or "").capitalize() or "—"
+                coverage_data.append([
+                    Paragraph(item.get("text", ""), cell_style),
+                    Paragraph(icon, cell_style),
+                    Paragraph(sev_text, cell_style),
+                ])
+            cov_tbl = Table(coverage_data, repeatRows=1, colWidths=[9.5*cm, 4.5*cm, 3.0*cm])
+            cov_tbl.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2C3E50")),
+                ("FONTSIZE", (0, 0), (-1, -1), 7),
+                ("LEADING", (0, 0), (-1, -1), 9),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+            ]))
+            story.append(cov_tbl)
+            story.append(Spacer(1, 0.4*cm))
+
+        # ── 8b/8c/8d: Risk Analysis Table with Paragraph cells + row colors ──
         if risks:
-            story.append(Paragraph("Risk Analysis Table", h2))
-            table_data = [["Severity", "Description", "Status", "Clauses", "Pages", "Recommendation"]]
+            story.append(Paragraph("Risk Analysis", h2))
+            # ── 8b: fixed 17cm total ──────────────────────────────────────────
+            COL_WIDTHS = [1.5*cm, 5.5*cm, 3.0*cm, 2.5*cm, 1.0*cm, 3.5*cm]
+            table_data = [[
+                Paragraph("Severity", header_cell_style),
+                Paragraph("Description", header_cell_style),
+                Paragraph("Status", header_cell_style),
+                Paragraph("Clauses", header_cell_style),
+                Paragraph("Pages", header_cell_style),
+                Paragraph("Recommendation", header_cell_style),
+            ]]
+            # ── 8c: wrap all cells in Paragraph — no truncation ───────────────
             for r in risks:
                 if not isinstance(r, dict):
                     continue
                 display_names = r.get("display_names", []) or r.get("clause_ids", []) or []
                 pages = r.get("page_numbers", []) or []
                 table_data.append([
-                    r.get("severity", ""),
-                    r.get("description", "")[:60],
-                    r.get("status", ""),
-                    ", ".join(display_names[:3]),
-                    ", ".join(str(p) for p in pages[:3]),
-                    (r.get("recommendation") or "")[:80],
+                    Paragraph(r.get("severity", "").capitalize(), cell_style),
+                    Paragraph(r.get("description", ""), cell_style),
+                    Paragraph(r.get("status", "").replace("_", " ").title(), cell_style),
+                    Paragraph(", ".join(display_names[:3]), cell_style),
+                    Paragraph(", ".join(str(p) for p in pages[:5]), cell_style),
+                    Paragraph(r.get("recommendation") or "", cell_style),
                 ])
-            tbl = Table(table_data, repeatRows=1, colWidths=[1.6*cm, 5*cm, 3*cm, 2.5*cm, 1.5*cm, 4.4*cm])
+            tbl = Table(table_data, repeatRows=1, colWidths=COL_WIDTHS)
+            # ── 8d: color-code rows by severity ──────────────────────────────
+            row_colors = []
+            for i, r in enumerate(risks, start=1):
+                if not isinstance(r, dict):
+                    continue
+                bg = (
+                    colors.HexColor("#FFD5D5") if r.get("severity") == "high" else
+                    colors.HexColor("#FFF3CD") if r.get("severity") == "medium" else
+                    colors.HexColor("#D4EDDA")
+                )
+                row_colors.append(("BACKGROUND", (0, i), (-1, i), bg))
             tbl.setStyle(TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2C3E50")),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                 ("FONTSIZE", (0, 0), (-1, -1), 7),
-                ("GRID", (0, 0), (-1, -1), 0.25, colors.black),
+                ("LEADING", (0, 0), (-1, -1), 9),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("WORDWRAP", (0, 0), (-1, -1), True),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                *row_colors,
             ]))
             story.append(tbl)
             story.append(Spacer(1, 0.4*cm))
-            # Verbatim evidence sub-section
+
+            # ── 8e: Evidence Excerpts with split header/body styles ────────────
             has_snippets = any(r.get("verbatim_evidence") for r in risks if isinstance(r, dict))
             if has_snippets:
                 story.append(Paragraph("Evidence Excerpts", h2))
+                ev_header_style = ParagraphStyle(
+                    "ev_h", parent=normal,
+                    fontSize=7, fontName="Helvetica-Bold", leftIndent=12, spaceAfter=1,
+                )
+                ev_body_style = ParagraphStyle(
+                    "ev_b", parent=normal,
+                    fontSize=7, leftIndent=12, leading=9,
+                    textColor=colors.HexColor("#1A3C6B"), spaceAfter=4,
+                )
                 for r in risks:
                     if not isinstance(r, dict):
                         continue
                     snippets = r.get("verbatim_evidence", []) or []
                     if not snippets:
                         continue
-                    story.append(Paragraph(f"<b>{r.get('description', '')[:80]}</b>", normal))
+                    story.append(Paragraph(f"<b>{r.get('description', '')}</b>", normal))
                     if r.get("severity_reason"):
                         story.append(Paragraph(f"<i>{r['severity_reason']}</i>", normal))
                     for snippet in snippets:
                         s_name = snippet.get("display_name") or snippet.get("clause_id", "")
                         s_page = snippet.get("page_number", "")
-                        s_text = snippet.get("text", "")[:300]
-                        story.append(Paragraph(
-                            f"<b>{s_name}</b> (p.{s_page}): \"{s_text}\"",
-                            ParagraphStyle("evidence", parent=normal, leftIndent=12, fontSize=7, textColor=colors.darkblue)
-                        ))
+                        s_text = snippet.get("text", "")
+                        story.append(Paragraph(f"{s_name} — Page {s_page}", ev_header_style))
+                        story.append(Paragraph(f'"{s_text}"', ev_body_style))
                     story.append(Spacer(1, 0.2*cm))
 
         # Not Detected
@@ -803,6 +1043,41 @@ if page == "🔍 Document Explorer":
             story.append(Paragraph("Clauses Not Detected", h2))
             for name in not_detected:
                 story.append(Paragraph(f"• {name}", normal))
+            story.append(Spacer(1, 0.3*cm))
+
+        # ── 8g: Statutory References ──────────────────────────────────────────
+        if statutory_notes:
+            story.append(Paragraph("Statutory References", h2))
+            story.append(Paragraph(
+                "<i>[Reference only — not legal advice. Verify with qualified counsel.]</i>", normal
+            ))
+            stat_data = [[
+                Paragraph("Clause", header_cell_style),
+                Paragraph("Reference", header_cell_style),
+            ]]
+            for clause_display, note in statutory_notes.items():
+                if not isinstance(note, dict):
+                    continue
+                art = note.get("article", "")
+                text_val = note.get("text", "")
+                src = note.get("source", "")
+                stat_data.append([
+                    Paragraph(str(clause_display), cell_style),
+                    Paragraph(f"{art}: {text_val} — {src}", cell_style),
+                ])
+            stat_tbl = Table(stat_data, repeatRows=1, colWidths=[4.5*cm, 12.5*cm])
+            stat_tbl.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2C3E50")),
+                ("FONTSIZE", (0, 0), (-1, -1), 7),
+                ("LEADING", (0, 0), (-1, -1), 9),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+            ]))
+            story.append(stat_tbl)
             story.append(Spacer(1, 0.3*cm))
 
         # Disclaimer

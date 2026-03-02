@@ -8,7 +8,7 @@ workflow as specified in the PRD:
 - Executive summary items
 """
 
-from typing import Dict, List, Optional, Literal
+from typing import Any, Dict, List, Optional, Literal
 
 from pydantic import BaseModel, Field
 
@@ -26,6 +26,10 @@ class VerbatimSnippet(BaseModel):
     display_name: Optional[str] = Field(default=None, description="Human-readable clause name.")
     page_number: int = Field(..., description="Page where the snippet appears.")
     text: str = Field(..., description="clean_text from ClauseEvidenceBlock, truncated to 400 chars.")
+    matched_keyword: Optional[str] = Field(
+        default=None,
+        description="Keyword that triggered clause detection; used for UI highlighting.",
+    )
 
 
 class RiskItem(BaseModel):
@@ -186,6 +190,25 @@ class ContractReviewResponse(BaseModel):
     used_implicit_or_distributed_logic: bool = Field(
         default=False,
         description="True if governing law was detected implicit, benefits distributed, or any evidence is section_non_standard; UI shows global disclaimer only when True.",
+    )
+    # ── Group 2a: overall risk score ─────────────────────────────────────────
+    risk_score: int = Field(
+        default=0,
+        description="Composite risk score: high_count * 3 + medium_count.",
+    )
+    risk_label: Literal["high_risk", "medium_risk", "low_risk"] = Field(
+        default="low_risk",
+        description="At-a-glance risk label derived from risk_score.",
+    )
+    # ── Group 5: cross-clause contradictions ──────────────────────────────────
+    contradiction_risks: List[RiskItem] = Field(
+        default_factory=list,
+        description="Low-severity risk items flagging cross-clause numeric or logical contradictions.",
+    )
+    # ── Group 7: jurisdiction statutory notes ─────────────────────────────────
+    statutory_notes: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Jurisdiction-specific statutory article references keyed by clause display name. Each value has {article, text, source}.",
     )
     disclaimer: str = Field(
         default=(

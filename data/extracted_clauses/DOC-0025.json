@@ -1,10 +1,10 @@
 {
   "schema_version": 2,
-  "document_id": "DOC-0014",
+  "document_id": "DOC-0025",
   "extraction_version": "v1.0",
   "clauses": [
     {
-      "clause_id": "unknown_2Itisnotintheinteres_b5638d59f5331f22",
+      "clause_id": "unknown_2Itisnotintheinteres_d65312f85e6d2250",
       "document_section": "unknown",
       "page_start": 2,
       "page_end": 2,
@@ -23,7 +23,7 @@
       }
     },
     {
-      "clause_id": "unknown_IntermsofthisAgreeme_1bb55859de4c73cb",
+      "clause_id": "unknown_IntermsofthisAgreeme_ca8aceebb16cf305",
       "document_section": "unknown",
       "page_start": 2,
       "page_end": 2,
@@ -42,7 +42,7 @@
       }
     },
     {
-      "clause_id": "unknown_ThepurposeofthisAgre_ddeb5462494d30b6",
+      "clause_id": "unknown_ThepurposeofthisAgre_4101398ef1f487be",
       "document_section": "unknown",
       "page_start": 2,
       "page_end": 2,
@@ -61,7 +61,7 @@
       }
     },
     {
-      "clause_id": "unknown_ThisAgreementshallop_cc5c407d1cac8129",
+      "clause_id": "unknown_ThisAgreementshallop_7e55a170dcdfcd37",
       "document_section": "unknown",
       "page_start": 2,
       "page_end": 2,
@@ -80,7 +80,7 @@
       }
     },
     {
-      "clause_id": "unknown_NonfulfilmentofanyCo_c759a59be46a61da",
+      "clause_id": "unknown_NonfulfilmentofanyCo_565d3d6eb6c28db4",
       "document_section": "unknown",
       "page_start": 4,
       "page_end": 4,
@@ -99,7 +99,7 @@
       }
     },
     {
-      "clause_id": "unknown_PerformanceBankGuara_60b9d66d22ba051e",
+      "clause_id": "unknown_PerformanceBankGuara_718d1ab60251391f",
       "document_section": "unknown",
       "page_start": 4,
       "page_end": 5,
@@ -118,7 +118,7 @@
       }
     },
     {
-      "clause_id": "unknown_InvoicingSettlementa_f8e51d7a9c896082",
+      "clause_id": "unknown_InvoicingSettlementa_92c40246e8d0afc1",
       "document_section": "unknown",
       "page_start": 5,
       "page_end": 5,
@@ -137,7 +137,7 @@
       }
     },
     {
-      "clause_id": "unknown_RepresentationandWar_dc81bbcd702cbda4",
+      "clause_id": "unknown_RepresentationandWar_9ed51d7952227a80",
       "document_section": "unknown",
       "page_start": 5,
       "page_end": 6,
@@ -156,7 +156,7 @@
       }
     },
     {
-      "clause_id": "unknown_SLATimelines_295eaa55cc518d59",
+      "clause_id": "unknown_SLATimelines_a76df300da62bfd6",
       "document_section": "unknown",
       "page_start": 5,
       "page_end": 5,
@@ -164,7 +164,7 @@
       "verbatim_text": "10. SLA & Timelines \nThe SLA & timelines shall be as per Schedule-A to this agreement.",
       "clause_number": "10",
       "clause_title": "SLA & Timelines",
-      "legal_category": "other",
+      "legal_category": "sla_obligations",
       "unit_type": "clause",
       "is_definition": false,
       "parent_clause_id": null,
@@ -175,7 +175,7 @@
       }
     },
     {
-      "clause_id": "unknown_ScopeofWork_74621bb1a7da8421",
+      "clause_id": "unknown_ScopeofWork_dffca07855c931e2",
       "document_section": "unknown",
       "page_start": 5,
       "page_end": 5,
@@ -194,7 +194,7 @@
       }
     },
     {
-      "clause_id": "terminatio_TermofAgreement_830e0d4b5a203da3",
+      "clause_id": "terminatio_TermofAgreement_3002c0c6ddbcae84",
       "document_section": "termination",
       "page_start": 5,
       "page_end": 5,
@@ -213,7 +213,7 @@
       }
     },
     {
-      "clause_id": "payment_TermsofPaymentandSer_3eda9d9243be0059",
+      "clause_id": "payment_TermsofPaymentandSer_8494ab9e91f28428",
       "document_section": "payment",
       "page_start": 5,
       "page_end": 5,
@@ -232,7 +232,7 @@
       }
     },
     {
-      "clause_id": "unknown_iiiTheServiceProvide_be6be2aeb0d51874",
+      "clause_id": "unknown_iiiTheServiceProvide_a240aab97a38ca90",
       "document_section": "unknown",
       "page_start": 6,
       "page_end": 6,
@@ -251,7 +251,7 @@
       }
     },
     {
-      "clause_id": "unknown_ivTheexecutiondelive_910f9013e3304070",
+      "clause_id": "unknown_ivTheexecutiondelive_728a96e2911b5d97",
       "document_section": "unknown",
       "page_start": 6,
       "page_end": 7,
@@ -270,7 +270,7 @@
       }
     },
     {
-      "clause_id": "payment_iiThattherearenojudi_84e39b573126b34b",
+      "clause_id": "payment_iiThattherearenojudi_0d1d8a3a1b5becf0",
       "document_section": "payment",
       "page_start": 6,
       "page_end": 6,
@@ -289,7 +289,7 @@
       }
     },
     {
-      "clause_id": "unknown_ixTheServiceProvider_99b75eaa2300f987",
+      "clause_id": "unknown_ixTheServiceProvider_047af070b8da0e99",
       "document_section": "unknown",
       "page_start": 7,
       "page_end": 7,
@@ -308,7 +308,7 @@
       }
     },
     {
-      "clause_id": "unknown_viiTheserviceprovide_c1b8382108ba8e94",
+      "clause_id": "unknown_viiTheserviceprovide_2b3bef500b78f7e8",
       "document_section": "unknown",
       "page_start": 7,
       "page_end": 7,
@@ -327,7 +327,7 @@
       }
     },
     {
-      "clause_id": "unknown_viiiTheserviceprovid_6145c1c97833832a",
+      "clause_id": "unknown_viiiTheserviceprovid_08f7ef40d244029c",
       "document_section": "unknown",
       "page_start": 7,
       "page_end": 7,
@@ -346,7 +346,7 @@
       }
     },
     {
-      "clause_id": "payment_xTheServiceProvideru_77303f94bab6b4a2",
+      "clause_id": "payment_xTheServiceProvideru_ec907afd91c7cdfa",
       "document_section": "payment",
       "page_start": 7,
       "page_end": 8,
@@ -365,7 +365,7 @@
       }
     },
     {
-      "clause_id": "liability_COMPLIANCEWITHLAWS_01aeb0237648626b",
+      "clause_id": "liability_COMPLIANCEWITHLAWS_e46ffecd0ea35b40",
       "document_section": "liability",
       "page_start": 8,
       "page_end": 9,
@@ -384,7 +384,7 @@
       }
     },
     {
-      "clause_id": "unknown_VicariousLiability_4f13a1bb34fd4359",
+      "clause_id": "unknown_VicariousLiability_49bb8668aa1fa8f7",
       "document_section": "unknown",
       "page_start": 9,
       "page_end": 9,
@@ -403,7 +403,7 @@
       }
     },
     {
-      "clause_id": "liability_INDEMNITIESANDOTHERP_8d1c720968b4ed46",
+      "clause_id": "liability_INDEMNITIESANDOTHERP_f2042a023ef273bd",
       "document_section": "liability",
       "page_start": 9,
       "page_end": 9,
@@ -422,7 +422,7 @@
       }
     },
     {
-      "clause_id": "liability_ivinfringementofanyp_fb68c355d7bb8238",
+      "clause_id": "liability_ivinfringementofanyp_5f4c56dc1f72d880",
       "document_section": "liability",
       "page_start": 9,
       "page_end": 10,
@@ -430,7 +430,7 @@
       "verbatim_text": "iv. infringement of any patent, trademarks, copyrights etc. or such other \nstatutory infringements in respect of all components provided to fulfil\nthe scope of the work herein Service Provider shall further indemnify the \nBank against any loss or damage to the Bank’s premises or property, \nBank’s data, loss of life, etc., due to the acts of the Service Provider’s \nemployees, agents or representatives.  \nThe Service Provider shall further indemnify the Bank against any loss or \ndamage arising out of loss of data, claims of infringement of third-party \ncopyright, patents, or other intellectual property rights, and third-party \nclaims on the Bank deliverables at all points of time. \nB. The indemnities set out in point A above shall be subject to the following \nconditions:",
       "clause_number": "IV",
       "clause_title": "iv. infringement of any patent, trademarks, copyrights etc. or such other",
-      "legal_category": "indemnity",
+      "legal_category": "ip_ownership",
       "unit_type": "clause",
       "is_definition": false,
       "parent_clause_id": null,
@@ -441,7 +441,7 @@
       }
     },
     {
-      "clause_id": "unknown_INDEPENDENTSERVICEPR_aefc8d3ea0efed68",
+      "clause_id": "unknown_INDEPENDENTSERVICEPR_343151cc93739f09",
       "document_section": "unknown",
       "page_start": 10,
       "page_end": 11,
@@ -460,7 +460,7 @@
       }
     },
     {
-      "clause_id": "liability_ItheIndemnifiedParty_3bfad4f22cb369ab",
+      "clause_id": "liability_ItheIndemnifiedParty_d5635ba3ec46aba0",
       "document_section": "liability",
       "page_start": 10,
       "page_end": 10,
@@ -479,7 +479,7 @@
       }
     },
     {
-      "clause_id": "liability_IItheIndemnifiedPart_4f615072f4c4342f",
+      "clause_id": "liability_IItheIndemnifiedPart_4b7f84addc1af237",
       "document_section": "liability",
       "page_start": 10,
       "page_end": 10,
@@ -498,7 +498,7 @@
       }
     },
     {
-      "clause_id": "liability_IIIiftheIndemnifying_c3c9c4bf86f02db4",
+      "clause_id": "liability_IIIiftheIndemnifying_6942e3518c714eed",
       "document_section": "liability",
       "page_start": 10,
       "page_end": 10,
@@ -517,7 +517,7 @@
       }
     },
     {
-      "clause_id": "liability_IVtheIndemnifiedPart_cff21cb6e7805a47",
+      "clause_id": "liability_IVtheIndemnifiedPart_e720d1446be0dd4e",
       "document_section": "liability",
       "page_start": 10,
       "page_end": 10,
@@ -536,7 +536,7 @@
       }
     },
     {
-      "clause_id": "liability_vallsettlementsofcla_12ace6721b3b699d",
+      "clause_id": "liability_vallsettlementsofcla_d13eeb3177543b6d",
       "document_section": "liability",
       "page_start": 10,
       "page_end": 10,
@@ -555,7 +555,7 @@
       }
     },
     {
-      "clause_id": "liability_vitheIndemnifiedPart_546f5111dc95a640",
+      "clause_id": "liability_vitheIndemnifiedPart_aa767499a51f9a3b",
       "document_section": "liability",
       "page_start": 10,
       "page_end": 10,
@@ -574,7 +574,7 @@
       }
     },
     {
-      "clause_id": "unknown_ASSIGNMENT_9747e3937ed5c8c3",
+      "clause_id": "unknown_ASSIGNMENT_0b4bf90b98153c80",
       "document_section": "unknown",
       "page_start": 11,
       "page_end": 11,
@@ -593,7 +593,7 @@
       }
     },
     {
-      "clause_id": "unknown_INSPECTIONANDRIGHTTO_e54b89d723a31430",
+      "clause_id": "unknown_INSPECTIONANDRIGHTTO_1f01bcf2260850d6",
       "document_section": "unknown",
       "page_start": 11,
       "page_end": 11,
@@ -612,7 +612,7 @@
       }
     },
     {
-      "clause_id": "unknown_SUBCONTRACTORS_aa470e5031a94290",
+      "clause_id": "unknown_SUBCONTRACTORS_87e5a3641b7e9a99",
       "document_section": "unknown",
       "page_start": 11,
       "page_end": 11,
@@ -631,7 +631,7 @@
       }
     },
     {
-      "clause_id": "unknown_Miscellaneous_44a05e0c82eeb516",
+      "clause_id": "unknown_Miscellaneous_82d788cc0db9a1a0",
       "document_section": "unknown",
       "page_start": 12,
       "page_end": 12,
@@ -650,7 +650,7 @@
       }
     },
     {
-      "clause_id": "unknown_StatutoryLegalCompli_b8cf7c8f2579bea5",
+      "clause_id": "unknown_StatutoryLegalCompli_fef8b54848253b5d",
       "document_section": "unknown",
       "page_start": 12,
       "page_end": 12,
@@ -669,7 +669,7 @@
       }
     },
     {
-      "clause_id": "unknown_Taxes_c9e60e5d94bee3a9",
+      "clause_id": "unknown_Taxes_7231817cf0f5137d",
       "document_section": "unknown",
       "page_start": 12,
       "page_end": 12,
@@ -688,7 +688,7 @@
       }
     },
     {
-      "clause_id": "unknown_Penalties_ace43772093ac501",
+      "clause_id": "unknown_Penalties_c0758733c1626ef1",
       "document_section": "unknown",
       "page_start": 13,
       "page_end": 14,
@@ -707,7 +707,7 @@
       }
     },
     {
-      "clause_id": "terminatio_ITheserviceproviders_1c4a955223c356b8",
+      "clause_id": "terminatio_ITheserviceproviders_3665404f86273603",
       "document_section": "termination",
       "page_start": 13,
       "page_end": 13,
@@ -726,7 +726,7 @@
       }
     },
     {
-      "clause_id": "unknown_NONEXCLUSIVEAGREEMEN_9544f8519aff9c34",
+      "clause_id": "unknown_NONEXCLUSIVEAGREEMEN_62c064181e5f24bc",
       "document_section": "unknown",
       "page_start": 14,
       "page_end": 14,
@@ -745,7 +745,7 @@
       }
     },
     {
-      "clause_id": "unknown_PROPRIETARYRIGHTS_602516cc97fa319b",
+      "clause_id": "unknown_PROPRIETARYRIGHTS_c7a496d9ba82f458",
       "document_section": "unknown",
       "page_start": 14,
       "page_end": 14,
@@ -753,7 +753,7 @@
       "verbatim_text": "25. PROPRIETARY RIGHTS:  \ni) All deliverables and the intellectual property rights (whether registered or not) relating to \nthe said services provided under this Agreement shall be the proprietary of IPPB and shall \nbe subject to the confidentiality provisions of this Agreement. \n  \nii) This Agreement shall in no way be construed to grant any right, license or authorization nor \nshall it any way be deemed to create any interests, charge or lien in favour of the IPPB to \nuse the computer programs, software, and/ or related documentation used or supplied by \nService Provider for any purpose except as permitted in this Agreement.  \n \niii) The IPPB master file as well as the transaction data file and related files, reports, studies \nsupplied by the IPPB under this Agreement are subject to the proprietary rights of the IPPB, \nas well as the Confidentiality provision of this Agreement.",
       "clause_number": "25",
       "clause_title": "PROPRIETARY RIGHTS:",
-      "legal_category": "confidentiality",
+      "legal_category": "ip_ownership",
       "unit_type": "clause",
       "is_definition": false,
       "parent_clause_id": null,
@@ -764,7 +764,7 @@
       }
     },
     {
-      "clause_id": "liability_RelationshipofthePar_9ad484c4fcfbdcaa",
+      "clause_id": "liability_RelationshipofthePar_91d1914358e9dc94",
       "document_section": "liability",
       "page_start": 14,
       "page_end": 14,
@@ -783,7 +783,7 @@
       }
     },
     {
-      "clause_id": "terminatio_TerminationofContrac_7b569587f0f1c60e",
+      "clause_id": "terminatio_TerminationofContrac_dc67a1a55034a2db",
       "document_section": "termination",
       "page_start": 14,
       "page_end": 15,
@@ -802,7 +802,7 @@
       }
     },
     {
-      "clause_id": "unknown_LIQUIDATEDDAMAGES_2809ac120794e1b4",
+      "clause_id": "unknown_LIQUIDATEDDAMAGES_044efce5b3c4c209",
       "document_section": "unknown",
       "page_start": 15,
       "page_end": 16,
@@ -821,7 +821,7 @@
       }
     },
     {
-      "clause_id": "payment_BLACKLISTING_f1ffbb97e4031c17",
+      "clause_id": "payment_BLACKLISTING_9fe66310d6014774",
       "document_section": "payment",
       "page_start": 15,
       "page_end": 15,
@@ -840,7 +840,7 @@
       }
     },
     {
-      "clause_id": "terminatio_EFFECTSOFTERMINATION_0907ee822f8928c3",
+      "clause_id": "terminatio_EFFECTSOFTERMINATION_7d6a4adc4272c9d8",
       "document_section": "termination",
       "page_start": 15,
       "page_end": 15,
@@ -859,7 +859,7 @@
       }
     },
     {
-      "clause_id": "terminatio_MATERIALBREACH_40b92e7b48d176da",
+      "clause_id": "terminatio_MATERIALBREACH_ab78d14954fa7e2b",
       "document_section": "termination",
       "page_start": 15,
       "page_end": 15,
@@ -878,7 +878,7 @@
       }
     },
     {
-      "clause_id": "terminatio_Terminationduetobank_32ea95fa9786c6a5",
+      "clause_id": "terminatio_Terminationduetobank_2894208c33297318",
       "document_section": "termination",
       "page_start": 15,
       "page_end": 15,
@@ -897,7 +897,7 @@
       }
     },
     {
-      "clause_id": "unknown_ForceMajeure_cfe749809ea6938d",
+      "clause_id": "unknown_ForceMajeure_098c450b447a77ae",
       "document_section": "unknown",
       "page_start": 16,
       "page_end": 16,
@@ -916,7 +916,7 @@
       }
     },
     {
-      "clause_id": "unknown_IntellectualProperty_8638973c0d791b9d",
+      "clause_id": "unknown_IntellectualProperty_20711557c5dbfcf4",
       "document_section": "unknown",
       "page_start": 16,
       "page_end": 16,
@@ -924,7 +924,7 @@
       "verbatim_text": "38. Intellectual Property Rights \nThe name, logo, design, and other intellectual property of IPPB is solely the property of the \nIPPB and in no case the Service Provider shall use the same, except for the purposes \nmentioned under this agreement and exclusively for the IPPB only.",
       "clause_number": "38",
       "clause_title": "Intellectual Property Rights",
-      "legal_category": "other",
+      "legal_category": "ip_ownership",
       "unit_type": "clause",
       "is_definition": false,
       "parent_clause_id": null,
@@ -935,7 +935,7 @@
       }
     },
     {
-      "clause_id": "terminatio_Confidentiality_a3ad190889a57265",
+      "clause_id": "terminatio_Confidentiality_fa358b020e64719c",
       "document_section": "termination",
       "page_start": 16,
       "page_end": 18,
@@ -943,7 +943,7 @@
       "verbatim_text": "39. Confidentiality  \n“Confidential Information” shall mean and includes, without limitation, any and all information, data(including but not \nlimited to customer data/information of IPPB), knowledge, and know-how, whether pertaining to commercial, \ntechnical, scientific, operational, administrative, financial, marketing or business affairs, or intellectual property, or \notherwise (in whatever form and however communicated) relating, directly or indirectly, to the Provider, which the \nProvider or its employees, directors, officers, agents, consultants etc., would have disclosed or delivered prior to the \ndate of this Agreement, or is disclosed or delivered after the date of this Agreement, to the Recipient or to any third \nparty on the request of the Recipient, in writing, electronically, verbally, or through visual means, either with the \ndisclaimer of confidentiality or not, or which the Recipient (or such third party) learns, obtains or derives, orally, through \nobservation or through analysis, interpretations, compilations, studies, or evaluations of such information, data, \nknowledge, or know-how; for clarity, the information, data, knowledge, and know-how includes, without limitation, \nthose in the nature of, or pertaining to, business plans, marketing and financial plans, strategy, projections, policy\ndetails, client details, various products, details regarding pricing, technical know-how etc. in respect of such products, \nand also the documents, registers, books, photographs, notes, renderings, journals, notebooks, computer programs, \ncomputer readable video, audio or sound files, and samples relating thereto;;  \ni) The Service Provider recognises that during the Term of this Agreement, data, documents \nand/or information, including but not limited to Proprietary Information (“Confidential \nInformation”) will be procured and made available to it. Disclosure or usage of the data \nby any such recipient may constitute a breach of applicable Laws causing harm to the \nconcerned customers of the IPPB. The Service Provider hereby convents to, not disclose \nany such Confidential Information to any Third Party and demonstrate utmost care, \nsensitivity and strict confidentiality with regard to any such Confidential Information. Any \nbreach of this Clause will result in the IPPB and its nominees receiving a right to seek \ninjunctive relief and damages without any limit, from the and/or also seek termination, in \nits sole discretion. \nii) Each Party agrees as to any Confidential Information disclosed by a Party to this \nAgreement (“Discloser”) to the other Party to this Agreement (“Recipient”): \na) To take such steps necessary to protect the Discloser's Confidential Information from \nunauthorised use, reproduction and disclosure as the Recipient takes in relation to its own \nConfidential Information of the same type, but in no event less than reasonable care. \nb) To use such Confidential Information only for the purposes of this Agreement or as otherwise \nexpressly permitted or expressly required by this Agreement or as otherwise permitted by \nthe Discloser in writing. \nc) Not, without the Discloser's prior written consent, to copy the Confidential Information or \ncause or allow it to be copied, directly or indirectly, in whole or in part, except as otherwise \nexpressly provided in this Agreement, or as required about Recipient's use as permitted \nunder this Clause, or as needed for the purposes of this Agreement, provided that any \nproprietary legends and notices (whether of the Discloser or of a Third Party) are not \nremoved or obscured. \nd) Not, without the Discloser's prior written consent, to disclose, transfer, publish or \ncommunicate the Confidential Information in any manner to any person except as \npermitted under this Agreement. \ne) Promptly destroy all Confidential Information in its possession, to the satisfaction of the \nDiscloser, upon fulfilment of its obligations under this Agreement. \niii) The restrictions of this clause shall not apply to Confidential Information that: \na) is or becomes generally available to the any Third Party through no breach of this Clause \nby the Recipient; \nb) was in the Recipient's possession free of any obligation of confidence prior to the time of \nreceipt of it by the Recipient hereunder, provided the same has been rightfully obtained; \nc) is developed by the Recipient independently of any of Discloser’s Confidential Information; \nd) is rightfully obtained by the Recipient from Third Parties authorised at that time to make \nsuch disclosure without restriction; \ne) is identified in writing by the Discloser as no longer proprietary or confidential;\nf) is required to be disclosed by Law, regulation or order of a court or any other regulatory \nauthority in India or to be furnished to the Parliament and/or its Committees, provided that \nthe Recipient gives prompt written notice to the Discloser of such legal and regulatory \nrequirement to disclose so as to allow the Discloser reasonable opportunity to contest such \ndisclosure. \niv) To the extent that such disclosure is required for the purposes of this Agreement, either Party \nmay disclose Confidential Information, with the prior written consent of the other Party, \nwhich shall not be unreasonably withheld, to: \na. its employees, agents and independent contractors and to any of its Affiliates and their \nrespective independent contractors or employees but all of them should in turn be bound \nto maintain the confidentiality referred to herein on their part; and \nb. its professional advisors and auditors, who require access for the purposes of this \nAgreement, whom the relevant Party has informed of its obligations under this Clause and \nin respect of whom the relevant Party has used commercially reasonable efforts to ensure \nthat they are contractually obliged to keep such Confidential Information confidential on \nterms substantially the same as set forth in this Article. Either Party may also disclose \nConfidential Information to any entity with the other Party's prior written consent. \nv) The provisions of this clause 39 shall survive the expiration or any earlier termination of this \nAgreement. \nvi) Confidential Information shall be and remain the property of the Discloser and nothing in \nthis clause shall be construed to grant either Party any right or license with respect to the \nother Party’s Confidential Information otherwise than as is expressly set out in this \nAgreement. \nvii) Subject as otherwise expressly provided in this Agreement all Confidential Information in \ntangible or electronic form under the control of the Recipient shall either be destroyed, \nerased or returned to the Discloser promptly upon the earlier of: (i) the written request of \nthe Discloser, or, (ii) termination or expiry of this Agreement.  \nviii) Both Parties agree that monetary damages would not be a sufficient remedy for any \nbreach of this Clause by the other Party and that the IPPB and Service Provider, as \nappropriate, shall be entitled to equitable relief, including injunction and specific \nperformance as a remedy for any such breach. Such remedies shall not be deemed to be \nthe exclusive remedies for a breach by a Party of this Clause, but shall be in addition to all \nother remedies available at Law or equity to the damaged Party.",
       "clause_number": "39",
       "clause_title": "Confidentiality",
-      "legal_category": "governing_law",
+      "legal_category": "remedies_injunction",
       "unit_type": "clause",
       "is_definition": false,
       "parent_clause_id": null,
@@ -954,7 +954,7 @@
       }
     },
     {
-      "clause_id": "terminatio_FraudbyServiceProvid_f4f9a96ea14edd04",
+      "clause_id": "terminatio_FraudbyServiceProvid_2eccc02cdfb4bf9a",
       "document_section": "termination",
       "page_start": 16,
       "page_end": 16,
@@ -973,7 +973,7 @@
       }
     },
     {
-      "clause_id": "unknown_Personnel_a98fbee8a5005acf",
+      "clause_id": "unknown_Personnel_a932a82f557a9b2d",
       "document_section": "unknown",
       "page_start": 18,
       "page_end": 19,
@@ -992,7 +992,7 @@
       }
     },
     {
-      "clause_id": "unknown_Changeinconstitution_ca27291f2b91b5a0",
+      "clause_id": "unknown_Changeinconstitution_2e69fd697458d154",
       "document_section": "unknown",
       "page_start": 19,
       "page_end": 19,
@@ -1011,7 +1011,7 @@
       }
     },
     {
-      "clause_id": "unknown_TransitionRequiremen_b18903e350928346",
+      "clause_id": "unknown_TransitionRequiremen_217c4e981c143eed",
       "document_section": "unknown",
       "page_start": 19,
       "page_end": 19,
@@ -1030,7 +1030,7 @@
       }
     },
     {
-      "clause_id": "liability_LimitationofLiabilit_ea11b723f0b0f788",
+      "clause_id": "liability_LimitationofLiabilit_785e1f0b313b256d",
       "document_section": "liability",
       "page_start": 19,
       "page_end": 19,
@@ -1049,7 +1049,7 @@
       }
     },
     {
-      "clause_id": "terminatio_Notices_a4bed359e3aba60f",
+      "clause_id": "terminatio_Notices_6d2c0bf0d59e487c",
       "document_section": "termination",
       "page_start": 19,
       "page_end": 19,
@@ -1068,7 +1068,7 @@
       }
     },
     {
-      "clause_id": "terminatio_PerformanceMonitorin_e4aa422eb4615dfc",
+      "clause_id": "terminatio_PerformanceMonitorin_d3788431bd4dc319",
       "document_section": "termination",
       "page_start": 19,
       "page_end": 19,
@@ -1087,7 +1087,7 @@
       }
     },
     {
-      "clause_id": "unknown_SURVIVAL_4b3d5266c7b028af",
+      "clause_id": "unknown_SURVIVAL_8b181276c3cc7669",
       "document_section": "unknown",
       "page_start": 21,
       "page_end": 22,
@@ -1106,7 +1106,7 @@
       }
     },
     {
-      "clause_id": "unknown_VARIATIONSANDFURTHER_37a02ebdd5ac4775",
+      "clause_id": "unknown_VARIATIONSANDFURTHER_967643119ef59bb8",
       "document_section": "unknown",
       "page_start": 21,
       "page_end": 21,
@@ -1114,7 +1114,7 @@
       "verbatim_text": "50. VARIATIONS AND FURTHER ASSURANCE \ni) No amendment, variation or other change to this Agreement shall be valid unless made in \nwriting and signed by the duly authorised representatives of the Parties to this Agreement. \nii) Each Party to this Agreement agrees to enter into or execute, without limitation, whatever \nother agreement, document, consent and waiver and to do all other things which shall or \nmay be reasonably required to complete and deliver the obligations set out in this \nAgreement.",
       "clause_number": "50",
       "clause_title": "VARIATIONS AND FURTHER ASSURANCE",
-      "legal_category": "other",
+      "legal_category": "mutual_vs_unilateral",
       "unit_type": "clause",
       "is_definition": false,
       "parent_clause_id": null,
@@ -1125,7 +1125,7 @@
       }
     },
     {
-      "clause_id": "terminatio_SEVERABILITYANDWAIVE_14b2a7fc3554c70c",
+      "clause_id": "terminatio_SEVERABILITYANDWAIVE_8dd64759f526bedc",
       "document_section": "termination",
       "page_start": 21,
       "page_end": 21,
@@ -1144,7 +1144,7 @@
       }
     },
     {
-      "clause_id": "unknown_ArrangementbetweenSe_3983dc5e76974213",
+      "clause_id": "unknown_ArrangementbetweenSe_7788792a886520a1",
       "document_section": "unknown",
       "page_start": 22,
       "page_end": 22,
@@ -1163,7 +1163,7 @@
       }
     },
     {
-      "clause_id": "unknown_PUBLICITYANDBRANDING_85eef96eb3fc433b",
+      "clause_id": "unknown_PUBLICITYANDBRANDING_683b9b6894fd931e",
       "document_section": "unknown",
       "page_start": 22,
       "page_end": 22,
@@ -1182,7 +1182,7 @@
       }
     },
     {
-      "clause_id": "unknown_PrecedenceofDocument_5cce6be19e02f6f6",
+      "clause_id": "unknown_PrecedenceofDocument_2266d52aafcdb3fd",
       "document_section": "unknown",
       "page_start": 22,
       "page_end": 22,
@@ -1201,7 +1201,7 @@
       }
     },
     {
-      "clause_id": "unknown_Resolutionofdisputes_f397236fb7d229d6",
+      "clause_id": "unknown_Resolutionofdisputes_41a68c6294927300",
       "document_section": "unknown",
       "page_start": 22,
       "page_end": 23,
@@ -1220,7 +1220,7 @@
       }
     },
     {
-      "clause_id": "unknown_Applicablelawandjuri_b54983458e0d6563",
+      "clause_id": "unknown_Applicablelawandjuri_be3ea58557bc98de",
       "document_section": "unknown",
       "page_start": 23,
       "page_end": 23,
@@ -1239,7 +1239,7 @@
       }
     },
     {
-      "clause_id": "unknown_PREVENTIONOFCORRUPTI_f642aa5cdd03b6ab",
+      "clause_id": "unknown_PREVENTIONOFCORRUPTI_cde9d13110c00d87",
       "document_section": "unknown",
       "page_start": 23,
       "page_end": 23,
@@ -1258,7 +1258,7 @@
       }
     },
     {
-      "clause_id": "terminatio_IIenterintothisAgree_300758f9225efac7",
+      "clause_id": "terminatio_IIenterintothisAgree_b1247565ecb65a76",
       "document_section": "termination",
       "page_start": 23,
       "page_end": 23,

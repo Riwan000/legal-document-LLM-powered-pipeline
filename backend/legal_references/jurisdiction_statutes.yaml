@@ -1,0 +1,96 @@
+# Jurisdiction-specific statutory references for GCC employment contracts.
+# [Reference only] — Not legal advice. Values are extracted article summaries.
+# Keys match canonical clause types in EXPECTED_CLAUSE_PATTERNS.
+# Source documents: official labor law texts (publicly available).
+
+KSA:
+  notice:
+    article: "Article 75"
+    text: "[Reference only] The employment contract shall not be terminated by the employer without a notice period of no less than sixty days for monthly-paid workers, or thirty days for workers paid on other bases."
+    source: "Saudi Labor Law, Royal Decree M/46 (2005)"
+  end_of_service_gratuity:
+    article: "Article 84"
+    text: "[Reference only] Upon termination of the employment contract, the employer shall pay the worker an end-of-service award of no less than half a month's wage for each of the first five years, and one month's wage for each subsequent year."
+    source: "Saudi Labor Law, Royal Decree M/46 (2005)"
+  annual_leave:
+    article: "Article 109"
+    text: "[Reference only] The worker shall be entitled to an annual leave of no less than twenty-one days per year, rising to thirty days per year after five years of service."
+    source: "Saudi Labor Law, Royal Decree M/46 (2005)"
+  probation_period:
+    article: "Article 53"
+    text: "[Reference only] The probationary period shall not exceed ninety days; it may be extended to a maximum of 180 days by mutual written agreement."
+    source: "Saudi Labor Law, Royal Decree M/46 (2005)"
+
+UAE:
+  notice:
+    article: "Article 43"
+    text: "[Reference only] Either party may terminate an unlimited employment contract by providing the other party with written notice of not less than thirty days (blue-collar) or not less than thirty days for all workers under the 2021 decree."
+    source: "UAE Federal Decree-Law No. 33 of 2021"
+  end_of_service_gratuity:
+    article: "Article 51"
+    text: "[Reference only] Upon completion of one or more years of service, the worker is entitled to an end-of-service gratuity of twenty-one days' basic wage per year for the first five years and thirty days per year thereafter."
+    source: "UAE Federal Decree-Law No. 33 of 2021"
+  annual_leave:
+    article: "Article 29"
+    text: "[Reference only] The worker shall be entitled to annual leave of no less than thirty calendar days per year after completing one year of service."
+    source: "UAE Federal Decree-Law No. 33 of 2021"
+  probation_period:
+    article: "Article 9"
+    text: "[Reference only] The probationary period shall not exceed six months from the employment start date."
+    source: "UAE Federal Decree-Law No. 33 of 2021"
+
+Qatar:
+  notice:
+    article: "Article 49"
+    text: "[Reference only] Either party may terminate an indefinite-term contract by providing the other with written notice of not less than one month if the worker has completed more than two years of service."
+    source: "Qatar Labor Law No. 14 of 2004"
+  end_of_service_gratuity:
+    article: "Article 54"
+    text: "[Reference only] Upon termination of an indefinite-term employment contract, the employer shall pay a gratuity of three weeks' wage per year of service."
+    source: "Qatar Labor Law No. 14 of 2004"
+  annual_leave:
+    article: "Article 78"
+    text: "[Reference only] Workers with one to five years of service are entitled to three weeks' annual leave; workers with more than five years are entitled to four weeks."
+    source: "Qatar Labor Law No. 14 of 2004"
+
+Bahrain:
+  notice:
+    article: "Article 99"
+    text: "[Reference only] Either party must give at least one month's notice in writing to terminate an indefinite-term contract; for workers with more than three years of service, at least three months' notice is required."
+    source: "Bahrain Labor Law No. 36 of 2012"
+  end_of_service_gratuity:
+    article: "Article 116"
+    text: "[Reference only] Workers are entitled to an end-of-service indemnity of half a month's wage per year for the first three years, one month's wage for years four to five, and one-and-a-half months for each subsequent year."
+    source: "Bahrain Labor Law No. 36 of 2012"
+  annual_leave:
+    article: "Article 57"
+    text: "[Reference only] Workers with one to three years of service are entitled to thirty days' annual leave; workers with more than three years are entitled to forty-five days."
+    source: "Bahrain Labor Law No. 36 of 2012"
+
+Oman:
+  notice:
+    article: "Article 40"
+    text: "[Reference only] Either party may terminate an indefinite-term contract by giving written notice of not less than thirty days for monthly-paid workers."
+    source: "Oman Labor Law, Royal Decree 35/2003"
+  end_of_service_gratuity:
+    article: "Article 39"
+    text: "[Reference only] Workers are entitled to end-of-service gratuity of fifteen days' pay per year for the first three years and one month's pay per year thereafter."
+    source: "Oman Labor Law, Royal Decree 35/2003"
+  annual_leave:
+    article: "Article 61"
+    text: "[Reference only] Workers are entitled to thirty days of paid annual leave per year after completing one year of continuous service."
+    source: "Oman Labor Law, Royal Decree 35/2003"
+
+Kuwait:
+  notice:
+    article: "Article 54"
+    text: "[Reference only] Either party may terminate an indefinite-term contract by giving the other party three months' written notice."
+    source: "Kuwait Private Sector Labor Law No. 6 of 2010"
+  end_of_service_gratuity:
+    article: "Article 51"
+    text: "[Reference only] Upon termination, workers are entitled to an indemnity of fifteen days' wage per year of service for the first five years and one month's wage per year thereafter."
+    source: "Kuwait Private Sector Labor Law No. 6 of 2010"
+  annual_leave:
+    article: "Article 70"
+    text: "[Reference only] Workers with less than five years of service are entitled to thirty days' annual leave; workers with five or more years are entitled to thirty-five days."
+    source: "Kuwait Private Sector Labor Law No. 6 of 2010"

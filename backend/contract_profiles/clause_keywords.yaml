@@ -1,0 +1,233 @@
+# Clause keywords for all profile types (employment, NDA, MSA).
+# Derived from EXPECTED_CLAUSE_PATTERNS in contract_review_service.py.
+# IMPORTANT: Keep in sync with EXPECTED_CLAUSE_PATTERNS when adding/removing clause types.
+
+# ── Employment profile ────────────────────────────────────────────────────────
+termination:
+  - terminate
+  - terminated
+  - termination
+  - may be terminated
+  - this agreement may be terminated
+  - termination of this agreement
+
+notice:
+  - notice period
+  - written notice
+  - days notice
+  - days of notice
+  - notice of termination
+  - give notice
+  - provide notice
+
+salary_wages:
+  - salary
+  - wages
+  - remuneration
+  - pay
+  - base salary
+  - basic salary
+  - monthly pay
+  - hourly rate
+
+compensation:
+  - compensation
+  - remuneration
+  - salary package
+  - total package
+
+benefits:
+  - benefit
+  - allowance
+  - insurance
+
+governing_law:
+  - governing law
+  - governed by
+  - shall be governed by
+  - laws of
+  - subject to the laws
+  - in accordance with the laws
+  - applicable law
+
+jurisdiction:
+  - jurisdiction
+  - courts of
+
+conduct_discipline:
+  - discipline
+  - misconduct
+  - code of conduct
+  - disciplinary
+  - disciplinary action
+
+probation_period:
+  - probation
+  - trial period
+  - probationary period
+
+end_of_service_gratuity:
+  - gratuity
+  - end of service
+  - terminal benefits
+  - severance
+  - eosb
+  - end of service benefit
+  - service benefit
+
+non_compete:
+  - non-compete
+  - non compete
+  - not compete
+  - restrain from competition
+  - competitive activity
+
+annual_leave:
+  - annual leave
+  - paid leave
+  - vacation
+  - leave entitlement
+
+# ── NDA profile ───────────────────────────────────────────────────────────────
+confidentiality:
+  - confidential
+  - confidentiality
+  - non disclosure
+  - confidential information
+  - proprietary information
+  - trade secret
+  - duty of confidentiality
+  - obligation of confidentiality
+
+term:
+  - term
+  - duration
+  - effective date
+
+liability:
+  - liability
+  - limitation of liability
+  - liable
+  - exempt from liability
+
+remedies:
+  - remedy
+  - injunctive relief
+  - specific performance
+  - equitable relief
+  - damages
+  - seek relief
+
+carve_outs:
+  - excluding
+  - except for
+  - public domain
+  - prior knowledge
+  - independently developed
+  - rightfully obtained
+  - carve out
+  - exclusion
+  - permitted disclosure
+  - disclosure permitted
+  - exception to confidentiality
+
+mutual_vs_unilateral:
+  - each party
+  - both parties
+  - mutual
+  - reciprocal
+
+remedies_injunction:
+  - injunction
+  - injunctive relief
+  - specific performance
+  - equitable relief
+
+return_of_information:
+  - return
+  - destroy
+  - deletion
+  - certification of destruction
+
+# ── MSA profile ───────────────────────────────────────────────────────────────
+dispute_resolution:
+  - dispute resolution
+  - arbitration
+  - arbitral
+  - mediation
+  - conciliation
+  - settlement of disputes
+  - resolution of disputes
+  - disputes and arbitration
+  - resolution of disputes and arbitration
+  - governing disputes
+  - amicable settlement
+
+probation:
+  - probation
+  - probation period
+  - probationary period
+  - trial period
+  - on probation
+
+non_solicitation:
+  - non solicitation
+  - not solicit
+  - solicit employees
+  - solicit customers
+  - non compete
+
+indemnification:
+  - indemnif
+  - hold harmless
+  - indemnitor
+
+ip_ownership:
+  - intellectual property
+  - proprietary rights
+  - ip rights
+  - work product
+  - ownership of
+  - assigns all right
+  - vests in
+  - shall own
+  - deliverables
+  - work for hire
+  - background ip
+  - foreground ip
+  - moral rights
+  - ip ownership
+  - intellectual property rights
+  - ownership of deliverables
+  - client shall own
+  - assigned to client
+  - ip indemnification
+
+sla_obligations:
+  - service level
+  - sla
+  - schedule a
+  - service standards
+  - uptime
+  - availability
+  - response time
+  - liquidated damages
+  - performance monitoring
+  - business continuity
+  - key performance
+  - kpi
+  - service credits
+  - penalty
+  - sla schedule
+  - sla timelines
+  - service schedule
+  - annexure a
+  - timelines and sla
+  - performance standards
+
+limitation_of_liability:
+  - limitation of liability
+  - shall not exceed
+  - aggregate liability
+  - maximum liability
+  - liability cap

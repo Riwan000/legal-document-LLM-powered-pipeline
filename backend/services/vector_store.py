@@ -665,22 +665,15 @@ class VectorStore:
     def get_stats(self) -> Dict[str, Any]:
         """
         Get statistics about the vector store.
-        
+
         Returns:
             Dict with statistics
         """
-        # NOTE: We intentionally do NOT call `_ensure_loaded()` here so that
-        # lightweight health/stats checks do not trigger disk I/O. Stats will
-        # reflect the in-memory view (which may be empty) until the first
-        # real search/ingest operation loads persisted data.
+        self._ensure_loaded()
         return {
             'total_vectors': self.index.ntotal,
-            # Number of vectors in index
             'embedding_dimension': self.embedding_dim,
-            # Dimension of embeddings
             'unique_documents': len(set(m['document_id'] for m in self.metadata)),
-            # Count unique document IDs
             'total_chunks': len(self.metadata)
-            # Total number of chunks
         }
 

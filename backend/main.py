@@ -1509,6 +1509,83 @@ async def get_stats():
     }
 
 
+@app.post("/api/admin/clear-all")
+async def clear_all_documents():
+    """
+    Delete every document and all associated artifacts from the system.
+
+    Coordinates cleanup across:
+    - Vector store (embeddings/chunks)
+    - Clause store (structured clauses)
+    - Extracted clause store (explorer JSON payloads)
+    - Document registry (SQLite records)
+    - On-disk files recorded in the registry
+    """
+    global document_registry, vector_store, clause_store, extracted_clause_store
+
+    if not document_registry:
+        raise HTTPException(status_code=500, detail="Document registry not initialized")
+
+    doc_records = document_registry.list_documents()
+    doc_ids = list({r["document_id"] for r in doc_records})
+
+    total_chunks = 0
+    total_clauses = 0
+    total_extracted = 0
+
+    for doc_id in doc_ids:
+        # Collect physical file paths before registry deletion.
+        versions = document_registry.get_versions(doc_id)
+
+        if vector_store:
+            try:
+                total_chunks += vector_store.delete_document(doc_id)
+            except Exception as e:
+                logging.error("clear-all: failed to delete vectors for %s: %s", doc_id, e)
+
+        if clause_store:
+            try:
+                total_clauses += clause_store.delete_document(doc_id)
+            except Exception as e:
+                logging.error("clear-all: failed to delete clauses for %s: %s", doc_id, e)
+
+        if extracted_clause_store:
+            try:
+                total_extracted += extracted_clause_store.delete_document_clauses(doc_id)
+            except Exception as e:
+                logging.error("clear-all: failed to delete extracted clauses for %s: %s", doc_id, e)
+
+        try:
+            document_registry.delete_document(doc_id)
+        except Exception as e:
+            logging.error("clear-all: failed to delete registry records for %s: %s", doc_id, e)
+
+        for rec in (versions or []):
+            file_path = rec.get("file_path")
+            if not file_path:
+                continue
+            try:
+                p = Path(file_path)
+                if p.exists():
+                    p.unlink()
+            except Exception as e:
+                logging.warning("clear-all: failed to delete file %s: %s", file_path, e)
+
+    if vector_store:
+        try:
+            vector_store.save()
+        except Exception as e:
+            logging.error("clear-all: failed to save vector store after clear: %s", e)
+
+    return {
+        "status": "cleared",
+        "documents_deleted": len(doc_ids),
+        "chunks_deleted": total_chunks,
+        "clauses_deleted": total_clauses,
+        "extracted_deleted": total_extracted,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Conversational RAG endpoints
 # ---------------------------------------------------------------------------

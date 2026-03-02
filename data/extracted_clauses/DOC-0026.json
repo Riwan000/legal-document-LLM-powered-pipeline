@@ -1,10 +1,10 @@
 {
   "schema_version": 2,
-  "document_id": "DOC-0024",
+  "document_id": "DOC-0026",
   "extraction_version": "v1.0",
   "clauses": [
     {
-      "clause_id": "unknown_IncaseofgeathofSecon_3e957243ad54d96b",
+      "clause_id": "unknown_IncaseofgeathofSecon_b523cb9f90306cf1",
       "document_section": "unknown",
       "page_start": 5,
       "page_end": 5,
@@ -12,7 +12,7 @@
       "verbatim_text": "16. In case of geath of Secong Party in Saug Arab.a ١\nwhile employed win the Firs: Party in terms of th 5 ils ‏محل‎ Joey ‏يوافق الطرفان بأن ورا العقد بنسة‎ (1\n: 60017861 it would be the -esponsip,. ly of the Furs: io. ~ . i me\nParty to despatch the deac bocy and persona: 9 ‏العقود السابقة من هذا التاريخ إن وجدت وبعد‎\nbelongings to his next of kin in the Gountry of mig ‏هذا العقد لا يمكن لأي من الطرفين ان يقوم بمطالبة اي‎\norigin ‏حو أوامتباز أو منفعمة ماعدا ما ذكر د هذا العقد‎\n17 Both partes acknowledge that iris Agreement ‏مكافاة نهاية‎ J bis ‏ويستشنى من حقو الطرف الثاني‎\nCancels and supersedes ai! agreemenis pro: to ‏الخدمة والاجازات السنوية غم المستعملة حتى تاريخ‎\nihe date thereol, if any ang atte: ine execution of ‏هذا العقد‎ sli:\n‏قلطا‎ agreement neither Party shall clair to have\nany 0951 prviiege or benefit other than those .\n\n; mentioned herein Exception is however mage in ‏مسئولا عن دفع تعويضص‎ I SL ‏الطرف الأول‎ le )٠\nrespect of the Second Panys right. to an ‏عن الطرفت الثانى إذا ادين‎ UL, ‏الوفاة بما فيه الدية‎\neng-ol-service awarg 300 unuttiseg annua ‏الطرف الثاني مسئولا في وفاة الطرف الثالث ويحتاج دفع‎\nvacations upto the date ot EXECUIION of this ae . toy ft\nAgreement PH ‏التعويض عن الوفاة والدية الى ورثة‎",
       "clause_number": "16",
       "clause_title": "In case of geath of Secong Party in Saug Arab.a ١",
-      "legal_category": "other",
+      "legal_category": "annual_leave",
       "unit_type": "clause",
       "is_definition": false,
       "parent_clause_id": null,
@@ -23,7 +23,7 @@
       }
     },
     {
-      "clause_id": "unknown_TheFirstParty8610017_149ee82a053fa12e",
+      "clause_id": "unknown_TheFirstParty8610017_7fd42fccc3161789",
       "document_section": "unknown",
       "page_start": 5,
       "page_end": 5,
@@ -42,7 +42,7 @@
       }
     },
     {
-      "clause_id": "unknown_G3_3d84128af70d6fc8",
+      "clause_id": "unknown_G3_88c4268b8f0ddd7b",
       "document_section": "unknown",
       "page_start": 5,
       "page_end": 5,

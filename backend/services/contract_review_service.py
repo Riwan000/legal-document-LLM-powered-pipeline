@@ -36,7 +36,7 @@ _log = logging.getLogger(__name__)
 STEP_NAME = "contract_review"
 MIN_SNIPPET_LENGTH = 120
 MIN_ALPHA_RATIO = 0.5
-TERMINATION_TOKEN_DISTANCE = 2
+TERMINATION_TOKEN_DISTANCE = 1
 
 EXPECTED_CLAUSE_PATTERNS: Dict[str, List[str]] = {
     # Employment profile
@@ -172,6 +172,26 @@ CLAUSE_HEADING_SYNONYMS: Dict[str, str] = {
     "non disclosure":                            "confidentiality",
     "duty of confidentiality":                   "confidentiality",
     "obligation of confidentiality":             "confidentiality",
+    # Employment headings
+    "remuneration":                              "salary_wages",
+    "leave entitlement":                         "annual_leave",
+    "probationary period":                       "probation_period",
+    "gratuity":                                  "end_of_service_gratuity",
+    "end of service benefit":                    "end_of_service_gratuity",
+    "notice period":                             "notice",
+    "salary and wages":                          "salary_wages",
+    "compensation and benefits":                 "compensation",
+    "conduct and discipline":                    "conduct_discipline",
+    # NDA headings
+    "confidentiality agreement":                 "confidentiality",
+    "non-disclosure agreement":                  "confidentiality",
+    "confidentiality and non-disclosure":        "confidentiality",
+    "term of agreement":                         "term",
+    "remedies for breach":                       "remedies",
+    "injunctive relief":                         "remedies_injunction",
+    "return of confidential information":        "return_of_information",
+    "carve-outs":                                "carve_outs",
+    "mutual confidentiality":                    "mutual_vs_unilateral",
 }
 
 # Human-readable display names for clause IDs (semantic slug -> display name).
@@ -210,7 +230,7 @@ EXPECTED_CLAUSE_DISPLAY_NAMES: Dict[str, str] = {
 
 WEAK_EVIDENCE_RULES: Dict[str, List[str]] = {
     "confidentiality": ["duration"],
-    "intellectual_property": ["post_employment_scope"],
+    "ip_ownership": ["post_employment_scope"],
     "termination": ["notice_period"],
     "non_compete": ["duration", "geographic_scope"],
     # Governing law: presence of jurisdiction text is usually sufficient; no weak-evidence checks.
@@ -337,7 +357,7 @@ def _evidence_block_display_name(
     Sanitized display name for evidence block: never use raw OCR/title.
     Priority: semantic_label -> clause-type display name -> "Clause (Page N)".
     """
-    if semantic_label and (semantic_label or "").strip():
+    if semantic_label and semantic_label.strip():
         return semantic_label.strip()
     if clause_type_key:
         display = EXPECTED_CLAUSE_DISPLAY_NAMES.get(
@@ -358,7 +378,9 @@ def _resolve_clause_display_name(clause_id: str) -> str:
         return "Clause"
     parts = clause_id.strip().split("_")
     # Format: section_slug_heading_slug_hash -> take middle segment (heading_slug)
-    if len(parts) >= 2:
+    if len(parts) >= 3:
+        semantic = " ".join(parts[1:-1])   # all middle segments, skip section prefix + hash suffix
+    elif len(parts) == 2:
         semantic = parts[1]
     else:
         semantic = parts[0]
@@ -374,21 +396,33 @@ def _resolve_clause_display_name(clause_id: str) -> str:
 
 def _find_document_path(document_id: str) -> Optional[str]:
     """Resolve document file path from document_id."""
+    # Exact match first
     for ext in [".pdf", ".docx", ".doc"]:
         p = settings.DOCUMENTS_PATH / f"{document_id}{ext}"
         if p.exists():
             return str(p)
+    # Prefix match: handles versioned filenames like <id>_v1.pdf
     for ext in [".pdf", ".docx", ".doc"]:
         matches = list(settings.DOCUMENTS_PATH.glob(f"{document_id}*{ext}"))
         if matches:
-            return str(matches[0])
+            return str(sorted(matches)[-1])  # pick latest version
     return None
 
 
 # Document classification: heuristic to detect non-operative (e.g. academic) documents.
 DOC_CLASSIFY_OPERATIVE_PHRASES = (
     "agreement", "employer", "employee", "shall pay", "shall terminate",
+    "service provider", "disclosing party", "receiving party", "vendor", "contractor",
 )
+# Party terms that confirm an operative contract preamble (covers employment, NDA, MSA).
+_DOC_CLASSIFY_PARTY_TERMS = frozenset({
+    "employer", "employee",
+    "disclosing party", "receiving party",
+    "service provider", "client",
+    "vendor", "contractor",
+    "licensor", "licensee",
+    "the company", "the consultant",
+})
 DOC_CLASSIFY_ACADEMIC_PATTERNS = [
     re.compile(r"\bv\.\s", re.IGNORECASE),  # case citation
     re.compile(r"\bF\.\s*2d\b", re.IGNORECASE),
@@ -415,7 +449,9 @@ def _is_likely_operative_contract(full_doc_text: str) -> bool:
     lead = text[:DOC_CLASSIFY_LEAD_CHARS].lower()
 
     # No parties / no agreement in lead
-    if "agreement" not in lead and ("employer" not in lead and "employee" not in lead):
+    if "agreement" not in lead and "contract" not in lead:
+        return False
+    if not any(term in lead for term in _DOC_CLASSIFY_PARTY_TERMS):
         return False
 
     # Must have at least one operative phrase
@@ -572,10 +608,10 @@ def _build_key_review_observations(
             return "detected_distributed"
         if any(s == "detected_weak" for s in statuses):
             return "detected_weak"
-        if any(s == "uncertain" for s in statuses):
-            return "uncertain"
         if any(s == "implicitly_covered" for s in statuses):
             return "implicitly_covered"
+        if any(s == "uncertain" for s in statuses):
+            return "uncertain"
         return "not_detected"
 
     def _max_severity(member_keys: List[str]) -> str:
@@ -782,6 +818,8 @@ def _levenshtein_distance(a: str, b: str) -> int:
 
 
 def _looks_like_terminate(token: str) -> bool:
+    if abs(len(token) - len("terminate")) > 2:
+        return False
     return _levenshtein_distance(token, "terminate") <= TERMINATION_TOKEN_DISTANCE
 
 
@@ -977,7 +1015,11 @@ def _page_fallback_scan(
         keywords = EXPECTED_CLAUSE_PATTERNS.get(clause_type, [])
         if not keywords:
             continue
-        for page_text, page_num in pages:
+        for page_entry in pages:
+            if len(page_entry) == 3:
+                page_text, page_num, _ = page_entry
+            else:
+                page_text, page_num = page_entry
             normalized_page = _normalize_text(page_text)
             if not normalized_page:
                 continue
@@ -1009,6 +1051,14 @@ class ContractReviewService:
         self.clause_extractor = clause_extractor
         # ── Improvement 2 — load explanation templates once at init ───────────
         self.risk_explanations: Dict[str, Any] = self._load_risk_explanations()
+        # ── Group 7 — jurisdiction statutory notes ────────────────────────────
+        self.jurisdiction_statutes: Dict[str, Any] = self._load_jurisdiction_statutes()
+        # ── Group 6 — Ollama client for G8 LLM uncertain-clause resolver ──────
+        try:
+            import ollama as _ollama
+            self._ollama_client = _ollama.Client(host=settings.OLLAMA_BASE_URL)
+        except Exception:
+            self._ollama_client = None
 
         # Deterministic heuristic patterns for "problematic language detection".
         # Keep these non-prescriptive: we flag ambiguity/breadth and reference evidence.
@@ -1046,7 +1096,7 @@ class ContractReviewService:
 
     def _load_risk_explanations(self) -> Dict[str, Any]:
         """Load risk_explanations.yaml once at service init. Returns empty dict on missing file."""
-        path = Path("backend/contract_profiles/risk_explanations.yaml")
+        path = Path(__file__).parent.parent / "contract_profiles" / "risk_explanations.yaml"
         if path.exists():
             try:
                 with open(path, encoding="utf-8") as f:
@@ -1054,6 +1104,122 @@ class ContractReviewService:
             except Exception as exc:
                 logging.warning("Failed to load risk_explanations.yaml: %s", exc)
         return {}
+
+    def _load_jurisdiction_statutes(self) -> Dict[str, Any]:
+        """Load jurisdiction_statutes.yaml once at service init. Returns empty dict on missing file."""
+        path = Path(__file__).parent.parent / "legal_references" / "jurisdiction_statutes.yaml"
+        if path.exists():
+            try:
+                with open(path, encoding="utf-8") as f:
+                    return yaml.safe_load(f) or {}
+            except Exception as exc:
+                logging.warning("Failed to load jurisdiction_statutes.yaml: %s", exc)
+        return {}
+
+    def _resolve_uncertain_with_llm(self, clause_type: str, evidence_text: str, display_name: str) -> str:
+        """
+        Binary LLM confirmation for a clause stuck at status='uncertain'.
+
+        Returns 'detected', 'not_detected', or 'uncertain' (on failure).
+        Wraps all errors; never raises.
+        """
+        if not self._ollama_client:
+            return "uncertain"
+        try:
+            prompt = (
+                f"Does the following text contain a {display_name} clause? "
+                f"Reply only: YES or NO.\n\n{evidence_text[:600]}"
+            )
+            response = self._ollama_client.generate(
+                model=settings.OLLAMA_MODEL,
+                prompt=prompt,
+                options={"temperature": 0.0, "seed": settings.CONTRACT_REVIEW_SEED},
+            )
+            answer = (response.get("response") or "").strip().lower()
+            return "detected" if answer.startswith("yes") else "not_detected"
+        except Exception as exc:
+            _log.debug("G8 LLM uncertain resolver failed for %s: %s", clause_type, exc)
+            return "uncertain"
+
+    def _identify_contradiction_risks(
+        self,
+        presence_map: Dict[str, Any],
+        evidence_candidates: List[Dict[str, Any]],
+    ) -> List[RiskItem]:
+        """
+        Rule-based cross-clause contradiction detection. No LLM.
+
+        Checks:
+        1. Notice period mismatch: termination vs notice clause numeric values differ >50%.
+        2. Confidentiality perpetuity vs return_of_information co-existence.
+
+        Returns a list of low-severity RiskItems (may be empty).
+        """
+        results: List[RiskItem] = []
+
+        def _extract_duration(text: str) -> Optional[int]:
+            """Extract first duration value in days from text."""
+            m = re.search(r"(\d+)\s*(day|month|year)s?", text, re.IGNORECASE)
+            if not m:
+                return None
+            value, unit = int(m.group(1)), m.group(2).lower()
+            if unit.startswith("month"):
+                return value * 30
+            if unit.startswith("year"):
+                return value * 365
+            return value
+
+        def _evidence_text_for(clause_type: str) -> str:
+            ids = (presence_map.get(clause_type) or {}).get("clause_ids") or []
+            for cand in evidence_candidates:
+                if cand.get("clause_id") in ids:
+                    return cand.get("text", "")
+            return ""
+
+        # Check 1: notice period mismatch between termination and notice clauses
+        term_status = (presence_map.get("termination") or {}).get("status", "")
+        notice_status = (presence_map.get("notice") or {}).get("status", "")
+        if term_status == "detected" and notice_status == "detected":
+            term_text = _evidence_text_for("termination")
+            notice_text = _evidence_text_for("notice")
+            term_days = _extract_duration(term_text)
+            notice_days = _extract_duration(notice_text)
+            if term_days and notice_days and term_days != notice_days:
+                ratio = max(term_days, notice_days) / min(term_days, notice_days)
+                if ratio > 1.5:
+                    desc = enforce_non_prescriptive_language(
+                        f"Possible notice period inconsistency: termination clause references "
+                        f"{term_days} days while notice clause references {notice_days} days.",
+                        step=f"{STEP_NAME}.contradiction",
+                    )
+                    results.append(RiskItem(
+                        description=desc,
+                        severity="low",
+                        status="detected",
+                        clause_types=["termination", "notice"],
+                        missing_clause=False,
+                    ))
+
+        # Check 2: perpetual confidentiality vs return_of_information
+        conf_status = (presence_map.get("confidentiality") or {}).get("status", "")
+        ret_status = (presence_map.get("return_of_information") or {}).get("status", "")
+        if conf_status == "detected" and ret_status == "detected":
+            conf_text = _evidence_text_for("confidentiality").lower()
+            if "perpetuity" in conf_text or "forever" in conf_text:
+                desc = enforce_non_prescriptive_language(
+                    "Confidentiality obligation extends in perpetuity while a return/destruction "
+                    "of information clause is also present; consider verifying these are consistent.",
+                    step=f"{STEP_NAME}.contradiction",
+                )
+                results.append(RiskItem(
+                    description=desc,
+                    severity="low",
+                    status="detected",
+                    clause_types=["confidentiality", "return_of_information"],
+                    missing_clause=False,
+                ))
+
+        return results
 
     def _resolve_problematic_key(self, description: str, clause_type: str) -> str:
         """Map problematic language risk descriptions to explanation template keys."""
@@ -1100,16 +1266,28 @@ class ContractReviewService:
         risks: List[RiskItem],
         evidence_blocks: List[ClauseEvidenceBlock],
         max_snippets_per_risk: int = 3,
+        clause_matched_keywords: Optional[Dict[str, str]] = None,
     ) -> List[RiskItem]:
         """
         For each RiskItem, match clause_ids against evidence_blocks and attach up to
         max_snippets_per_risk VerbatimSnippet objects.
-        Skips risks where status is not_detected or uncertain, or missing_clause=True.
+        Skips risks where status is not_detected or missing_clause=True.
+        Uncertain risks retain their clause_ids and receive verbatim snippets.
+
+        clause_matched_keywords: optional map of clause_type -> matched keyword string,
+        used to populate VerbatimSnippet.matched_keyword.
         """
         block_by_id: Dict[str, ClauseEvidenceBlock] = {b.clause_id: b for b in evidence_blocks}
+        _kw_map = clause_matched_keywords or {}
         for risk in risks:
-            if risk.status in ("not_detected", "uncertain") or risk.missing_clause:
+            if risk.status == "not_detected" or risk.missing_clause:
                 continue  # no verbatim text for absent clauses
+            # Determine matched keyword for this risk's clause types
+            matched_kw: Optional[str] = None
+            for ct in risk.clause_types:
+                if ct in _kw_map:
+                    matched_kw = _kw_map[ct]
+                    break
             snippets: List[VerbatimSnippet] = []
             for cid in risk.clause_ids[:max_snippets_per_risk]:
                 block = block_by_id.get(cid)
@@ -1119,6 +1297,7 @@ class ContractReviewService:
                         display_name=block.display_name,
                         page_number=block.page_number,
                         text=block.clean_text[:400],
+                        matched_keyword=matched_kw,
                     ))
             risk.verbatim_evidence = snippets
         return risks
@@ -1370,7 +1549,12 @@ class ContractReviewService:
             return ctx
 
         meta = ctx.metadata or {}
-        contract_type_key = meta.get("contract_type") or "employment"
+        contract_type_key = meta.get("contract_type")
+        if not contract_type_key:
+            _log.warning(
+                "No contract_type in metadata for %s — defaulting to 'employment'", contract_id
+            )
+            contract_type_key = "employment"
         jurisdiction = ctx.jurisdiction or meta.get("jurisdiction")
         review_depth = meta.get("review_depth") or "standard"
 
@@ -1707,10 +1891,31 @@ class ContractReviewService:
                     if presence_map.get(canon_type, {}).get("status") != "not_detected":
                         continue
                     norm_heading_kw = _normalize_text(heading_kw)
-                    if norm_heading_kw in title_norm or title_norm in norm_heading_kw:
+                    if norm_heading_kw in title_norm:
                         presence_map[canon_type]["status"] = "detected_implicit"
                         presence_map[canon_type]["display_status"] = "Detected (Heading Match)"
                         break
+
+        # G8: LLM uncertain-clause resolver — only for standard depth, gates on Ollama availability.
+        # Resolves clauses stuck at 'uncertain' by asking the LLM a binary YES/NO question.
+        if review_depth == "standard":
+            for _g8_clause_type in expected:
+                if presence_map.get(_g8_clause_type, {}).get("status") == "uncertain":
+                    _g8_ev_text = next(
+                        (c.get("text", "") for c in evidence_candidates
+                         if c.get("clause_id") in (presence_map[_g8_clause_type].get("clause_ids") or [])),
+                        "",
+                    )
+                    _g8_disp = EXPECTED_CLAUSE_DISPLAY_NAMES.get(_g8_clause_type, _g8_clause_type)
+                    _g8_resolved = self._resolve_uncertain_with_llm(_g8_clause_type, _g8_ev_text, _g8_disp)
+                    if _g8_resolved != "uncertain":
+                        presence_map[_g8_clause_type]["status"] = _g8_resolved
+                        presence_map[_g8_clause_type]["display_status"] = _display_status_for(_g8_resolved)
+
+        # G9: Cross-clause contradiction detection — only for standard depth.
+        contradiction_risks: List[RiskItem] = []
+        if review_depth == "standard":
+            contradiction_risks = self._identify_contradiction_risks(presence_map, evidence_candidates)
 
         # Add risk rows only for clause_types that are not detected (any variant)
         _skip_risk_statuses = (
@@ -1731,16 +1936,10 @@ class ContractReviewService:
                 severity = "medium"
             if severity not in ("high", "medium", "low"):
                 severity = "medium"
-            if status == "uncertain":
-                description = f"Clause detected with weak evidence signal: {clause_type.replace('_', ' ')}."
-                clause_ids = entry.get("clause_ids") or []
-                page_numbers = entry.get("page_numbers") or []
-                missing_clause = False
-            else:
-                description = f"Clause not confidently detected: {clause_type.replace('_', ' ')}."
-                clause_ids = []
-                page_numbers = []
-                missing_clause = True
+            description = f"Clause not confidently detected: {clause_type.replace('_', ' ')}."
+            clause_ids = [result["clause_id"]] if result.get("clause_id") else []
+            page_numbers = [result["page_number"]] if result.get("page_number") else []
+            missing_clause = True
             display_names = [_resolve_clause_display_name(cid) for cid in clause_ids] if clause_ids else []
             risks.append(
                 RiskItem(
@@ -1795,6 +1994,22 @@ class ContractReviewService:
                 )
             )
 
+        # --- deduplication pass ---
+        _seen: dict = {}
+        _deduped: list = []
+        for _r in risks:
+            _key = (_r.description, frozenset(_r.clause_ids or []))
+            if _key not in _seen:
+                _seen[_key] = len(_deduped)
+                _deduped.append(_r)
+            else:
+                # merge page_numbers into the first occurrence
+                _existing = _deduped[_seen[_key]]
+                for _pn in (_r.page_numbers or []):
+                    if _pn not in (_existing.page_numbers or []):
+                        (_existing.page_numbers or []).append(_pn)
+        risks = _deduped
+
         # Guardrail: enforce on generated text only (risk descriptions, executive summary).
         for r in risks:
             r.description = enforce_non_prescriptive_language(r.description, step=f"{STEP_NAME}.risk_description")
@@ -1806,7 +2021,13 @@ class ContractReviewService:
         )
 
         # ── Improvement 1: attach verbatim evidence snippets ──────────────────
-        risks = self._attach_verbatim_evidence(risks, evidence_blocks)
+        # Build clause_type → matched_keyword map from presence_map for snippet highlighting
+        clause_matched_keywords: Dict[str, str] = {
+            ct: entry["matched_keyword"]
+            for ct, entry in presence_map.items()
+            if entry.get("matched_keyword")
+        }
+        risks = self._attach_verbatim_evidence(risks, evidence_blocks, clause_matched_keywords=clause_matched_keywords)
 
         # ── Improvement 2: attach severity reason + recommendation ─────────────
         risks = self._attach_explanations(risks)
@@ -1900,6 +2121,25 @@ class ContractReviewService:
                 )
 
         # 10) Build deliverable and store in context
+
+        # Group 2a: compute overall risk score
+        _high_count = sum(1 for r in risks if r.severity == "high")
+        _medium_count = sum(1 for r in risks if r.severity == "medium")
+        _risk_score = _high_count * 3 + _medium_count
+        _risk_label = "high_risk" if _high_count >= 2 else ("medium_risk" if _risk_score >= 2 else "low_risk")
+
+        # Group 7: statutory notes — jurisdiction-specific article references
+        statutory_notes: Optional[Dict[str, Any]] = None
+        if jurisdiction and self.jurisdiction_statutes:
+            _canon_jur, _, _ = _canon_jurisdiction(jurisdiction)
+            jur_data = self.jurisdiction_statutes.get(_canon_jur) if _canon_jur else None
+            if jur_data:
+                statutory_notes = {
+                    EXPECTED_CLAUSE_DISPLAY_NAMES.get(k, k): v
+                    for k, v in jur_data.items()
+                    if k in expected
+                }
+
         response = ContractReviewResponse(
             workflow_id=ctx.workflow_id,
             document_id=contract_id,
@@ -1913,6 +2153,10 @@ class ContractReviewService:
             implicit_coverage_notes=implicit_coverage_notes,
             document_classification_warning=document_classification_warning,
             used_implicit_or_distributed_logic=used_implicit_or_distributed_logic,
+            risk_score=_risk_score,
+            risk_label=_risk_label,
+            contradiction_risks=contradiction_risks,
+            statutory_notes=statutory_notes,
         )
         ctx.add_result(f"{STEP_NAME}.response", response.model_dump())
         ctx.workflow_state.legal_analysis = StageStatus.COMPLETE

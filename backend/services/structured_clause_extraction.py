@@ -167,7 +167,7 @@ class StructuredClauseExtractionService:
             DocumentSection.ADMINISTRATIVE_MATERIAL: [
                 r'\b(cover\s+letter|dear\s+sir|dear\s+madam|yours\s+sincerely|regards|signature|date:|dated:)',
                 r'\b(page\s+\d+|page\s+of\s+\d+)',
-                r'\b(confidential|private|internal\s+use\s+only)',
+                r'\b(private\s+and\s+confidential|internal\s+use\s+only|confidential\s+document)',
             ],
             DocumentSection.CONTRACTUAL_TERMS: [
                 r'\b(contract|agreement|terms\s+and\s+conditions|clause|article|section)',
@@ -217,6 +217,21 @@ class StructuredClauseExtractionService:
             r"\bthis\s+master\s+service\s+agreement\b",
             r"\bclient\s+shall\b",
             r"\bvendor\s+shall\b",
+            # NDA-specific patterns
+            r"\bnon.?disclosure\s+agreement\b",
+            r"\bconfidentiality\s+agreement\b",
+            r"\bdisclosing\s+party\b",
+            r"\breceiving\s+party\b",
+            r"\brecipient\s+shall\b",
+            r"\bconfidential\s+information\s+shall\b",
+            r"\bunauthorized\s+disclosure\b",
+            r"\bobligation\s+of\s+confidentiality\b",
+            # General contract patterns
+            r"\bservice\s+agreement\b",
+            r"\bthe\s+parties\s+agree\b",
+            r"\bhereby\s+agree[sd]?\b",
+            r"\bin\s+witness\s+whereof\b",
+            r"\bnow[\s,]+therefore\b",
         ]
         
         # Administrative override markers (force administrative_material)
@@ -230,7 +245,8 @@ class StructuredClauseExtractionService:
             r"\btelephone\b",
             r"\bphone\b",
             r"@\w+\.\w+",
-            r"\bno\.\s*\d+\b"
+            r"\bministry\s+no\.\s*\d+\b",
+            r"\bcircular\s+no\.\s*\d+\b",
         ]
         
         # Verb list for substantive clause detection
@@ -516,9 +532,10 @@ class StructuredClauseExtractionService:
         # Step 6: Deterministic ordering: page_start, then section order, then clause_heading.
         section_order = {
             DocumentSection.CONTRACTUAL_TERMS.value: 0,
-            DocumentSection.JUDICIAL_REASONING.value: 1,
-            DocumentSection.STATUTORY_TEXT.value: 2,
-            DocumentSection.UNKNOWN.value: 3,
+            DocumentSection.ANNEXURES_SCHEDULES.value: 1,
+            DocumentSection.JUDICIAL_REASONING.value: 2,
+            DocumentSection.STATUTORY_TEXT.value: 3,
+            DocumentSection.UNKNOWN.value: 4,
         }
         deduplicated.sort(key=lambda c: (
             c.page_start,
@@ -633,7 +650,7 @@ class StructuredClauseExtractionService:
 
             # Priority 4: Arabic numerals (^[٠-٩]+)
             if not heading:
-                match = re.match(r'^([٠-٩]+)[\.\)]\s*(.+)', line_stripped)
+                match = re.match(r'^([٠-٩]+)[\.\):]\s*(.+)', line_stripped)
                 if match:
                     clause_number = match.group(1)
                     heading = match.group(2).strip()
@@ -702,8 +719,18 @@ class StructuredClauseExtractionService:
         return any(re.search(pattern, text_lower, re.IGNORECASE) for pattern in self.administrative_markers)
 
     def _has_party_definitions(self, text_lower: str) -> bool:
-        """Detect party definitions in a page."""
-        return ("first party" in text_lower and "second party" in text_lower)
+        """Detect party definitions across Employment, NDA, and MSA document types."""
+        employment = "first party" in text_lower and "second party" in text_lower
+        msa = any(t in text_lower for t in [
+            "service provider", "the client", "the vendor", "licensor", "licensee",
+            "purchaser", "the buyer", "the seller", "the supplier",
+            "hereinafter referred to as", "hereinafter called",
+        ])
+        nda = any(t in text_lower for t in [
+            "disclosing party", "receiving party", "the recipient",
+            "the disclosing party", "the receiving party",
+        ])
+        return employment or msa or nda
 
     def _has_sustained_modal_language(self, text: str) -> bool:
         """Require sustained 'shall/may/will' across multiple lines."""
@@ -895,7 +922,7 @@ class StructuredClauseExtractionService:
         
         if "judgment" in sample or "lord" in sample or "court of appeal" in sample:
             return DocumentType.JUDGMENT
-        if "this agreement" in sample or "party" in sample:
+        if "this agreement" in sample or ("party" in sample and "agreement" in sample):
             return DocumentType.CONTRACT
         if "an act to" in sample or "section" in sample:
             return DocumentType.STATUTE
