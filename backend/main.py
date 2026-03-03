@@ -1321,6 +1321,34 @@ async def search_bilingual(
         raise HTTPException(status_code=500, detail=f"Error in bilingual search: {str(e)}")
 
 
+@app.post("/api/translate")
+async def translate_batch(
+    texts: str = Form(...),          # JSON-encoded list[str]
+    target_lang: str = Form("ar"),
+    source_lang: str = Form("en"),
+):
+    """Batch-translate a list of text strings. Returns {translations: list[str]}."""
+    import json as _json
+    global translation_service
+    if not translation_service:
+        raise HTTPException(status_code=503, detail="Translation service not available")
+    try:
+        parsed = _json.loads(texts)
+    except _json.JSONDecodeError:
+        raise HTTPException(status_code=422, detail="texts must be a valid JSON array")
+    if not isinstance(parsed, list):
+        raise HTTPException(status_code=422, detail="texts must be a JSON array")
+    if len(parsed) > 500:
+        raise HTTPException(status_code=422, detail="Too many strings (max 500)")
+    results = []
+    for t in parsed:
+        if t and str(t).strip():
+            results.append(translation_service.translate_text(str(t), source_lang, target_lang))
+        else:
+            results.append(t)
+    return {"translations": results}
+
+
 @app.get("/api/documents", response_model=DocumentListResponse)
 async def list_documents(include_versions: bool = True):
     """

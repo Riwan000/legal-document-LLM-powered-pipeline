@@ -41,6 +41,10 @@ tiktoken>=0.7.0
 # Translation
 deep-translator==1.11.4
 
+# Arabic PDF support (frontend)
+arabic-reshaper>=3.0.0
+python-bidi>=0.4.2
+
 # Testing
 pytest==7.4.3
 pytest-cov==4.1.0

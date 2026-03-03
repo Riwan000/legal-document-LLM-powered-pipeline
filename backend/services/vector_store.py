@@ -562,10 +562,17 @@ class VectorStore:
     def save(self, filepath: Path = None) -> None:
         """
         Save the vector store to disk.
-        
+
         Args:
             filepath: Path to save index (defaults to config)
         """
+        # Guard: never overwrite on-disk data with an empty in-memory state that
+        # hasn't been loaded yet.  This prevents the shutdown handler from wiping
+        # the index when the server restarts and exits before any query/add triggers
+        # the lazy _ensure_loaded().
+        if not self._loaded:
+            return
+
         filepath = filepath or settings.VECTOR_STORE_PATH / settings.FAISS_INDEX_NAME
         
         # Save index
