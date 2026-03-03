@@ -1,5 +1,23 @@
 # Troubleshooting Reference
 
+## Contract review always uses "employment" profile regardless of document type
+`document_registry.get_classification()` returns `detected_contract_type` set by Ollama at upload time; inject it into `run_contract_review()` in the `/api/contract-review` endpoint before dispatching.
+
+## Legitimate clauses containing "token"/"chunk" not extracted (fail-closed false positive)
+Replace the literal-word check (`'token' in text.lower()`) with an alpha-ratio check: only reject pages where `alpha_chars / len(text) < 0.10`, which catches genuinely encoded data without blocking real text.
+
+## Contracts with "section 3.1" mis-detected as STATUTE
+`detect_document_type()` matched on `"section" in sample`; remove that condition and only trigger STATUTE on `"an act to"` (the unambiguous statutory preamble).
+
+## DistilBERT truncation warning / possible missed context
+Reduce input to `text[:2000]` (≈400 tokens) instead of `text[:3000]` to stay safely within the 512-token DistilBERT limit.
+
+## `_keyword_classify` heuristic cannot infer contract type (Ollama offline)
+Add `_HEURISTIC_CONTRACT_TYPE_KEYWORDS` dict and score each contract type against the lowercased text; return best match as the third element of the tuple. Update `_stage1` to unpack the 3-tuple.
+
+## Contracts with Notices section (email addresses) produce empty clause list
+The `r"@\w+\.\w+"` administrative_markers regex matched email addresses and suppressed the entire page. Remove it — the remaining markers (ministry, circular, telephone) are sufficient.
+
 ## RAG returns "info not found" on every question
 
 **First check:** Is the vector store empty?
@@ -42,6 +60,9 @@ If `len_chunks` is consistently 0 for one `document_id` but not others, that doc
 Occurs when retrieval returns 0 chunks. The guardrail has nothing to grade and fails immediately. Fix retrieval first (see above) — the guardrail result will recover on its own.
 
 ---
+
+## Contract review runs on unsupported document types (statute, policy, etc.)
+Guard the Step-3 review call with `_REVIEWABLE_TYPES = {"employment", "nda", "msa"}`; if the selected contract type is not in that set, set `wf_review_done=True`, `wf_review_result=None`, `wf_agent_state="qa_active"`, append a skip notice to chat history, and `st.rerun()` — skipping the review entirely and landing directly in Document Explorer Q&A.
 
 ## General pipeline health checklist
 

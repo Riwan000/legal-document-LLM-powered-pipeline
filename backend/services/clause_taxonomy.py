@@ -11,6 +11,10 @@ from backend.models.clause import ClauseType, TerminationSubtype
 
 logger = logging.getLogger(__name__)
 
+# SYNC REQUIREMENT: Every slug in _LEGAL_CATEGORY_PRIORITY (except "other")
+# must have a corresponding entry in _CATEGORY_SLUG_KEYWORDS.
+# New categories must be added to BOTH structures.
+
 # Tie-break priority order for classify_legal_category() (lower index = higher priority)
 _LEGAL_CATEGORY_PRIORITY = [
     "governing_law",
@@ -202,8 +206,15 @@ class ClauseTaxonomyService:
             if score > 0:
                 string_scores[slug] = score
 
-        # If a string-type match found, return OTHER (caller can read normalized_clause_type)
+        # If a string-type match found, try to map the winning slug back to a ClauseType enum value.
+        # For non-enum string-type matches where no ClauseType exists, returns ClauseType.OTHER.
+        # Use classify_clause_type_string() to get the exact slug.
         if string_scores:
+            winning_slug = max(string_scores.items(), key=lambda x: x[1])[0]
+            try:
+                return ClauseType(winning_slug)
+            except ValueError:
+                pass  # Slug has no enum equivalent (e.g. ip_ownership, sla_obligations)
             return ClauseType.OTHER
 
         return ClauseType.OTHER
@@ -308,6 +319,9 @@ class ClauseTaxonomyService:
         """
         text_lower = clause_text.lower()
 
+        # Priority order (first match wins — ordering is intentional):
+        # TERMINATION_RIGHTS > TERMINATION_NOTICE > PROBATION_TERMINATION >
+        # END_OF_SERVICE_COMPENSATION > DEATH_DISABILITY
         subtype_keywords = {
             TerminationSubtype.TERMINATION_RIGHTS: [
                 "right to terminate", "may terminate", "entitled to terminate"

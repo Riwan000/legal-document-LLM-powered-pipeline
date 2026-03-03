@@ -1655,7 +1655,7 @@ if page == "🔍 Document Explorer":
                 _ct_idx = _ct_options.index(detected_type) if detected_type in _ct_options else 0
                 wf_contract_type_sel = st.selectbox(
                     "Contract type", _ct_options, index=_ct_idx, key="wf_contract_type_select",
-                    help="Automatically detected from document text",
+                    help="Automatically detected from document text. Select 'other' to skip contract analysis and go directly to Document Explorer.",
                 )
                 if _cls.get("detected_contract_type"):
                     st.caption(f"🤖 Auto-detected: **{_cls['detected_contract_type']}**")
@@ -1871,7 +1871,24 @@ if page == "🔍 Document Explorer":
             agent_state = st.session_state.wf_agent_state
 
             # ── Agent 1: Contract Analysis (auto-runs on entry) ───────────
+            _REVIEWABLE_TYPES = {"employment", "nda", "msa"}
             if not st.session_state.wf_review_done:
+                _selected_ct = st.session_state.get("wf_contract_type", "other")
+                if _selected_ct not in _REVIEWABLE_TYPES:
+                    # Skip contract review — unsupported type, go straight to Q&A
+                    st.session_state.wf_review_result = None
+                    st.session_state.wf_review_done = True
+                    st.session_state.wf_agent_state = "qa_active"
+                    st.session_state.explorer_chat_history.append({
+                        "role": "assistant",
+                        "content": (
+                            f"Document type **{_selected_ct}** is not eligible for contract review. "
+                            "You can ask any question about this document below."
+                        ),
+                        "msg_type": "agent_prompt",
+                    })
+                    st.rerun()
+
                 st.session_state.wf_agent_state = "reviewing"
                 with st.spinner("Running contract analysis…"):
                     review_result = _run_contract_review(

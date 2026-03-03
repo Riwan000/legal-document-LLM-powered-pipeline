@@ -101,10 +101,6 @@ EXPECTED_CLAUSE_PATTERNS: Dict[str, List[str]] = {
         "amicable settlement",
     ],
     # ── 1c: new entries (RC1 fix) ─────────────────────────────────────────────
-    "probation": [
-        "probation", "probation period", "probationary period",
-        "trial period", "on probation",
-    ],
     "non_solicitation": [
         "non solicitation", "not solicit", "solicit employees",
         "solicit customers", "non compete",
@@ -1601,7 +1597,7 @@ class ContractReviewService:
                 full_text = "\n".join((t or "") for t, _ in pages)
                 if not _is_likely_operative_contract(full_text):
                     document_classification_warning = (
-                        "This document does not appear to be an operative employment contract. "
+                        f"This document does not appear to be an operative {contract_type_key} contract. "
                         "Results are based on the selected contract profile and may reflect profile mismatch rather than missing clauses."
                     )
             except Exception:

@@ -13,7 +13,7 @@ import logging
 import re
 import time
 import threading
-from typing import Optional
+from typing import Dict, List, Optional
 
 import httpx
 
@@ -127,8 +127,6 @@ _CASE_FILE_SIGNALS: list[str] = [
     # Hearing language
     "hearing date", "handed down", "approved judgment",
     "before the honourable", "before mr justice",
-    # Case style separator (padded to avoid matching inside words like "review")
-    " v ", "versus",
     # Litigation procedural terms
     "pleadings", "particulars of claim", "statement of case",
     "witness statement", "skeleton argument", "written submissions",
@@ -140,6 +138,13 @@ _CASE_FILE_SIGNALS: list[str] = [
     "state immunity act", "human rights act",
 ]
 _CASE_FILE_THRESHOLD: int = 3
+
+# Keyword sets used by the heuristic fallback to infer contract type when Ollama is unavailable.
+_HEURISTIC_CONTRACT_TYPE_KEYWORDS: Dict[str, List[str]] = {
+    "employment": ["employee", "employer", "salary", "probation", "employment agreement", "notice period"],
+    "nda":        ["non disclosure", "confidential information", "disclosing party", "receiving party"],
+    "msa":        ["service provider", "master service agreement", "sla", "deliverables", "service level"],
+}
 
 # Lazy-loaded pipeline; protected by a lock so we only download once.
 _distilbert_pipeline = None
@@ -324,9 +329,9 @@ class DocumentClassificationService:
         except Exception as exc:
             logger.warning("Ollama classification failed (%s), using heuristic fallback", exc)
 
-        # Heuristic fallback — no contract_type/jurisdiction detection
-        is_legal, confidence = self._keyword_classify(text)
-        return is_legal, confidence, None, True, None, None
+        # Heuristic fallback — contract_type inferred from keywords, no jurisdiction detection
+        is_legal, confidence, contract_type = self._keyword_classify(text)
+        return is_legal, confidence, None, True, contract_type, None
 
     def _ollama_classify(self, text: str):
         """
@@ -391,7 +396,7 @@ class DocumentClassificationService:
         return None  # Caller will fall back to heuristic
 
     def _keyword_classify(self, text: str):
-        """Bilingual keyword scan (English + Arabic). Returns (is_legal, confidence)."""
+        """Bilingual keyword scan (English + Arabic). Returns (is_legal, confidence, contract_type)."""
         lower = text.lower()
         en_hits = sum(1 for kw in _LEGAL_KEYWORDS if kw in lower)
         # Arabic keywords are checked against the original text (case is irrelevant for Arabic)
@@ -404,7 +409,19 @@ class DocumentClassificationService:
         en_conf = min(0.9, en_hits / len(_LEGAL_KEYWORDS))
         ar_conf = min(0.9, ar_hits / len(_ARABIC_LEGAL_KEYWORDS))
         confidence = max(en_conf, ar_conf)
-        return is_legal, confidence
+
+        # Infer contract type from keyword matches
+        contract_type: Optional[str] = None
+        if is_legal:
+            ct_scores = {
+                ct: sum(1 for kw in kws if kw in lower)
+                for ct, kws in _HEURISTIC_CONTRACT_TYPE_KEYWORDS.items()
+            }
+            best = max(ct_scores.items(), key=lambda x: x[1])
+            if best[1] > 0:
+                contract_type = best[0]
+
+        return is_legal, confidence, contract_type
 
     # ── Stage 2 helper ──────────────────────────────────────────────────────────
 
@@ -418,8 +435,8 @@ class DocumentClassificationService:
             return False, None, "DistilBERT model unavailable (download failed or not installed)"
 
         try:
-            # Pipeline truncates to 512 tokens automatically
-            results = pipe(text[:3000], truncation=True, max_length=512)
+            # 2000 chars ≈ 400 tokens, safely within DistilBERT 512 token limit
+            results = pipe(text[:2000], truncation=True, max_length=512)
             if not results:
                 return False, None, "DistilBERT returned empty result"
             top = results[0] if isinstance(results[0], dict) else results[0][0]

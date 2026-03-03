@@ -1,0 +1,19 @@
+contract_type: Other
+
+expected_clauses:
+  - governing_law
+  - termination
+  - liability
+
+optional_clauses:
+  - confidentiality
+  - dispute_resolution
+  - indemnification
+
+risk_weights:
+  governing_law: high
+  termination: high
+  liability: medium
+  indemnification: medium
+  confidentiality: medium
+  dispute_resolution: low

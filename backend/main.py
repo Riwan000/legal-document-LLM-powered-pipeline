@@ -1016,9 +1016,25 @@ async def contract_review(
     if not workflow_orchestrator:
         raise HTTPException(status_code=500, detail="Workflow orchestrator not initialized")
     try:
+        # Resolve contract_type: use registry auto-detection if user left default
+        resolved_contract_type = contract_type
+        if document_registry:
+            cls_info = document_registry.get_classification(contract_id)
+            if cls_info:
+                detected = cls_info.get("detected_contract_type")
+                if detected and detected not in ("other", None) and contract_type == "employment":
+                    logging.info(
+                        "Auto-resolved contract_type from 'employment' to '%s' via classification registry for %s",
+                        detected, contract_id
+                    )
+                    resolved_contract_type = detected
+                # Also auto-fill jurisdiction if not provided
+                if not jurisdiction and cls_info.get("detected_jurisdiction"):
+                    jurisdiction = cls_info["detected_jurisdiction"]
+
         ctx = workflow_orchestrator.run_contract_review(
             contract_id=contract_id,
-            contract_type=contract_type,
+            contract_type=resolved_contract_type,
             jurisdiction=jurisdiction,
             review_depth=review_depth,
         )

@@ -18,7 +18,7 @@ risk_weights:
   liability: high
   termination: high
   indemnification: high
-  limitation_of_liability: high
+  limitation_of_liability: medium
   dispute_resolution: medium
   confidentiality: medium
   ip_ownership: medium

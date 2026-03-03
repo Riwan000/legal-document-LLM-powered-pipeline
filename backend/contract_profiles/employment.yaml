@@ -10,7 +10,6 @@ expected_clauses:
   - conduct_discipline
   - probation_period
   - end_of_service_gratuity
-  - probation            # contract_fixes1: moved from optional (dead code)
 
 optional_clauses:
   - confidentiality
@@ -22,7 +21,6 @@ optional_clauses:
 risk_weights:
   termination: high
   governing_law: high
-  liability: high
   compensation: high
   end_of_service_gratuity: high
   salary_wages: medium
@@ -34,4 +32,3 @@ risk_weights:
   dispute_resolution: low
   non_compete: low
   ip_ownership: low
-  probation: low         # contract_fixes1

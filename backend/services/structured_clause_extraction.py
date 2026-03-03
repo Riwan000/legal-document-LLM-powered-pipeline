@@ -244,7 +244,6 @@ class StructuredClauseExtractionService:
             r"\bemail\b",
             r"\btelephone\b",
             r"\bphone\b",
-            r"@\w+\.\w+",
             r"\bministry\s+no\.\s*\d+\b",
             r"\bcircular\s+no\.\s*\d+\b",
         ]
@@ -311,10 +310,10 @@ class StructuredClauseExtractionService:
                 logger.error(f"Invalid page_number detected: {page_number}. Must be 1-indexed. Fail-closed.")
                 return []
             
-            # FAIL-CLOSED: Reject chunk-like input (check for embeddings/tokens indicators)
-            if text and ('embedding' in text.lower() or 'chunk' in text.lower() or 'token' in text.lower()):
-                # This might be chunk metadata, not page text - fail closed
-                logger.error("Input appears to be chunks/embeddings, not page-level text. Fail-closed.")
+            # FAIL-CLOSED: Reject binary/encoded content (alpha ratio < 10%)
+            _alpha_chars = sum(1 for c in (text or "") if c.isalpha())
+            if text and len(text) > 50 and _alpha_chars / len(text) < 0.10:
+                logger.error("Input appears to be non-textual/encoded content. Fail-closed.")
                 return []
             
             # Split text into lines (preserve verbatim line structure)
@@ -924,7 +923,7 @@ class StructuredClauseExtractionService:
             return DocumentType.JUDGMENT
         if "this agreement" in sample or ("party" in sample and "agreement" in sample):
             return DocumentType.CONTRACT
-        if "an act to" in sample or "section" in sample:
+        if "an act to" in sample:
             return DocumentType.STATUTE
         return DocumentType.UNKNOWN
 
