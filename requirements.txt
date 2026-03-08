@@ -14,11 +14,11 @@ python-docx==1.1.0
 # OCR Support (for scanned/image-based PDFs)
 pytesseract==0.3.10
 pdf2image==1.16.3
-Pillow==10.1.0
+Pillow>=10.4.0
 symspellpy>=6.7.7
 
 # Vector Database
-faiss-cpu==1.7.4
+faiss-cpu>=1.8.0
 
 # LLM Client
 ollama==0.1.6
@@ -35,7 +35,7 @@ pydantic-settings==2.1.0
 PyYAML>=6.0
 
 # Additional utilities
-numpy==1.24.3
+numpy>=1.26.0
 tiktoken>=0.7.0
 
 # Translation
@@ -52,3 +52,6 @@ reportlab==4.0.7  # For creating test PDFs
 httpx==0.25.2  # For FastAPI TestClient
 requests==2.31.0  # For manual API testing
 
+# --- Desktop packaging (build-time, not needed for dev server) ---
+pystray>=0.19.4
+pyinstaller>=6.0
