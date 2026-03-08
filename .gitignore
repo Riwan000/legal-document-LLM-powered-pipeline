@@ -49,6 +49,11 @@ Thumbs.db
 *.md
 !README.md
 
+# Excluded deployment folders
+installer/
+launcher/
+vendors/
+
 # Frontend build and dependencies
 frontend/young-counsel-ui/.next/
 frontend/young-counsel-ui/node_modules/
