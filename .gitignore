@@ -45,6 +45,10 @@ Thumbs.db
 # Logs
 *.log
 
+# Markdown files (except README.md)
+*.md
+!README.md
+
 # Frontend build and dependencies
 frontend/young-counsel-ui/.next/
 frontend/young-counsel-ui/node_modules/
