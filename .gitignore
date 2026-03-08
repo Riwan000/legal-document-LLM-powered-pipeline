@@ -18,10 +18,10 @@ test_*.py
 tests/
 manual_test_*.py
 
-# Example PDFs and documents
-data/documents/*.pdf
-data/documents/*.docx
-data/documents/*.doc
+# Documents and PDFs
+*.pdf
+*.docx
+*.doc
 
 # Vector store indices (generated files)
 data/vector_store/*.index
