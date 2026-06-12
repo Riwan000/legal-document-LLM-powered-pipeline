@@ -64,6 +64,15 @@ from backend.models.document import DocumentClassification
 from backend.services.structured_clause_extraction import StructuredClauseExtractionService
 from backend.utils.chunking import TextChunker
 
+# Agent layer (see plans/agentic-orchestrator.md)
+from backend.agent.executor import AgentExecutor
+from backend.agent.rule_planner import RuleBasedPlanner
+from backend.agent.run_store import get_run as get_agent_run
+from backend.agent.tool_registry import ToolRegistry
+from backend.agent.tools import AgentToolServices, register_all_tools
+from backend.models.agent import AgentRunRequest, AgentRunResponse
+from backend.services.query_classifier import QueryClassifier
+
 
 # Lifespan handlers (replaces deprecated on_event startup/shutdown)
 @asynccontextmanager
@@ -135,6 +144,10 @@ chat_orchestrator: Optional[ChatOrchestratorService] = None
 document_classification_service: Optional[DocumentClassificationService] = None
 structured_clause_extractor: Optional[StructuredClauseExtractionService] = None
 
+# Agent layer
+agent_registry: Optional[ToolRegistry] = None
+agent_executor: Optional[AgentExecutor] = None
+
 # Serialize uploads to avoid DB/vector-store races when user clicks "Upload & Classify" twice
 _upload_lock = threading.Lock()
 
@@ -148,6 +161,7 @@ async def _initialize_services():
     global extracted_clause_store, ingestion_metadata_store
     global session_store, session_manager, chat_orchestrator
     global document_classification_service, structured_clause_extractor
+    global agent_registry, agent_executor
     
     print("Initializing services...")
     
@@ -227,6 +241,24 @@ async def _initialize_services():
     # Document classification service
     document_classification_service = DocumentClassificationService()
     print("Document classification service initialized")
+
+    # Agent layer: tool registry + planner + executor (Phase 1: rule-based planner)
+    agent_registry = ToolRegistry(tool_timeout_s=settings.AGENT_TOOL_TIMEOUT_S)
+    register_all_tools(
+        agent_registry,
+        AgentToolServices(
+            workflow_orchestrator=workflow_orchestrator,
+            comparison_service=comparison_service,
+            summarization_service=summarization_service,
+            document_registry=document_registry,
+        ),
+    )
+    agent_executor = AgentExecutor(
+        registry=agent_registry,
+        planner=RuleBasedPlanner(query_classifier=QueryClassifier()),
+        document_registry=document_registry,
+    )
+    print(f"Agent layer initialized ({len(agent_registry.specs())} tools, planner={settings.AGENT_PLANNER})")
 
     # Structured clause extractor (for Phase 6 upload pipeline)
     structured_clause_extractor = StructuredClauseExtractionService()
@@ -1053,6 +1085,40 @@ async def get_workflow_state(workflow_id: str):
     if state is None:
         raise HTTPException(status_code=404, detail="Workflow not found")
     return state
+
+
+@app.post("/api/agent/run", response_model=AgentRunResponse, tags=["Agent"])
+async def agent_run(request: AgentRunRequest):
+    """
+    Run an agentic request: the planner routes the natural-language task to
+    one of the registered workflow tools, scoped to request.document_ids.
+    Synchronous; returns the full AgentRunResponse with audit trace.
+    """
+    global agent_executor
+    if not agent_executor:
+        raise HTTPException(status_code=500, detail="Agent layer not initialized")
+    try:
+        return agent_executor.run(request)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Agent run failed: {str(e)}")
+
+
+@app.get("/api/agent/run/{run_id}", tags=["Agent"])
+async def get_agent_run_by_id(run_id: str):
+    """Return a stored agent run by id. 404 if unknown or evicted."""
+    run = get_agent_run(run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Agent run not found")
+    return run
+
+
+@app.get("/api/agent/tools", tags=["Agent"])
+async def list_agent_tools():
+    """List registered agent tools (introspection/debugging)."""
+    global agent_registry
+    if not agent_registry:
+        raise HTTPException(status_code=500, detail="Agent layer not initialized")
+    return {"tools": [spec.model_dump() for spec in agent_registry.specs()]}
 
 
 @app.post("/api/explore")
