@@ -1094,6 +1094,228 @@ JSON response:"""
         
         return citations
     
+    @staticmethod
+    def _md_case_spine(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the case spine markdown section."""
+        out = ""
+        # Case Spine (new format only)
+        if is_new_format and summary.get('case_spine'):
+            spine = summary['case_spine']
+            out += "## Case Spine\n\n"
+            out += f"- **Case:** {spine.get('case_name', 'N/A')}\n"
+            out += f"- **Court:** {spine.get('court', 'N/A')}\n"
+            out += f"- **Date:** {spine.get('date', 'N/A')}\n"
+            out += f"- **Parties:** {', '.join(spine.get('parties', []))}\n"
+            out += f"- **Procedural Posture:** {spine.get('procedural_posture', 'N/A')}\n"
+            if spine.get('core_issues'):
+                out += "- **Core Issues:**\n"
+                for issue in spine['core_issues']:
+                    out += f"  - {issue}\n"
+            out += "\n"
+        
+        return out
+
+    @staticmethod
+    def _md_executive_summary(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the executive summary markdown section."""
+        out = ""
+        # Executive Summary
+        out += "## Executive Summary\n\n"
+        if is_new_format:
+            # New format: array of items
+            exec_items = summary.get('executive_summary', [])
+            if exec_items:
+                for item in exec_items:
+                    source = item.get('source', {})
+                    out += f"{item.get('text', '')}\n"
+                    out += f"*Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n\n"
+            else:
+                out += "No executive summary available.\n\n"
+        else:
+            # Old format: string
+            out += f"{summary.get('executive_summary', 'No summary available')}\n\n"
+        
+        return out
+
+    @staticmethod
+    def _md_timeline(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the timeline markdown section."""
+        out = ""
+        # Timeline
+        if summary.get('timeline'):
+            out += "## Timeline of Events\n\n"
+            for event in summary['timeline']:
+                if is_new_format:
+                    source = event.get('source', {})
+                    out += f"- **{event.get('date', 'N/A')}**: {event.get('event', '')}\n"
+                    out += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
+                else:
+                    out += f"- **{event.get('date', 'N/A')}**: {event.get('event', '')} {event.get('source', '')}\n"
+            out += "\n"
+        
+        return out
+
+    @staticmethod
+    def _md_key_arguments(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the key arguments markdown section."""
+        out = ""
+        # Key Arguments
+        if summary.get('key_arguments'):
+            out += "## Key Arguments\n\n"
+            if is_new_format:
+                args = summary['key_arguments']
+                if args.get('claimant'):
+                    out += "### Claimant/Plaintiff Arguments\n\n"
+                    for arg in args['claimant']:
+                        source = arg.get('source', {})
+                        out += f"- {arg.get('text', '')}\n"
+                        out += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
+                    out += "\n"
+                if args.get('defendant'):
+                    out += "### Defendant/Respondent Arguments\n\n"
+                    for arg in args['defendant']:
+                        source = arg.get('source', {})
+                        out += f"- {arg.get('text', '')}\n"
+                        out += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
+                    out += "\n"
+            else:
+                # Old format
+                for arg in summary['key_arguments']:
+                    out += f"- {arg.get('argument', '')} {arg.get('source', '')}\n"
+                out += "\n"
+        
+        return out
+
+    @staticmethod
+    def _md_open_issues(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the open issues markdown section."""
+        out = ""
+        # Open Issues
+        if summary.get('open_issues'):
+            out += "## Open Issues\n\n"
+            for issue in summary['open_issues']:
+                if is_new_format:
+                    source = issue.get('source', {})
+                    out += f"- {issue.get('text', '')}\n"
+                    out += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
+                else:
+                    out += f"- {issue.get('issue', '')} {issue.get('source', '')}\n"
+            out += "\n"
+        
+        return out
+
+    @staticmethod
+    def _md_citations(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the citations markdown section."""
+        out = ""
+        # Citations
+        if summary.get('citations'):
+            out += "## Source Citations\n\n"
+            for citation in summary['citations']:
+                if is_new_format:
+                    out += f"- **{citation.get('chunk_id', '')}**: Page {citation.get('page', 0)}, Type: {citation.get('chunk_type', 'unknown')}\n"
+                else:
+                    out += f"**{citation.get('citation', '')}**\n"
+                    out += f"> {citation.get('text', '')}\n\n"
+        
+        return out
+
+    def _render_markdown_report(self, summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the markdown-format case summary report."""
+        report = "# Case File Summary\n\n"
+        report += self._md_case_spine(summary, is_new_format)
+        report += self._md_executive_summary(summary, is_new_format)
+        report += self._md_timeline(summary, is_new_format)
+        report += self._md_key_arguments(summary, is_new_format)
+        report += self._md_open_issues(summary, is_new_format)
+        report += self._md_citations(summary, is_new_format)
+        return report
+
+    @staticmethod
+    def _text_case_spine(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the case spine text section."""
+        out = ""
+        if is_new_format and summary.get('case_spine'):
+            spine = summary['case_spine']
+            out += f"Case: {spine.get('case_name', 'N/A')}\n"
+            out += f"Court: {spine.get('court', 'N/A')}\n"
+            out += f"Date: {spine.get('date', 'N/A')}\n\n"
+        
+        return out
+
+    @staticmethod
+    def _text_executive_summary(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the executive summary text section."""
+        out = ""
+        out += "Executive Summary:\n" + "-" * 50 + "\n"
+        if is_new_format:
+            for item in summary.get('executive_summary', []):
+                out += f"{item.get('text', '')}\n"
+        else:
+            out += f"{summary.get('executive_summary', '')}\n"
+        
+        return out
+
+    @staticmethod
+    def _text_timeline(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the timeline text section."""
+        out = ""
+        if summary.get('timeline'):
+            out += "\nTimeline:\n" + "-" * 50 + "\n"
+            for event in summary['timeline']:
+                out += f"{event.get('date', 'N/A')}: {event.get('event', '')}\n"
+        
+        return out
+
+    @staticmethod
+    def _text_key_arguments(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the key arguments text section."""
+        out = ""
+        if summary.get('key_arguments'):
+            out += "\nKey Arguments:\n" + "-" * 50 + "\n"
+            if is_new_format:
+                args = summary['key_arguments']
+                if args.get('claimant'):
+                    out += "Claimant Arguments:\n"
+                    for arg in args['claimant']:
+                        out += f"- {arg.get('text', '')}\n"
+                if args.get('defendant'):
+                    out += "Defendant Arguments:\n"
+                    for arg in args['defendant']:
+                        out += f"- {arg.get('text', '')}\n"
+            else:
+                for arg in summary['key_arguments']:
+                    out += f"- {arg.get('argument', '')}\n"
+        
+        return out
+
+    @staticmethod
+    def _text_open_issues(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the open issues text section."""
+        out = ""
+        if summary.get('open_issues'):
+            out += "\nOpen Issues:\n" + "-" * 50 + "\n"
+            for issue in summary['open_issues']:
+                if is_new_format:
+                    out += f"- {issue.get('text', '')}\n"
+                else:
+                    out += f"- {issue.get('issue', '')}\n"
+        
+        return out
+
+    def _render_text_report(self, summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the plain-text-format case summary report."""
+        report = f"""Case File Summary
+{'=' * 50}
+
+"""
+        report += self._text_case_spine(summary, is_new_format)
+        report += self._text_executive_summary(summary, is_new_format)
+        report += self._text_timeline(summary, is_new_format)
+        report += self._text_key_arguments(summary, is_new_format)
+        report += self._text_open_issues(summary, is_new_format)
+        return report
+
     def generate_summary_report(
         self,
         summary: Dict[str, Any],
@@ -1102,158 +1324,15 @@ JSON response:"""
         """
         Generate a human-readable summary report.
         Handles both old and new summary formats.
-        
+
         Args:
             summary: Summary dictionary (new format with case_spine, or old format)
             format: Output format ('markdown' or 'text')
-            
+
         Returns:
             Formatted report string
         """
-        # Detect format: new format has case_spine, old format has executive_summary as string
         is_new_format = 'case_spine' in summary
-        
         if format == 'markdown':
-            report = "# Case File Summary\n\n"
-            
-            # Case Spine (new format only)
-            if is_new_format and summary.get('case_spine'):
-                spine = summary['case_spine']
-                report += "## Case Spine\n\n"
-                report += f"- **Case:** {spine.get('case_name', 'N/A')}\n"
-                report += f"- **Court:** {spine.get('court', 'N/A')}\n"
-                report += f"- **Date:** {spine.get('date', 'N/A')}\n"
-                report += f"- **Parties:** {', '.join(spine.get('parties', []))}\n"
-                report += f"- **Procedural Posture:** {spine.get('procedural_posture', 'N/A')}\n"
-                if spine.get('core_issues'):
-                    report += "- **Core Issues:**\n"
-                    for issue in spine['core_issues']:
-                        report += f"  - {issue}\n"
-                report += "\n"
-            
-            # Executive Summary
-            report += "## Executive Summary\n\n"
-            if is_new_format:
-                # New format: array of items
-                exec_items = summary.get('executive_summary', [])
-                if exec_items:
-                    for item in exec_items:
-                        source = item.get('source', {})
-                        report += f"{item.get('text', '')}\n"
-                        report += f"*Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n\n"
-                else:
-                    report += "No executive summary available.\n\n"
-            else:
-                # Old format: string
-                report += f"{summary.get('executive_summary', 'No summary available')}\n\n"
-            
-            # Timeline
-            if summary.get('timeline'):
-                report += "## Timeline of Events\n\n"
-                for event in summary['timeline']:
-                    if is_new_format:
-                        source = event.get('source', {})
-                        report += f"- **{event.get('date', 'N/A')}**: {event.get('event', '')}\n"
-                        report += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
-                    else:
-                        report += f"- **{event.get('date', 'N/A')}**: {event.get('event', '')} {event.get('source', '')}\n"
-                report += "\n"
-            
-            # Key Arguments
-            if summary.get('key_arguments'):
-                report += "## Key Arguments\n\n"
-                if is_new_format:
-                    args = summary['key_arguments']
-                    if args.get('claimant'):
-                        report += "### Claimant/Plaintiff Arguments\n\n"
-                        for arg in args['claimant']:
-                            source = arg.get('source', {})
-                            report += f"- {arg.get('text', '')}\n"
-                            report += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
-                        report += "\n"
-                    if args.get('defendant'):
-                        report += "### Defendant/Respondent Arguments\n\n"
-                        for arg in args['defendant']:
-                            source = arg.get('source', {})
-                            report += f"- {arg.get('text', '')}\n"
-                            report += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
-                        report += "\n"
-                else:
-                    # Old format
-                    for arg in summary['key_arguments']:
-                        report += f"- {arg.get('argument', '')} {arg.get('source', '')}\n"
-                    report += "\n"
-            
-            # Open Issues
-            if summary.get('open_issues'):
-                report += "## Open Issues\n\n"
-                for issue in summary['open_issues']:
-                    if is_new_format:
-                        source = issue.get('source', {})
-                        report += f"- {issue.get('text', '')}\n"
-                        report += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
-                    else:
-                        report += f"- {issue.get('issue', '')} {issue.get('source', '')}\n"
-                report += "\n"
-            
-            # Citations
-            if summary.get('citations'):
-                report += "## Source Citations\n\n"
-                for citation in summary['citations']:
-                    if is_new_format:
-                        report += f"- **{citation.get('chunk_id', '')}**: Page {citation.get('page', 0)}, Type: {citation.get('chunk_type', 'unknown')}\n"
-                    else:
-                        report += f"**{citation.get('citation', '')}**\n"
-                        report += f"> {citation.get('text', '')}\n\n"
-            
-            return report
-        
-        else:  # text format
-            report = f"""Case File Summary
-{'=' * 50}
-
-"""
-            if is_new_format and summary.get('case_spine'):
-                spine = summary['case_spine']
-                report += f"Case: {spine.get('case_name', 'N/A')}\n"
-                report += f"Court: {spine.get('court', 'N/A')}\n"
-                report += f"Date: {spine.get('date', 'N/A')}\n\n"
-            
-            report += "Executive Summary:\n" + "-" * 50 + "\n"
-            if is_new_format:
-                for item in summary.get('executive_summary', []):
-                    report += f"{item.get('text', '')}\n"
-            else:
-                report += f"{summary.get('executive_summary', '')}\n"
-            
-            if summary.get('timeline'):
-                report += "\nTimeline:\n" + "-" * 50 + "\n"
-                for event in summary['timeline']:
-                    report += f"{event.get('date', 'N/A')}: {event.get('event', '')}\n"
-            
-            if summary.get('key_arguments'):
-                report += "\nKey Arguments:\n" + "-" * 50 + "\n"
-                if is_new_format:
-                    args = summary['key_arguments']
-                    if args.get('claimant'):
-                        report += "Claimant Arguments:\n"
-                        for arg in args['claimant']:
-                            report += f"- {arg.get('text', '')}\n"
-                    if args.get('defendant'):
-                        report += "Defendant Arguments:\n"
-                        for arg in args['defendant']:
-                            report += f"- {arg.get('text', '')}\n"
-                else:
-                    for arg in summary['key_arguments']:
-                        report += f"- {arg.get('argument', '')}\n"
-            
-            if summary.get('open_issues'):
-                report += "\nOpen Issues:\n" + "-" * 50 + "\n"
-                for issue in summary['open_issues']:
-                    if is_new_format:
-                        report += f"- {issue.get('text', '')}\n"
-                    else:
-                        report += f"- {issue.get('issue', '')}\n"
-            
-            return report
-
+            return self._render_markdown_report(summary, is_new_format)
+        return self._render_text_report(summary, is_new_format)
