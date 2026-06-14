@@ -654,6 +654,165 @@ class RAGService:
             "policy_clauses": policy_clauses,
         }
     
+    def _retrieve_clauses_and_chunks(
+        self,
+        query: str,
+        classification: Any,
+        document_id_filter: Optional[str],
+        top_k: Optional[int],
+        chunks_override: Optional[List[Dict[str, Any]]],
+    ) -> tuple:
+        """
+        Return ``(structured_clauses, chunks)`` for the query.
+
+        When ``chunks_override`` is provided, retrieval and structured-clause
+        lookup are skipped and the caller's chunks are used as-is.
+        """
+        structured_clauses: List[Any] = []
+        if chunks_override is not None:
+            # Use provided chunks and skip retrieval/structured clause lookup
+            return structured_clauses, chunks_override
+
+        # Step 3: Try to retrieve structured clauses first (if clause store available)
+        if self.clause_store and document_id_filter:
+            try:
+                # RAG retrieval uses ranking-ready candidate clauses from ClauseStore.
+                # ClauseStore remains ranking-agnostic: it only returns data + normalized metadata.
+                candidate_dicts = self.clause_store.get_candidate_clauses(
+                    document_ids=[document_id_filter]
+                )
+
+                # If we have specific query_types, filter candidates by normalized clause_type.
+                filtered_candidates = candidate_dicts
+                if classification.query_types and classification.query_types[0] != "general":
+                    primary_type = classification.query_types[0].lower()
+                    filtered_candidates = [
+                        c for c in candidate_dicts
+                        if c.get("clause_type") == primary_type
+                    ]
+
+                # Use the underlying StructuredClause objects for hierarchy analysis.
+                structured_clauses = [c["clause"] for c in filtered_candidates]
+            except Exception as e:
+                print(f"Error querying clause store: {str(e)}")
+                structured_clauses = []
+
+        # Step 4: Retrieve relevant chunks with priority boosting (weighted).
+        # Over-fetch for page coverage: use top_k * 4; page grouping will select top pages.
+        priority_weights = self._get_priority_clause_types(classification)
+        effective_top_k = (top_k or settings.TOP_K_RESULTS) * 4
+        chunks = self.search(
+            query,
+            top_k=effective_top_k,
+            document_id_filter=document_id_filter,
+            priority_clause_types=priority_weights,
+        )
+        return structured_clauses, chunks
+
+    def _retry_on_translation_error(
+        self,
+        answer: str,
+        flat_chunks_for_context: List[Dict[str, Any]],
+        query: str,
+        context: str,
+        classification: Any,
+        hierarchy_analysis: Dict[str, Any],
+        response_language: Optional[str],
+    ) -> str:
+        """
+        If the answer looks like an LLM translation-refusal message, regenerate
+        once with the original (untranslated) prompt. Returns the original answer
+        unchanged when no such message is detected or the retry fails.
+        """
+        translation_error_indicators = [
+            "I'm sorry, but I cannot provide a translation",
+            "cannot provide a translation for the user's question",
+            "Can I help you with something else",
+        ]
+        if not (answer and any(ind.lower() in answer.lower() for ind in translation_error_indicators)):
+            return answer
+        print("Warning: LLM answer contains translation error message. This suggests translation may have failed.")
+        if not flat_chunks_for_context:
+            return answer
+        # Rebuild prompt with original query (no translation)
+        prompt_original = self._build_legal_prompt(query, context, classification, hierarchy_analysis, response_language)
+        try:
+            response_original = self.ollama_client.generate(
+                model=settings.OLLAMA_MODEL,
+                prompt=prompt_original,
+                options={'temperature': 0.1}
+            )
+            if isinstance(response_original, dict):
+                answer = response_original.get('response', answer)
+            elif hasattr(response_original, 'response'):
+                answer = response_original.response
+            else:
+                answer = str(response_original)
+        except Exception:
+            pass  # Keep original answer if retry fails
+        return answer
+
+    def _ollama_generate(self, prompt: str, temperature: float = 0.1) -> str:
+        """
+        Call Ollama and return the generated text, tolerant of both dict and
+        object response shapes. Low temperature by default for deterministic
+        legal answers.
+        """
+        response = self.ollama_client.generate(
+            model=settings.OLLAMA_MODEL,
+            prompt=prompt,
+            options={'temperature': temperature},
+        )
+        # Extract generated text from response - handle both dict and object formats
+        if isinstance(response, dict):
+            answer = response.get('response', '')
+        elif hasattr(response, 'response'):
+            answer = response.response
+        else:
+            answer = str(response)
+        # If still empty, try alternative keys (for dict format)
+        if not answer and isinstance(response, dict):
+            answer = response.get('text', response.get('content', ''))
+        return answer
+
+    @staticmethod
+    def _strip_not_specified_suffix(answer: str) -> str:
+        """
+        Remove a trailing "not specified"/"law does not state" phrase when the
+        answer also contains a citation — the LLM sometimes appends it despite
+        having found relevant, cited information.
+        """
+        if not (answer and '[Source' in answer and 'not specified' in answer.lower()):
+            return answer
+        answer_clean = answer.strip()
+        contract_phrase = "This is not specified in the provided contract."
+        statute_phrase = "The law does not expressly state this."
+        for prefix in ("", ".", "\n"):
+            if answer_clean.endswith(prefix + contract_phrase):
+                return answer_clean[:-len(prefix + contract_phrase)].strip()
+            if answer_clean.endswith(prefix + statute_phrase):
+                return answer_clean[:-len(prefix + statute_phrase)].strip()
+        return answer
+
+    def _select_top_pages(
+        self,
+        page_buckets: Dict[Any, List[Dict[str, Any]]],
+        max_pages: int = 2,
+    ) -> List[Dict[str, Any]]:
+        """Score page buckets and return the top-N pages (each with its chunks)."""
+        if not page_buckets:
+            return []
+        page_scores = self._score_pages(page_buckets)
+        top_page_keys = sorted(page_scores, key=page_scores.get, reverse=True)[:max_pages]
+        return [
+            {
+                "document_id": doc_id,
+                "page_number": page_no,
+                "chunks": page_buckets[(doc_id, page_no)],
+            }
+            for (doc_id, page_no) in top_page_keys
+        ]
+
     def query(
         self,
         query: str,
@@ -723,61 +882,13 @@ class RAGService:
                 'query': query
             }
         
-        structured_clauses: List[Any] = []
-        if chunks_override is None:
-            # Step 3: Try to retrieve structured clauses first (if clause store available)
-            if self.clause_store and document_id_filter:
-                try:
-                    # RAG retrieval uses ranking-ready candidate clauses from ClauseStore.
-                    # ClauseStore remains ranking-agnostic: it only returns data + normalized metadata.
-                    candidate_dicts = self.clause_store.get_candidate_clauses(
-                        document_ids=[document_id_filter]
-                    )
+        structured_clauses, chunks = self._retrieve_clauses_and_chunks(
+            query, classification, document_id_filter, top_k, chunks_override
+        )
 
-                    # If we have specific query_types, filter candidates by normalized clause_type.
-                    filtered_candidates = candidate_dicts
-                    if classification.query_types and classification.query_types[0] != "general":
-                        primary_type = classification.query_types[0].lower()
-                        filtered_candidates = [
-                            c for c in candidate_dicts
-                            if c.get("clause_type") == primary_type
-                        ]
-
-                    # Use the underlying StructuredClause objects for hierarchy analysis.
-                    structured_clauses = [c["clause"] for c in filtered_candidates]
-                except Exception as e:
-                    print(f"Error querying clause store: {str(e)}")
-                    structured_clauses = []
-
-            # Step 4: Retrieve relevant chunks with priority boosting (weighted).
-            # Over-fetch for page coverage: use top_k * 4; page grouping will select top pages.
-            priority_weights = self._get_priority_clause_types(classification)
-            effective_top_k = (top_k or settings.TOP_K_RESULTS) * 4
-            chunks = self.search(
-                query,
-                top_k=effective_top_k,
-                document_id_filter=document_id_filter,
-                priority_clause_types=priority_weights,
-            )
-        else:
-            # Use provided chunks and skip retrieval/structured clause lookup
-            chunks = chunks_override
-        
         # Page-index: group by (document_id, page_number), score pages, select top N pages.
         page_buckets = self._group_results_by_page(chunks) if chunks else {}
-        retrieved_pages: List[Dict[str, Any]] = []
-        if page_buckets:
-            page_scores = self._score_pages(page_buckets)
-            max_pages = 2
-            top_page_keys = sorted(page_scores, key=page_scores.get, reverse=True)[:max_pages]
-            retrieved_pages = [
-                {
-                    "document_id": doc_id,
-                    "page_number": page_no,
-                    "chunks": page_buckets[(doc_id, page_no)],
-                }
-                for (doc_id, page_no) in top_page_keys
-            ]
+        retrieved_pages: List[Dict[str, Any]] = self._select_top_pages(page_buckets)
         # For downstream: use top page's chunks for hierarchy/not_specified; keep flat chunks from retrieved_pages for context/sources.
         top_chunks = retrieved_pages[0]["chunks"] if retrieved_pages else (chunks or [])
         flat_chunks_for_context = [c for p in retrieved_pages for c in p["chunks"]] if retrieved_pages else (chunks or [])
@@ -813,15 +924,7 @@ class RAGService:
                     chunks = keyword_results
                     # Re-run page grouping for keyword results
                     page_buckets = self._group_results_by_page(chunks)
-                    retrieved_pages = []
-                    if page_buckets:
-                        page_scores = self._score_pages(page_buckets)
-                        max_pages = 2
-                        top_page_keys = sorted(page_scores, key=page_scores.get, reverse=True)[:max_pages]
-                        retrieved_pages = [
-                            {"document_id": doc_id, "page_number": page_no, "chunks": page_buckets[(doc_id, page_no)]}
-                            for (doc_id, page_no) in top_page_keys
-                        ]
+                    retrieved_pages = self._select_top_pages(page_buckets)
                     top_chunks = retrieved_pages[0]["chunks"] if retrieved_pages else chunks
                     flat_chunks_for_context = [c for p in retrieved_pages for c in p["chunks"]] if retrieved_pages else chunks
                     hierarchy_analysis = self.legal_reasoning.analyze_legal_hierarchy(query, top_chunks) if top_chunks else {}
@@ -939,53 +1042,14 @@ class RAGService:
         
         # Step 14: Generate response using Ollama
         try:
-            response = self.ollama_client.generate(
-                model=settings.OLLAMA_MODEL,
-                prompt=prompt,
-                options={
-                    'temperature': 0.1  # Low temperature for deterministic legal answers
-                }
-            )
+            answer = self._ollama_generate(prompt)
             # Call Ollama API to generate response
             # Uses local LLM (no data sent externally)
-            
-            # Extract generated text from response - handle both dict and object formats
-            if isinstance(response, dict):
-                # Old format: {'response': '...'}
-                answer = response.get('response', '')
-            elif hasattr(response, 'response'):
-                # New format: response object with .response attribute
-                answer = response.response
-            else:
-                # Fallback: try to get text directly
-                answer = str(response)
-            
-            # If still empty, try alternative keys (for dict format)
-            if not answer and isinstance(response, dict):
-                answer = response.get('text', response.get('content', ''))
-            
+
             # Post-process: Remove "not specified" phrase if answer contains citations
             # This handles cases where LLM incorrectly adds the phrase despite finding relevant information
-            if answer and '[Source' in answer and 'not specified' in answer.lower():
-                # Check if "not specified" appears at the end (common pattern)
-                answer_clean = answer.strip()
-                # Check for both contract and statute messages
-                contract_phrase = "This is not specified in the provided contract."
-                statute_phrase = "The law does not expressly state this."
-                if answer_clean.endswith(contract_phrase):
-                    answer = answer_clean[:-len(contract_phrase)].strip()
-                elif answer_clean.endswith(statute_phrase):
-                    answer = answer_clean[:-len(statute_phrase)].strip()
-                # Also remove if it appears as a separate sentence at the end
-                elif answer_clean.endswith('.' + contract_phrase):
-                    answer = answer_clean[:-len('.' + contract_phrase)].strip()
-                elif answer_clean.endswith('.' + statute_phrase):
-                    answer = answer_clean[:-len('.' + statute_phrase)].strip()
-                elif answer_clean.endswith('\n' + contract_phrase):
-                    answer = answer_clean[:-len('\n' + contract_phrase)].strip()
-                elif answer_clean.endswith('\n' + statute_phrase):
-                    answer = answer_clean[:-len('\n' + statute_phrase)].strip()
-            
+            answer = self._strip_not_specified_suffix(answer)
+
             # FIX 3: Validate citation-answer semantic support (skip when caller provided chunks — orchestrator/guardrail handle evidence)
             if answer and flat_chunks_for_context and chunks_override is None:
                 cited_chunks = flat_chunks_for_context
@@ -1004,31 +1068,11 @@ class RAGService:
                     }
             
             # Post-process: Detect and handle translation error messages in answer
-            translation_error_indicators = [
-                "I'm sorry, but I cannot provide a translation",
-                "cannot provide a translation for the user's question",
-                "Can I help you with something else"
-            ]
-            if answer and any(indicator.lower() in answer.lower() for indicator in translation_error_indicators):
-                print(f"Warning: LLM answer contains translation error message. This suggests translation may have failed.")
-                if flat_chunks_for_context:
-                    # Rebuild prompt with original query (no translation)
-                    prompt_original = self._build_legal_prompt(query, context, classification, hierarchy_analysis, response_language)
-                    try:
-                        response_original = self.ollama_client.generate(
-                            model=settings.OLLAMA_MODEL,
-                            prompt=prompt_original,
-                            options={'temperature': 0.1}
-                        )
-                        if isinstance(response_original, dict):
-                            answer = response_original.get('response', answer)
-                        elif hasattr(response_original, 'response'):
-                            answer = response_original.response
-                        else:
-                            answer = str(response_original)
-                    except:
-                        pass  # Keep original answer if retry fails
-            
+            answer = self._retry_on_translation_error(
+                answer, flat_chunks_for_context, query, context,
+                classification, hierarchy_analysis, response_language,
+            )
+
         except Exception as e:
             # Handle Ollama errors (server not running, model not found, etc.)
             answer = f"Error generating response: {str(e)}. Please ensure Ollama is running and the model is available."
