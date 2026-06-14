@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     OLLAMA_MODEL: str = "qwen2.5:3b"
     
     # Agent layer (see plans/agentic-orchestrator.md)
-    AGENT_PLANNER: str = "rules"  # "rules" | "llm" (llm arrives in Phase 2)
+    AGENT_PLANNER: str = "llm"  # "llm" (Ollama tool calling) | "rules" (deterministic fallback)
     AGENT_MODEL: str = "qwen2.5:7b-instruct"  # planner model, separate from OLLAMA_MODEL
     AGENT_MAX_STEPS: int = 6  # default per-run cap; server hard cap is 10
     AGENT_TOOL_TIMEOUT_S: int = 120

@@ -182,3 +182,16 @@ class AgentRunResponse(BaseModel):
     refusal_reason: Optional[str] = Field(
         default=None, description="Populated when status == 'refused'."
     )
+    guardrail_status: Optional[str] = Field(
+        default=None,
+        description=(
+            "Evidence verification of the assembled answer: 'inherited' (single tool, "
+            "guardrails ran inside the wrapped service), 'verified'/'weak' (multi-tool "
+            "answer re-checked by EvidenceGuardrailService), or 'downgraded' (verification "
+            "failed; narrative removed, structured results kept)."
+        ),
+    )
+    verifier_notice: Optional[str] = Field(
+        default=None,
+        description="User-facing notice when the assembled narrative was downgraded.",
+    )

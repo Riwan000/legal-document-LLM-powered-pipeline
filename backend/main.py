@@ -42,6 +42,7 @@ from backend.services.ingestion_metadata_store import IngestionMetadataStore
 from backend.models.document_structure import IngestionMetadata
 from backend.models.workflow import WorkflowContext
 from backend.services.guardrails import WORKFLOW_DISCLAIMER
+from backend.utils.path_safety import resolve_within, UnsafePathError
 from backend import workflow_store
 
 # Conversational RAG
@@ -66,6 +67,7 @@ from backend.utils.chunking import TextChunker
 
 # Agent layer (see plans/agentic-orchestrator.md)
 from backend.agent.executor import AgentExecutor
+from backend.agent.planner import LLMPlanner
 from backend.agent.rule_planner import RuleBasedPlanner
 from backend.agent.run_store import get_run as get_agent_run
 from backend.agent.tool_registry import ToolRegistry
@@ -242,7 +244,7 @@ async def _initialize_services():
     document_classification_service = DocumentClassificationService()
     print("Document classification service initialized")
 
-    # Agent layer: tool registry + planner + executor (Phase 1: rule-based planner)
+    # Agent layer: tool registry + planner + executor
     agent_registry = ToolRegistry(tool_timeout_s=settings.AGENT_TOOL_TIMEOUT_S)
     register_all_tools(
         agent_registry,
@@ -251,12 +253,23 @@ async def _initialize_services():
             comparison_service=comparison_service,
             summarization_service=summarization_service,
             document_registry=document_registry,
+            rag_service=rag_service,
+            extracted_clause_store=extracted_clause_store,
         ),
     )
+    if settings.AGENT_PLANNER == "llm":
+        # LLM planner gets an error-recovery turn on tool failures (fail_fast=False).
+        agent_planner = LLMPlanner(registry=agent_registry)
+        agent_fail_fast = False
+    else:
+        agent_planner = RuleBasedPlanner(query_classifier=QueryClassifier())
+        agent_fail_fast = True
     agent_executor = AgentExecutor(
         registry=agent_registry,
-        planner=RuleBasedPlanner(query_classifier=QueryClassifier()),
+        planner=agent_planner,
         document_registry=document_registry,
+        guardrail_service=evidence_guardrail,
+        fail_fast=agent_fail_fast,
     )
     print(f"Agent layer initialized ({len(agent_registry.specs())} tools, planner={settings.AGENT_PLANNER})")
 
@@ -366,9 +379,18 @@ async def extract_clauses(
     if not file_path:
         # Search in documents directory
         file_path = _find_document_path(document_id)
-        
+
         if not file_path:
             raise HTTPException(status_code=404, detail="Document file not found")
+    else:
+        # Security (S2083 / path traversal): a client-supplied path must resolve
+        # inside the approved storage directories. Reject anything that escapes.
+        try:
+            file_path = str(resolve_within(
+                file_path, [settings.DOCUMENTS_PATH, settings.TEMPLATES_PATH]
+            ))
+        except UnsafePathError:
+            raise HTTPException(status_code=400, detail="Invalid file path")
 
     # Step 0.2 (API): Ensure the clause extractor service is initialized.
     # Only require the extractor after we've validated the request and located the file.
@@ -568,7 +590,6 @@ async def ai_health_check():
     try:
         # This will lazily load the heavy embedding model if available.
         get_embedding_model()
-        return {"ai_models": "ready"}
     except Exception as e:
         # Do not leak internal errors; just report not_ready with minimal detail.
         return JSONResponse(
@@ -578,6 +599,35 @@ async def ai_health_check():
                 "reason": str(e),
             },
         )
+
+    # Agent planner model availability (warning-level: server stays healthy,
+    # agent runs fail cleanly if the model is missing).
+    agent_info = {"agent_planner": settings.AGENT_PLANNER}
+    if settings.AGENT_PLANNER == "llm":
+        agent_info["agent_model"] = settings.AGENT_MODEL
+        try:
+            import ollama as _ollama
+
+            tags = _ollama.Client(host=settings.OLLAMA_BASE_URL).list()
+            models = [
+                (m.get("name") or m.get("model") or "") if isinstance(m, dict)
+                else (getattr(m, "model", "") or "")
+                for m in (tags.get("models", []) if isinstance(tags, dict) else getattr(tags, "models", []))
+            ]
+            base = settings.AGENT_MODEL.split(":")[0]
+            agent_info["agent_model_ready"] = any(
+                m == settings.AGENT_MODEL or m.startswith(settings.AGENT_MODEL) or m.startswith(base)
+                for m in models
+            )
+        except Exception:
+            agent_info["agent_model_ready"] = False
+        if not agent_info["agent_model_ready"]:
+            agent_info["agent_model_hint"] = (
+                f"Pull the planner model with: ollama pull {settings.AGENT_MODEL} "
+                "(or set AGENT_PLANNER=rules for the deterministic fallback)."
+            )
+
+    return {"ai_models": "ready", **agent_info}
 
 
 @app.post("/api/upload", response_model=DocumentUploadResponse)
@@ -997,14 +1047,30 @@ async def compare_contracts(
             if potential_path.exists():
                 contract_path = str(potential_path)
                 break
-    
+    else:
+        # Security (S2083 / path traversal): validate client-supplied path.
+        try:
+            contract_path = str(resolve_within(
+                contract_path, [settings.DOCUMENTS_PATH, settings.TEMPLATES_PATH]
+            ))
+        except UnsafePathError:
+            raise HTTPException(status_code=400, detail="Invalid contract path")
+
     if not template_path:
         for ext in ['.pdf', '.docx', '.doc']:
             potential_path = settings.TEMPLATES_PATH / f"{template_id}{ext}"
             if potential_path.exists():
                 template_path = str(potential_path)
                 break
-    
+    else:
+        # Security (S2083 / path traversal): validate client-supplied path.
+        try:
+            template_path = str(resolve_within(
+                template_path, [settings.DOCUMENTS_PATH, settings.TEMPLATES_PATH]
+            ))
+        except UnsafePathError:
+            raise HTTPException(status_code=400, detail="Invalid template path")
+
     if not contract_path or not template_path:
         raise HTTPException(status_code=404, detail="Contract or template file not found")
 
