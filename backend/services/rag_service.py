@@ -184,14 +184,22 @@ class RAGService:
         priority_clause_types: List[str] = None
     ) -> List[Dict[str, Any]]:
         """
-        Internal search method without translation logic (original implementation).
-        
+        Bilingual query-translation orchestration wrapper.
+
+        The actual (non-translated) retrieval is performed by ``search()``; this
+        method layers two-pass translation on top of it. The plain-search passes
+        below therefore delegate to ``self.search`` — never back to this method —
+        which is what prevents the unbounded recursion flagged by S2190.
+
+        NOTE: this wrapper is currently not wired into the live ``search()`` path
+        (translation was orphaned during the Phase 3 RetrievalRouter refactor).
+
         Args:
             query: Search query
             top_k: Number of results to return
             document_id_filter: Optional filter by document ID
             priority_clause_types: List of clause types to boost
-            
+
         Returns:
             List of relevant chunks with metadata, ranked by authority
         """
@@ -199,10 +207,10 @@ class RAGService:
         if settings.ENABLE_QUERY_TRANSLATION and self.translation_service:
             # Detect query language
             query_language = self.translation_service.detect_language(query)
-            
+
             # First pass: Search with original query
             initial_top_k = max(top_k or settings.TOP_K_RESULTS, 10) if top_k else 15
-            original_results = self._search_without_translation(
+            original_results = self.search(
                 query, initial_top_k, document_id_filter, priority_clause_types
             )
             
@@ -227,7 +235,7 @@ class RAGService:
                 )
                 
                 # Second pass: Search with translated query
-                translated_results = self._search_without_translation(
+                translated_results = self.search(
                     translated_query, top_k or settings.TOP_K_RESULTS, document_id_filter, priority_clause_types
                 )
                 
@@ -258,7 +266,7 @@ class RAGService:
                 raise
         
         # Fallback to original search without translation
-        return self._search_without_translation(query, top_k, document_id_filter, priority_clause_types)
+        return self.search(query, top_k, document_id_filter, priority_clause_types)
     
     def _detect_document_language(
         self,

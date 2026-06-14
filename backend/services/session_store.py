@@ -11,12 +11,13 @@ import json
 import logging
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
 from backend.config import settings
 from backend.models.session import ChatSession, SessionMode
+from backend.utils.log_safety import sanitize_for_log
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +72,11 @@ class SessionStore:
         if settings.SESSION_TTL_HOURS <= 0:
             return False
         last = datetime.fromisoformat(last_active_at)
-        cutoff = datetime.utcnow() - timedelta(hours=settings.SESSION_TTL_HOURS)
+        # Legacy rows were stored as naive UTC; treat them as UTC so the
+        # comparison below never mixes naive and timezone-aware datetimes.
+        if last.tzinfo is None:
+            last = last.replace(tzinfo=timezone.utc)
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=settings.SESSION_TTL_HOURS)
         return last < cutoff
 
     # ------------------------------------------------------------------
@@ -86,7 +91,7 @@ class SessionStore:
             document_id=document_id,
             mode=mode,
         )
-        now_iso = datetime.utcnow().isoformat()
+        now_iso = datetime.now(timezone.utc).isoformat()
         with self._conn() as conn:
             conn.execute(
                 """INSERT INTO sessions
@@ -120,7 +125,7 @@ class SessionStore:
             return None
 
         if self._is_expired(row["last_active_at"]):
-            logger.info("Session %s has expired; deleting.", session_id)
+            logger.info("Session %s has expired; deleting.", sanitize_for_log(session_id))
             self.delete_session(session_id)
             return None
 
@@ -128,8 +133,8 @@ class SessionStore:
 
     def save_session(self, session: ChatSession) -> None:
         """Persist the full session state (after mutations by SessionManager)."""
-        now_iso = datetime.utcnow().isoformat()
-        session.last_active_at = datetime.utcnow()
+        now_iso = datetime.now(timezone.utc).isoformat()
+        session.last_active_at = datetime.now(timezone.utc)
         with self._conn() as conn:
             conn.execute(
                 """UPDATE sessions

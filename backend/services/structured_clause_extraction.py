@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from backend.config import settings
 from backend.services.document_ingestion import DocumentIngestionService
 from backend.services.clause_taxonomy import ClauseTaxonomyService
+from backend.utils.log_safety import sanitize_for_log
 
 # Configure logger for clause extraction
 logger = logging.getLogger(__name__)
@@ -278,17 +279,17 @@ class StructuredClauseExtractionService:
             List of ExtractedClause objects
         """
         file_path = Path(file_path)
-        logger.info(f"Starting clause extraction for document_id={document_id}, file_path={file_path}")
+        logger.info(f"Starting clause extraction for document_id={sanitize_for_log(document_id)}, file_path={sanitize_for_log(file_path)}")
         
         # Step 1: Parse document pages and convert to List[Page] (page_number + verbatim lines[]).
         try:
             raw_pages = self.ingestion_service.parser.parse_file(file_path)
         except Exception as parse_error:
-            logger.error(f"Error parsing file {file_path}: {str(parse_error)}", exc_info=True)
+            logger.error(f"Error parsing file {sanitize_for_log(file_path)}: {str(parse_error)}", exc_info=True)
             return []
-        
+
         if not raw_pages:
-            logger.warning(f"No pages extracted from {file_path}")
+            logger.warning(f"No pages extracted from {sanitize_for_log(file_path)}")
             return []
         
         logger.info(f"Parsed {len(raw_pages)} pages from document")
@@ -372,7 +373,7 @@ class StructuredClauseExtractionService:
         
         if not has_operative_section:
             # No operative sections detected - fail closed
-            logger.warning(f"No operative sections detected in document {document_id}. Fail-closed: returning empty clauses.")
+            logger.warning(f"No operative sections detected in document {sanitize_for_log(document_id)}. Fail-closed: returning empty clauses.")
             return []
         
         logger.info("Operative sections detected. Proceeding with clause extraction.")
@@ -542,7 +543,7 @@ class StructuredClauseExtractionService:
             c.clause_heading
         ))
         
-        logger.info(f"Clause extraction complete for {document_id}: {len(deduplicated)} clauses extracted")
+        logger.info(f"Clause extraction complete for {sanitize_for_log(document_id)}: {len(deduplicated)} clauses extracted")
         return deduplicated
     
     def _classify_page_section(self, text: str, page_number: int) -> DocumentSection:

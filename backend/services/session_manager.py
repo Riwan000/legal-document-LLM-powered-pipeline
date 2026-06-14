@@ -20,6 +20,7 @@ from backend.config import settings
 from backend.models.session import ChatSession, SessionMessage, SessionMode
 from backend.services.session_store import SessionStore
 from backend.utils.token_counter import count_session_tokens
+from backend.utils.log_safety import sanitize_for_log
 
 if TYPE_CHECKING:
     from backend.services.conversation_summarizer import ConversationSummarizer
@@ -245,7 +246,7 @@ class SessionManager:
             window = window[2:]  # drop oldest user+assistant pair
             logger.warning(
                 "Session %s: context exceeded %d tokens; truncating oldest turn.",
-                session_id,
+                sanitize_for_log(session_id),
                 settings.MAX_SESSION_TOKENS,
             )
 
@@ -271,7 +272,7 @@ class SessionManager:
         if (near_turn_limit or near_token_limit) and self.summarizer is not None:
             logger.info(
                 "Session %s approaching limits (turns=%d, tokens=%d). Triggering summarization.",
-                session_id, turn_count, total_tokens,
+                sanitize_for_log(session_id), turn_count, total_tokens,
             )
             self.summarizer.summarize(session)
             self.store.save_session(session)

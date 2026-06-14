@@ -490,6 +490,23 @@ def _display_status_for_internal(status: str) -> str:
     return "Not Detected"
 
 
+# Full status → display mapping used by the Contract Review workflow (covers the
+# implicit/distributed/weak variants produced by the G1–G8 detection passes).
+_DISPLAY_STATUS_LABELS = {
+    "detected": "Detected",
+    "uncertain": "Detected (Weak Evidence)",
+    "detected_implicit": "Detected (Implicit Reference)",
+    "detected_distributed": "Detected (Distributed Provisions)",
+    "detected_weak": "Detected (Limited Coverage)",
+    "implicitly_covered": "Implicitly Covered",
+}
+
+
+def _display_status_full(status: str) -> str:
+    """Map an internal presence status to its full UI display label."""
+    return _DISPLAY_STATUS_LABELS.get(status, "Not Detected")
+
+
 CRITICAL_CLAUSES = {"termination", "governing_law", "compensation"}
 
 
@@ -1228,14 +1245,15 @@ class ContractReviewService:
             return "problematic_confidentiality_perpetuity"
         return clause_type
 
-    def _attach_explanations(self, risks: List[RiskItem]) -> List[RiskItem]:
+    def _attach_explanations(self, risks: List[RiskItem]) -> None:
         """
-        Attach severity_reason and recommendation from static templates.
-        Keyed on (clause_type, status, severity). No-op if no entry found (graceful fallback).
+        Attach severity_reason and recommendation from static templates, mutating
+        each RiskItem in place. Keyed on (clause_type, status, severity); a no-op if
+        no entry is found (graceful fallback).
         Does NOT run enforce_non_prescriptive_language on these fields.
         """
         if not self.risk_explanations:
-            return risks
+            return
         for risk in risks:
             for clause_type in (risk.clause_types or []):
                 # For problematic language risks (missing_clause=False), map to specific key
@@ -1253,7 +1271,6 @@ class ContractReviewService:
                     risk.severity_reason = entry.get("reason")
                     risk.recommendation = entry.get("recommendation")
                 break  # use first clause_type match only
-        return risks
 
     # ── Improvement 1 — verbatim evidence per risk ────────────────────────────
 
@@ -1525,35 +1542,8 @@ class ContractReviewService:
 
         return risks
 
-    def run(self, ctx: WorkflowContext) -> WorkflowContext:
-        """
-        Execute the full Contract Review workflow. Reads contract_id, contract_type,
-        jurisdiction, review_depth from ctx.document_ids[0] and ctx.metadata.
-        """
-        if ctx.status == "failed":
-            return ctx
-
-        contract_id = (ctx.document_ids or [None])[0]
-        if not contract_id:
-            ctx.workflow_state.legal_analysis = StageStatus.FAILED
-            ctx.fail(
-                code="MISSING_INPUT",
-                message="Contract Review requires document_ids[0] (contract_id).",
-                step=STEP_NAME,
-                details={},
-            )
-            return ctx
-
-        meta = ctx.metadata or {}
-        contract_type_key = meta.get("contract_type")
-        if not contract_type_key:
-            _log.warning(
-                "No contract_type in metadata for %s — defaulting to 'employment'", contract_id
-            )
-            contract_type_key = "employment"
-        jurisdiction = ctx.jurisdiction or meta.get("jurisdiction")
-        review_depth = meta.get("review_depth") or "standard"
-
+    def _load_profile_or_fail(self, ctx: WorkflowContext, contract_type_key: str) -> Optional[Dict[str, Any]]:
+        """Load the contract profile; on failure mark ctx failed and return None."""
         # 1) Load contract profile
         ctx.current_step = f"{STEP_NAME}.load_profile"
         try:
@@ -1566,7 +1556,7 @@ class ContractReviewService:
                 step=STEP_NAME,
                 details={"contract_type": contract_type_key, "path": str(e)},
             )
-            return ctx
+            return None
         except ValueError as e:
             ctx.workflow_state.legal_analysis = StageStatus.FAILED
             ctx.fail(
@@ -1575,7 +1565,7 @@ class ContractReviewService:
                 step=STEP_NAME,
                 details={"contract_type": contract_type_key},
             )
-            return ctx
+            return None
         except Exception as e:
             ctx.workflow_state.legal_analysis = StageStatus.FAILED
             ctx.fail(
@@ -1584,10 +1574,11 @@ class ContractReviewService:
                 step=STEP_NAME,
                 details={"contract_type": contract_type_key},
             )
-            return ctx
+            return None
+        return profile
 
-        ctx.add_result(f"{STEP_NAME}.profile", profile)
-
+    def _classify_document_warning(self, contract_id: str, contract_type_key: str) -> Optional[str]:
+        """Return a mismatch warning if the document does not look like an operative contract."""
         # 1b) Document classification (mandatory check before review)
         document_classification_warning: Optional[str] = None
         doc_path = _find_document_path(contract_id)
@@ -1602,10 +1593,190 @@ class ContractReviewService:
                     )
             except Exception:
                 pass  # do not fail workflow; leave warning unset
+        return document_classification_warning
 
-        # 2) Get clauses (from store or extract)
-        ctx.current_step = f"{STEP_NAME}.clauses"
-        clauses_from_store = self.clause_store.get_clauses_by_document(contract_id)
+    def _dedupe_risks(self, risks: List[RiskItem]) -> List[RiskItem]:
+        """Deduplicate risks by (description, clause_ids), merging page numbers."""
+        # --- deduplication pass ---
+        _seen: dict = {}
+        _deduped: list = []
+        for _r in risks:
+            _key = (_r.description, frozenset(_r.clause_ids or []))
+            if _key not in _seen:
+                _seen[_key] = len(_deduped)
+                _deduped.append(_r)
+            else:
+                # merge page_numbers into the first occurrence
+                _existing = _deduped[_seen[_key]]
+                for _pn in (_r.page_numbers or []):
+                    if _pn not in (_existing.page_numbers or []):
+                        (_existing.page_numbers or []).append(_pn)
+        risks = _deduped
+        return risks
+
+    def _compute_document_confidence(
+        self,
+        evidence_blocks: List[ClauseEvidenceBlock],
+        presence_map: Dict[str, Any],
+        expected: List[str],
+        document_classification_warning: Optional[str],
+    ) -> tuple:
+        """
+        Compute (document_confidence, used_implicit_or_distributed_logic). On a
+        high-confidence document, section_non_standard evidence blocks are
+        downgraded to 'provision' in place (mutates evidence_blocks).
+        """
+        # 4) Document confidence (for severity cap and guardrail)
+        section_non_standard_count = sum(1 for b in evidence_blocks if getattr(b, "structure_class", None) == "section_non_standard")
+        total_blocks = max(len(evidence_blocks), 1)
+        document_confidence = "high" if (
+            not document_classification_warning
+            and (section_non_standard_count / total_blocks) < 0.2
+        ) else ("medium" if not document_classification_warning else "low")
+
+        # 5) Final output guardrail: on clean documents, do not show section_non_standard
+        if document_confidence == "high" and section_non_standard_count > 0:
+            for block in evidence_blocks:
+                if getattr(block, "structure_class", None) == "section_non_standard":
+                    block.structure_class = "provision"  # downgrade; no heading on block to prefer clause
+                    logging.debug(
+                        "contract_review: downgraded evidence block structure_class to provision (document_confidence=high)"
+                    )
+
+        # 6) used_implicit_or_distributed_logic: after guardrail so downgraded blocks do not count
+        # OCR confidence below threshold: significant fraction of blocks have high OCR noise
+        noisy_count = sum(
+            1 for b in evidence_blocks
+            if (1.0 - _alpha_ratio(getattr(b, "raw_text", "") or "")) >= OCR_NOISE_THRESHOLD
+        )
+        ocr_confidence_below_threshold = (noisy_count / total_blocks) > 0.5
+        used_implicit_or_distributed_logic = (
+            presence_map.get("governing_law", {}).get("status") == "detected_implicit"
+            or presence_map.get("benefits", {}).get("status") == "detected_distributed"
+            or any(presence_map.get(ct, {}).get("status") == "implicitly_covered" for ct in expected)
+            or any(getattr(b, "structure_class", None) == "section_non_standard" for b in evidence_blocks)
+            or ocr_confidence_below_threshold
+        )
+        return document_confidence, used_implicit_or_distributed_logic
+
+    def _build_implicitly_covered(
+        self,
+        expected: List[str],
+        presence_map: Dict[str, Any],
+    ) -> tuple:
+        """Return (implicitly_covered_clauses, implicit_coverage_notes) for the UI."""
+        # 9) Implicitly covered clauses (display names + notes for UI)
+        implicitly_covered_clauses: List[str] = []
+        implicit_coverage_notes: Optional[Dict[str, str]] = None
+        for ct in expected:
+            entry_status = presence_map.get(ct, {}).get("status")
+            if entry_status == "implicitly_covered":
+                display = EXPECTED_CLAUSE_DISPLAY_NAMES.get(ct, ct.replace("_", " ").title())
+                implicitly_covered_clauses.append(display)
+                note = presence_map.get(ct, {}).get("coverage_note")
+                if note:
+                    if implicit_coverage_notes is None:
+                        implicit_coverage_notes = {}
+                    implicit_coverage_notes[display] = note
+            elif entry_status == "uncertain":
+                # Uncertain clauses are detected with weak/heading-only evidence.
+                # Surface them in implicitly_covered_clauses with a note rather than
+                # generating a misleading risk item.
+                display = EXPECTED_CLAUSE_DISPLAY_NAMES.get(ct, ct.replace("_", " ").title())
+                display_with_note = f"{display} (Weak Evidence)"
+                implicitly_covered_clauses.append(display_with_note)
+                if implicit_coverage_notes is None:
+                    implicit_coverage_notes = {}
+                implicit_coverage_notes[display_with_note] = (
+                    "Detected with limited textual evidence; manual review of the relevant section is recommended."
+                )
+        return implicitly_covered_clauses, implicit_coverage_notes
+
+    def _build_missing_clause_risks(
+        self,
+        expected: List[str],
+        presence_map: Dict[str, Any],
+        risk_weights: Dict[str, Any],
+    ) -> List[RiskItem]:
+        """Create a RiskItem for each expected clause still marked not_detected."""
+        risks: List[RiskItem] = []
+        # Add risk rows only for clause_types that are not detected (any variant)
+        _skip_risk_statuses = (
+            "detected", "detected_implicit", "detected_distributed", "detected_weak",
+            "implicitly_covered",
+            "uncertain",   # heading/weak-evidence matches don't generate misleading risk items
+        )
+        for clause_type in expected:
+            status = presence_map.get(clause_type, {}).get("status", "not_detected")
+            if status in _skip_risk_statuses:
+                continue
+            entry = presence_map[clause_type]
+            result = {"clause_id": (entry.get("clause_ids") or [None])[0], "page_number": (entry.get("page_numbers") or [None])[0]}
+            severity = risk_weights.get(clause_type, "medium")
+            if isinstance(severity, str):
+                severity = severity.lower()
+            else:
+                severity = "medium"
+            if severity not in ("high", "medium", "low"):
+                severity = "medium"
+            description = f"Clause not confidently detected: {clause_type.replace('_', ' ')}."
+            clause_ids = [result["clause_id"]] if result.get("clause_id") else []
+            page_numbers = [result["page_number"]] if result.get("page_number") else []
+            missing_clause = True
+            display_names = [_resolve_clause_display_name(cid) for cid in clause_ids] if clause_ids else []
+            risks.append(
+                RiskItem(
+                    description=description,
+                    severity=severity,
+                    status=status,
+                    clause_types=[clause_type],
+                    missing_clause=missing_clause,
+                    clause_ids=clause_ids,
+                    page_numbers=page_numbers,
+                    display_names=display_names,
+                )
+            )
+        return risks
+
+    def _build_not_detected_clauses(
+        self,
+        expected: List[str],
+        presence_map: Dict[str, Any],
+    ) -> List[str]:
+        """Display names of expected clauses still not_detected, with canonical grouping."""
+        # Build not_detected_clauses with canonical grouping (e.g. compensation vs salary_wages).
+        missing_keys = [ct for ct in expected if presence_map.get(ct, {}).get("status") == "not_detected"]
+        not_detected_clauses: List[str] = []
+        # Handle canonical groups first (only show one entry for each group)
+        for canon_key, members in CANONICAL_CLAUSE_GROUPS.items():
+            group_members = [m for m in members if m in missing_keys]
+            if group_members:
+                not_detected_clauses.append(
+                    EXPECTED_CLAUSE_DISPLAY_NAMES.get(canon_key, canon_key.replace("_", " ").title())
+                )
+                missing_keys = [ct for ct in missing_keys if ct not in group_members]
+
+        # Add remaining standalone missing keys
+        for ct in missing_keys:
+            not_detected_clauses.append(
+                EXPECTED_CLAUSE_DISPLAY_NAMES.get(ct, ct.replace("_", " ").title())
+            )
+        return not_detected_clauses
+
+    def _gather_clause_evidence(
+        self,
+        ctx: WorkflowContext,
+        contract_id: str,
+        clauses_from_store: Any,
+    ) -> Optional[tuple]:
+        """
+        Build the evidence collections for the review from stored clauses, or by
+        extracting from the document when the store is empty.
+
+        Returns ``(extracted_types, evidence_blocks, evidence_candidates)`` on
+        success, or ``None`` when the workflow has failed (``ctx`` is already
+        marked failed in that case).
+        """
         evidence_candidates: List[Dict[str, Any]] = []
         if clauses_from_store:
             # Use structured clauses; types from enum value / normalized_clause_type
@@ -1663,7 +1834,7 @@ class ContractReviewService:
                     step=STEP_NAME,
                     details={"document_id": contract_id},
                 )
-                return ctx
+                return None
             raw_clauses = self.clause_extractor.extract_clauses(file_path, contract_id, use_structured=True)
             if not raw_clauses:
                 ctx.workflow_state.legal_analysis = StageStatus.FAILED
@@ -1673,7 +1844,7 @@ class ContractReviewService:
                     step=STEP_NAME,
                     details={"document_id": contract_id},
                 )
-                return ctx
+                return None
             # Map extractor output to types: we have document_section only; map to a minimal set
             extracted_types = set()
             evidence_blocks = []
@@ -1724,57 +1895,25 @@ class ContractReviewService:
                     if any(kw in text for kw in keywords):
                         extracted_types.add(_normalize_clause_type_for_profile(topic))
                         break
+        return extracted_types, evidence_blocks, evidence_candidates
 
-        ctx.add_result(f"{STEP_NAME}.extracted_types", list(extracted_types))
-        ctx.add_result(f"{STEP_NAME}.evidence_blocks", [e.model_dump() for e in evidence_blocks])
 
-        # Fail closed: Contract Review requires evidence text to support any output.
-        # If evidence blocks are empty, we cannot provide an evidence-backed review.
-        if not evidence_blocks:
-            ctx.workflow_state.legal_analysis = StageStatus.FAILED
-            ctx.fail(
-                code="NO_EVIDENCE",
-                message="No extractable evidence was found in the provided document.",
-                step=STEP_NAME,
-                details={"document_id": contract_id},
-            )
-            return ctx
-
-        # 3) Expected clause checks (evidence-first, conservative)
-        expected = list(profile["expected_clauses"])
-        optional = set(profile.get("optional_clauses") or [])
-        risk_weights = profile.get("risk_weights") or {}
-
-        risks: List[RiskItem] = []
-        presence_map: Dict[str, Any] = {}
-
-        def _display_status_for(status: str) -> str:
-            if status == "detected":
-                return "Detected"
-            if status == "uncertain":
-                return "Detected (Weak Evidence)"
-            if status == "detected_implicit":
-                return "Detected (Implicit Reference)"
-            if status == "detected_distributed":
-                return "Detected (Distributed Provisions)"
-            if status == "detected_weak":
-                return "Detected (Limited Coverage)"
-            if status == "implicitly_covered":
-                return "Implicitly Covered"
-            return "Not Detected"
-
-        for clause_type in expected:
-            keywords = EXPECTED_CLAUSE_PATTERNS.get(clause_type, [])
-            result = _detect_clause_presence(evidence_candidates, keywords, clause_type=clause_type)
-            status = result["status"]
-            presence_map[clause_type] = {
-                "status": status,
-                "display_status": _display_status_for(status),
-                "clause_ids": [result["clause_id"]] if result.get("clause_id") else [],
-                "page_numbers": [result["page_number"]] if result.get("page_number") else [],
-                "matched_keyword": result.get("matched_keyword"),
-            }
-
+    def _apply_implicit_detection_passes(
+        self,
+        *,
+        expected: List[str],
+        presence_map: Dict[str, Any],
+        evidence_candidates: List[Dict[str, Any]],
+        clauses_from_store: Any,
+        contract_id: str,
+        review_depth: str,
+    ) -> None:
+        """
+        Run the implicit / fallback clause-detection passes (G1-G8), mutating
+        ``presence_map`` in place. Each pass only upgrades clauses still marked
+        ``not_detected`` (or ``uncertain`` for G8), so the order is preserved
+        exactly as it ran inline in ``run()``.
+        """
         # G1: Post-pass for implicit governing law (no country requirement; do not infer country)
         # Store the matching candidate so we can attach evidence (synthetic block) and avoid "present" without evidence.
         if "governing_law" in expected and presence_map.get("governing_law", {}).get("status") == "not_detected":
@@ -1810,7 +1949,7 @@ class ContractReviewService:
                 t = (cand.get("text") or "").lower()
                 if any(kw in t for kw in IMPLICIT_IP_OWNERSHIP_KEYWORDS):
                     presence_map["ip_ownership"]["status"] = "detected_implicit"
-                    presence_map["ip_ownership"]["display_status"] = _display_status_for("detected_implicit")
+                    presence_map["ip_ownership"]["display_status"] = _display_status_full("detected_implicit")
                     break
 
         # G5: Post-pass for implicit sla_obligations
@@ -1822,7 +1961,7 @@ class ContractReviewService:
                 t = (cand.get("text") or "").lower()
                 if any(kw in t for kw in IMPLICIT_SLA_KEYWORDS):
                     presence_map["sla_obligations"]["status"] = "detected_implicit"
-                    presence_map["sla_obligations"]["display_status"] = _display_status_for("detected_implicit")
+                    presence_map["sla_obligations"]["display_status"] = _display_status_full("detected_implicit")
                     break
 
         # G2: Post-pass for benefits (composite). 0 categories must remain not_detected (no overwrite).
@@ -1869,7 +2008,7 @@ class ContractReviewService:
             for ct, hit in _fallback_hits.items():
                 if presence_map.get(ct, {}).get("status") == "not_detected":
                     presence_map[ct]["status"] = hit["status"]
-                    presence_map[ct]["display_status"] = _display_status_for(hit["status"])
+                    presence_map[ct]["display_status"] = _display_status_full(hit["status"])
                     if hit.get("page_number"):
                         presence_map[ct].setdefault("page_numbers", []).append(hit["page_number"])
 
@@ -1906,69 +2045,110 @@ class ContractReviewService:
                     _g8_resolved = self._resolve_uncertain_with_llm(_g8_clause_type, _g8_ev_text, _g8_disp)
                     if _g8_resolved != "uncertain":
                         presence_map[_g8_clause_type]["status"] = _g8_resolved
-                        presence_map[_g8_clause_type]["display_status"] = _display_status_for(_g8_resolved)
+                        presence_map[_g8_clause_type]["display_status"] = _display_status_full(_g8_resolved)
+
+
+    def run(self, ctx: WorkflowContext) -> WorkflowContext:
+        """
+        Execute the full Contract Review workflow. Reads contract_id, contract_type,
+        jurisdiction, review_depth from ctx.document_ids[0] and ctx.metadata.
+        """
+        if ctx.status == "failed":
+            return ctx
+
+        contract_id = (ctx.document_ids or [None])[0]
+        if not contract_id:
+            ctx.workflow_state.legal_analysis = StageStatus.FAILED
+            ctx.fail(
+                code="MISSING_INPUT",
+                message="Contract Review requires document_ids[0] (contract_id).",
+                step=STEP_NAME,
+                details={},
+            )
+            return ctx
+
+        meta = ctx.metadata or {}
+        contract_type_key = meta.get("contract_type")
+        if not contract_type_key:
+            _log.warning(
+                "No contract_type in metadata for %s — defaulting to 'employment'", contract_id
+            )
+            contract_type_key = "employment"
+        jurisdiction = ctx.jurisdiction or meta.get("jurisdiction")
+        review_depth = meta.get("review_depth") or "standard"
+
+        profile = self._load_profile_or_fail(ctx, contract_type_key)
+        if profile is None:
+            return ctx
+
+        ctx.add_result(f"{STEP_NAME}.profile", profile)
+
+        document_classification_warning = self._classify_document_warning(contract_id, contract_type_key)
+
+        # 2) Get clauses (from store or extract)
+        ctx.current_step = f"{STEP_NAME}.clauses"
+        clauses_from_store = self.clause_store.get_clauses_by_document(contract_id)
+        gathered = self._gather_clause_evidence(ctx, contract_id, clauses_from_store)
+        if gathered is None:
+            return ctx
+        extracted_types, evidence_blocks, evidence_candidates = gathered
+
+        ctx.add_result(f"{STEP_NAME}.extracted_types", list(extracted_types))
+        ctx.add_result(f"{STEP_NAME}.evidence_blocks", [e.model_dump() for e in evidence_blocks])
+
+        # Fail closed: Contract Review requires evidence text to support any output.
+        # If evidence blocks are empty, we cannot provide an evidence-backed review.
+        if not evidence_blocks:
+            ctx.workflow_state.legal_analysis = StageStatus.FAILED
+            ctx.fail(
+                code="NO_EVIDENCE",
+                message="No extractable evidence was found in the provided document.",
+                step=STEP_NAME,
+                details={"document_id": contract_id},
+            )
+            return ctx
+
+        # 3) Expected clause checks (evidence-first, conservative)
+        expected = list(profile["expected_clauses"])
+        optional = set(profile.get("optional_clauses") or [])
+        risk_weights = profile.get("risk_weights") or {}
+
+        risks: List[RiskItem] = []
+        presence_map: Dict[str, Any] = {}
+
+        for clause_type in expected:
+            keywords = EXPECTED_CLAUSE_PATTERNS.get(clause_type, [])
+            result = _detect_clause_presence(evidence_candidates, keywords, clause_type=clause_type)
+            status = result["status"]
+            presence_map[clause_type] = {
+                "status": status,
+                "display_status": _display_status_full(status),
+                "clause_ids": [result["clause_id"]] if result.get("clause_id") else [],
+                "page_numbers": [result["page_number"]] if result.get("page_number") else [],
+                "matched_keyword": result.get("matched_keyword"),
+            }
+
+        # Implicit / fallback detection passes (G1–G8) mutate presence_map in place.
+        self._apply_implicit_detection_passes(
+            expected=expected,
+            presence_map=presence_map,
+            evidence_candidates=evidence_candidates,
+            clauses_from_store=clauses_from_store,
+            contract_id=contract_id,
+            review_depth=review_depth,
+        )
+
 
         # G9: Cross-clause contradiction detection — only for standard depth.
         contradiction_risks: List[RiskItem] = []
         if review_depth == "standard":
             contradiction_risks = self._identify_contradiction_risks(presence_map, evidence_candidates)
 
-        # Add risk rows only for clause_types that are not detected (any variant)
-        _skip_risk_statuses = (
-            "detected", "detected_implicit", "detected_distributed", "detected_weak",
-            "implicitly_covered",
-            "uncertain",   # heading/weak-evidence matches don't generate misleading risk items
-        )
-        for clause_type in expected:
-            status = presence_map.get(clause_type, {}).get("status", "not_detected")
-            if status in _skip_risk_statuses:
-                continue
-            entry = presence_map[clause_type]
-            result = {"clause_id": (entry.get("clause_ids") or [None])[0], "page_number": (entry.get("page_numbers") or [None])[0]}
-            severity = risk_weights.get(clause_type, "medium")
-            if isinstance(severity, str):
-                severity = severity.lower()
-            else:
-                severity = "medium"
-            if severity not in ("high", "medium", "low"):
-                severity = "medium"
-            description = f"Clause not confidently detected: {clause_type.replace('_', ' ')}."
-            clause_ids = [result["clause_id"]] if result.get("clause_id") else []
-            page_numbers = [result["page_number"]] if result.get("page_number") else []
-            missing_clause = True
-            display_names = [_resolve_clause_display_name(cid) for cid in clause_ids] if clause_ids else []
-            risks.append(
-                RiskItem(
-                    description=description,
-                    severity=severity,
-                    status=status,
-                    clause_types=[clause_type],
-                    missing_clause=missing_clause,
-                    clause_ids=clause_ids,
-                    page_numbers=page_numbers,
-                    display_names=display_names,
-                )
-            )
+        risks.extend(self._build_missing_clause_risks(expected, presence_map, risk_weights))
 
         ctx.add_result(f"{STEP_NAME}.presence_map", presence_map)
 
-        # Build not_detected_clauses with canonical grouping (e.g. compensation vs salary_wages).
-        missing_keys = [ct for ct in expected if presence_map.get(ct, {}).get("status") == "not_detected"]
-        not_detected_clauses: List[str] = []
-        # Handle canonical groups first (only show one entry for each group)
-        for canon_key, members in CANONICAL_CLAUSE_GROUPS.items():
-            group_members = [m for m in members if m in missing_keys]
-            if group_members:
-                not_detected_clauses.append(
-                    EXPECTED_CLAUSE_DISPLAY_NAMES.get(canon_key, canon_key.replace("_", " ").title())
-                )
-                missing_keys = [ct for ct in missing_keys if ct not in group_members]
-
-        # Add remaining standalone missing keys
-        for ct in missing_keys:
-            not_detected_clauses.append(
-                EXPECTED_CLAUSE_DISPLAY_NAMES.get(ct, ct.replace("_", " ").title())
-            )
+        not_detected_clauses = self._build_not_detected_clauses(expected, presence_map)
 
         # 3b) Problematic language detection (heuristic)
         if clauses_from_store:
@@ -1990,21 +2170,7 @@ class ContractReviewService:
                 )
             )
 
-        # --- deduplication pass ---
-        _seen: dict = {}
-        _deduped: list = []
-        for _r in risks:
-            _key = (_r.description, frozenset(_r.clause_ids or []))
-            if _key not in _seen:
-                _seen[_key] = len(_deduped)
-                _deduped.append(_r)
-            else:
-                # merge page_numbers into the first occurrence
-                _existing = _deduped[_seen[_key]]
-                for _pn in (_r.page_numbers or []):
-                    if _pn not in (_existing.page_numbers or []):
-                        (_existing.page_numbers or []).append(_pn)
-        risks = _deduped
+        risks = self._dedupe_risks(risks)
 
         # Guardrail: enforce on generated text only (risk descriptions, executive summary).
         for r in risks:
@@ -2026,40 +2192,12 @@ class ContractReviewService:
         risks = self._attach_verbatim_evidence(risks, evidence_blocks, clause_matched_keywords=clause_matched_keywords)
 
         # ── Improvement 2: attach severity reason + recommendation ─────────────
-        risks = self._attach_explanations(risks)
+        self._attach_explanations(risks)  # mutates risks in place
 
         ctx.add_result(f"{STEP_NAME}.risks", [r.model_dump() for r in risks])
 
-        # 4) Document confidence (for severity cap and guardrail)
-        section_non_standard_count = sum(1 for b in evidence_blocks if getattr(b, "structure_class", None) == "section_non_standard")
-        total_blocks = max(len(evidence_blocks), 1)
-        document_confidence = "high" if (
-            not document_classification_warning
-            and (section_non_standard_count / total_blocks) < 0.2
-        ) else ("medium" if not document_classification_warning else "low")
-
-        # 5) Final output guardrail: on clean documents, do not show section_non_standard
-        if document_confidence == "high" and section_non_standard_count > 0:
-            for block in evidence_blocks:
-                if getattr(block, "structure_class", None) == "section_non_standard":
-                    block.structure_class = "provision"  # downgrade; no heading on block to prefer clause
-                    logging.debug(
-                        "contract_review: downgraded evidence block structure_class to provision (document_confidence=high)"
-                    )
-
-        # 6) used_implicit_or_distributed_logic: after guardrail so downgraded blocks do not count
-        # OCR confidence below threshold: significant fraction of blocks have high OCR noise
-        noisy_count = sum(
-            1 for b in evidence_blocks
-            if (1.0 - _alpha_ratio(getattr(b, "raw_text", "") or "")) >= OCR_NOISE_THRESHOLD
-        )
-        ocr_confidence_below_threshold = (noisy_count / total_blocks) > 0.5
-        used_implicit_or_distributed_logic = (
-            presence_map.get("governing_law", {}).get("status") == "detected_implicit"
-            or presence_map.get("benefits", {}).get("status") == "detected_distributed"
-            or any(presence_map.get(ct, {}).get("status") == "implicitly_covered" for ct in expected)
-            or any(getattr(b, "structure_class", None) == "section_non_standard" for b in evidence_blocks)
-            or ocr_confidence_below_threshold
+        document_confidence, used_implicit_or_distributed_logic = self._compute_document_confidence(
+            evidence_blocks, presence_map, expected, document_classification_warning
         )
 
         # 7) Key Review Observations (template-based, reviewer-grade; no raw counts)
@@ -2090,31 +2228,7 @@ class ContractReviewService:
                 )
             )
 
-        # 9) Implicitly covered clauses (display names + notes for UI)
-        implicitly_covered_clauses: List[str] = []
-        implicit_coverage_notes: Optional[Dict[str, str]] = None
-        for ct in expected:
-            entry_status = presence_map.get(ct, {}).get("status")
-            if entry_status == "implicitly_covered":
-                display = EXPECTED_CLAUSE_DISPLAY_NAMES.get(ct, ct.replace("_", " ").title())
-                implicitly_covered_clauses.append(display)
-                note = presence_map.get(ct, {}).get("coverage_note")
-                if note:
-                    if implicit_coverage_notes is None:
-                        implicit_coverage_notes = {}
-                    implicit_coverage_notes[display] = note
-            elif entry_status == "uncertain":
-                # Uncertain clauses are detected with weak/heading-only evidence.
-                # Surface them in implicitly_covered_clauses with a note rather than
-                # generating a misleading risk item.
-                display = EXPECTED_CLAUSE_DISPLAY_NAMES.get(ct, ct.replace("_", " ").title())
-                display_with_note = f"{display} (Weak Evidence)"
-                implicitly_covered_clauses.append(display_with_note)
-                if implicit_coverage_notes is None:
-                    implicit_coverage_notes = {}
-                implicit_coverage_notes[display_with_note] = (
-                    "Detected with limited textual evidence; manual review of the relevant section is recommended."
-                )
+        implicitly_covered_clauses, implicit_coverage_notes = self._build_implicitly_covered(expected, presence_map)
 
         # 10) Build deliverable and store in context
 
