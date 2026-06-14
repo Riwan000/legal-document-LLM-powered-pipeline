@@ -16,6 +16,13 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "qwen2.5:3b"
     
+    # Agent layer (see plans/agentic-orchestrator.md)
+    AGENT_PLANNER: str = "rules"  # "rules" | "llm" (llm arrives in Phase 2)
+    AGENT_MODEL: str = "qwen2.5:7b-instruct"  # planner model, separate from OLLAMA_MODEL
+    AGENT_MAX_STEPS: int = 6  # default per-run cap; server hard cap is 10
+    AGENT_TOOL_TIMEOUT_S: int = 120
+    AGENT_SEED: int = 42  # planner determinism (LLM planner only)
+
     # Embedding Model Configuration
     EMBEDDING_MODEL: str = "paraphrase-multilingual-MiniLM-L12-v2"
     # Fallback when primary model fails with low memory (e.g. OSError 1455 paging file)

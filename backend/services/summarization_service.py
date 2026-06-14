@@ -579,6 +579,135 @@ class SummarizationService:
             })
             yield sse("done", {"status": "error"})
 
+    def _collect_position_candidates(
+        self,
+        all_doc_chunks: List[Dict[str, Any]],
+        chunk_types: List[str],
+        top_k: int,
+    ) -> List[Dict[str, Any]]:
+        """
+        Select candidate chunks by document position (background=first 20%,
+        holding=last 20%, others=middle band), de-duplicate by chunk_id, and
+        cap the count for classification.
+        """
+        total_doc_chunks = len(all_doc_chunks)
+        # Select chunks by position based on required types
+        position_based_chunks = []
+        if 'background' in chunk_types:
+            # First 20% of chunks for background
+            background_end = max(1, int(total_doc_chunks * 0.2))
+            position_based_chunks.extend(all_doc_chunks[:background_end])
+        if 'holding' in chunk_types:
+            # Last 20% of chunks for holding
+            holding_start = max(0, int(total_doc_chunks * 0.8))
+            position_based_chunks.extend(all_doc_chunks[holding_start:])
+        # For other types (procedural_history, issue_framing, etc.), use middle sections
+        other_types = [ct for ct in chunk_types if ct not in ['background', 'holding']]
+        if other_types:
+            # Middle 40-60% for procedural history and other types
+            middle_start = max(0, int(total_doc_chunks * 0.2))
+            middle_end = min(total_doc_chunks, int(total_doc_chunks * 0.6))
+            position_based_chunks.extend(all_doc_chunks[middle_start:middle_end])
+        
+        # Remove duplicates (chunks might overlap in first/last 20%)
+        seen_chunk_ids = set()
+        unique_position_chunks = []
+        for chunk in position_based_chunks:
+            chunk_id = chunk.get('chunk_id') or f"c_p{chunk.get('page_number', 0):04d}_i{chunk.get('chunk_index', 0):04d}"
+            if chunk_id not in seen_chunk_ids:
+                seen_chunk_ids.add(chunk_id)
+                unique_position_chunks.append(chunk)
+        
+        # Limit to reasonable number for classification
+        max_fallback = min(len(unique_position_chunks), top_k * 3)
+        unique_position_chunks = unique_position_chunks[:max_fallback]
+        return unique_position_chunks
+
+    def _force_assign_types_by_position(
+        self,
+        unique_position_chunks: List[Dict[str, Any]],
+        chunk_types: List[str],
+        total_doc_chunks: int,
+    ) -> List[Dict[str, Any]]:
+        """
+        Force-assign chunk types by document position (background=first 20%,
+        holding=last 20%, procedural_history/issue_framing=middle bands) as a
+        last resort when classification matched none of the required types.
+        """
+        assigned: List[Dict[str, Any]] = []
+        # Force assign types based on position in original document
+        # Re-sort by position to ensure correct ordering
+        unique_position_chunks_sorted = sorted(unique_position_chunks, key=lambda c: (c.get('page_number', 0), c.get('chunk_index', 0)))
+        for chunk in unique_position_chunks_sorted:
+            page = chunk.get('page_number', 0)
+            chunk_idx = chunk.get('chunk_index', 0)
+            # Calculate position in document (0.0 to 1.0)
+            # Use a simple heuristic: page number relative to total pages
+            # For more accuracy, we'd need total pages, but chunk_index works too
+            position_ratio = chunk_idx / max(1, total_doc_chunks - 1)
+            
+            # Assign type based on position
+            if 'background' in chunk_types and position_ratio < 0.2:
+                chunk['chunk_type'] = 'background'
+                assigned.append(chunk)
+            elif 'holding' in chunk_types and position_ratio >= 0.8:
+                chunk['chunk_type'] = 'holding'
+                assigned.append(chunk)
+            elif any(ct in chunk_types for ct in ['procedural_history', 'issue_framing', 'argument_claimant', 'argument_defendant', 'reasoning', 'citation']):
+                # For other types, assign based on what's needed
+                # Prioritize procedural_history in middle sections
+                if 'procedural_history' in chunk_types and 0.2 <= position_ratio < 0.6:
+                    chunk['chunk_type'] = 'procedural_history'
+                    assigned.append(chunk)
+                elif 'issue_framing' in chunk_types and 0.3 <= position_ratio < 0.7:
+                    chunk['chunk_type'] = 'issue_framing'
+                    assigned.append(chunk)
+    
+        return assigned
+
+    def _position_based_fallback_chunks(
+        self,
+        document_id: str,
+        chunk_types: List[str],
+        top_k: int,
+    ) -> List[Dict[str, Any]]:
+        """
+        Position-based retrieval fallback used when no semantically-retrieved
+        chunk matches the required ``chunk_types``. Selects chunks by their
+        position in the document (background=first 20%, holding=last 20%,
+        others=middle), classifies them, and force-assigns types by position
+        if classification still yields nothing. Returns [] when the document
+        has no chunks.
+        """
+        all_doc_chunks = self._get_all_document_chunks(document_id)
+        if not all_doc_chunks:
+            return []
+        all_doc_chunks.sort(key=lambda c: (c.get('page_number', 0), c.get('chunk_index', 0)))
+        total_doc_chunks = len(all_doc_chunks)
+        
+        unique_position_chunks = self._collect_position_candidates(all_doc_chunks, chunk_types, top_k)
+        
+        # Classify position-based chunks
+        # Ensure position-based chunks have scores (use 0.5 as default for position-based)
+        for chunk in unique_position_chunks:
+            if 'score' not in chunk or chunk.get('score') is None:
+                chunk['score'] = 0.5
+        classified_position_chunks = self._backfill_and_classify_chunks(unique_position_chunks, document_id)
+        
+        # Filter position-based chunks by required types
+        filtered_position_chunks = [
+            chunk for chunk in classified_position_chunks
+            if chunk.get('chunk_type') in chunk_types
+        ]
+        
+        # If still no chunks match, force assign types based on position
+        if not filtered_position_chunks and unique_position_chunks:
+            filtered_position_chunks = self._force_assign_types_by_position(
+                unique_position_chunks, chunk_types, total_doc_chunks
+            )
+
+        return filtered_position_chunks
+
     def _select_top_k_chunks_for_section(
         self,
         document_id: str,
@@ -633,90 +762,9 @@ class SummarizationService:
         
         # Step 3.5: Fallback to position-based retrieval if no chunks match required types
         if not filtered_chunks and search_results:
-            # Get all chunks for this document
-            all_doc_chunks = self._get_all_document_chunks(document_id)
-            if all_doc_chunks:
-                # Sort by chunk_index to get document order
-                all_doc_chunks.sort(key=lambda c: (c.get('page_number', 0), c.get('chunk_index', 0)))
-                total_doc_chunks = len(all_doc_chunks)
-                
-                # Select chunks by position based on required types
-                position_based_chunks = []
-                if 'background' in chunk_types:
-                    # First 20% of chunks for background
-                    background_end = max(1, int(total_doc_chunks * 0.2))
-                    position_based_chunks.extend(all_doc_chunks[:background_end])
-                if 'holding' in chunk_types:
-                    # Last 20% of chunks for holding
-                    holding_start = max(0, int(total_doc_chunks * 0.8))
-                    position_based_chunks.extend(all_doc_chunks[holding_start:])
-                # For other types (procedural_history, issue_framing, etc.), use middle sections
-                other_types = [ct for ct in chunk_types if ct not in ['background', 'holding']]
-                if other_types:
-                    # Middle 40-60% for procedural history and other types
-                    middle_start = max(0, int(total_doc_chunks * 0.2))
-                    middle_end = min(total_doc_chunks, int(total_doc_chunks * 0.6))
-                    position_based_chunks.extend(all_doc_chunks[middle_start:middle_end])
-                
-                # Remove duplicates (chunks might overlap in first/last 20%)
-                seen_chunk_ids = set()
-                unique_position_chunks = []
-                for chunk in position_based_chunks:
-                    chunk_id = chunk.get('chunk_id') or f"c_p{chunk.get('page_number', 0):04d}_i{chunk.get('chunk_index', 0):04d}"
-                    if chunk_id not in seen_chunk_ids:
-                        seen_chunk_ids.add(chunk_id)
-                        unique_position_chunks.append(chunk)
-                
-                # Limit to reasonable number for classification
-                max_fallback = min(len(unique_position_chunks), top_k * 3)
-                unique_position_chunks = unique_position_chunks[:max_fallback]
-                
-                # Classify position-based chunks
-                # Ensure position-based chunks have scores (use 0.5 as default for position-based)
-                for chunk in unique_position_chunks:
-                    if 'score' not in chunk or chunk.get('score') is None:
-                        chunk['score'] = 0.5
-                classified_position_chunks = self._backfill_and_classify_chunks(unique_position_chunks, document_id)
-                
-                # Filter position-based chunks by required types
-                filtered_position_chunks = [
-                    chunk for chunk in classified_position_chunks
-                    if chunk.get('chunk_type') in chunk_types
-                ]
-                
-                # If still no chunks match, force assign types based on position
-                if not filtered_position_chunks and unique_position_chunks:
-                    # Force assign types based on position in original document
-                    # Re-sort by position to ensure correct ordering
-                    unique_position_chunks_sorted = sorted(unique_position_chunks, key=lambda c: (c.get('page_number', 0), c.get('chunk_index', 0)))
-                    for chunk in unique_position_chunks_sorted:
-                        page = chunk.get('page_number', 0)
-                        chunk_idx = chunk.get('chunk_index', 0)
-                        # Calculate position in document (0.0 to 1.0)
-                        # Use a simple heuristic: page number relative to total pages
-                        # For more accuracy, we'd need total pages, but chunk_index works too
-                        position_ratio = chunk_idx / max(1, total_doc_chunks - 1)
-                        
-                        # Assign type based on position
-                        if 'background' in chunk_types and position_ratio < 0.2:
-                            chunk['chunk_type'] = 'background'
-                            filtered_position_chunks.append(chunk)
-                        elif 'holding' in chunk_types and position_ratio >= 0.8:
-                            chunk['chunk_type'] = 'holding'
-                            filtered_position_chunks.append(chunk)
-                        elif any(ct in chunk_types for ct in ['procedural_history', 'issue_framing', 'argument_claimant', 'argument_defendant', 'reasoning', 'citation']):
-                            # For other types, assign based on what's needed
-                            # Prioritize procedural_history in middle sections
-                            if 'procedural_history' in chunk_types and 0.2 <= position_ratio < 0.6:
-                                chunk['chunk_type'] = 'procedural_history'
-                                filtered_position_chunks.append(chunk)
-                            elif 'issue_framing' in chunk_types and 0.3 <= position_ratio < 0.7:
-                                chunk['chunk_type'] = 'issue_framing'
-                                filtered_position_chunks.append(chunk)
-                
-                # Use position-based chunks if we found any
-                if filtered_position_chunks:
-                    filtered_chunks = filtered_position_chunks
+            fallback = self._position_based_fallback_chunks(document_id, chunk_types, top_k)
+            if fallback:
+                filtered_chunks = fallback
         
         # Step 4: Limit to top_k and enforce hard limit
         # Sort by score (highest first) for deterministic selection
@@ -1094,6 +1142,228 @@ JSON response:"""
         
         return citations
     
+    @staticmethod
+    def _md_case_spine(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the case spine markdown section."""
+        out = ""
+        # Case Spine (new format only)
+        if is_new_format and summary.get('case_spine'):
+            spine = summary['case_spine']
+            out += "## Case Spine\n\n"
+            out += f"- **Case:** {spine.get('case_name', 'N/A')}\n"
+            out += f"- **Court:** {spine.get('court', 'N/A')}\n"
+            out += f"- **Date:** {spine.get('date', 'N/A')}\n"
+            out += f"- **Parties:** {', '.join(spine.get('parties', []))}\n"
+            out += f"- **Procedural Posture:** {spine.get('procedural_posture', 'N/A')}\n"
+            if spine.get('core_issues'):
+                out += "- **Core Issues:**\n"
+                for issue in spine['core_issues']:
+                    out += f"  - {issue}\n"
+            out += "\n"
+        
+        return out
+
+    @staticmethod
+    def _md_executive_summary(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the executive summary markdown section."""
+        out = ""
+        # Executive Summary
+        out += "## Executive Summary\n\n"
+        if is_new_format:
+            # New format: array of items
+            exec_items = summary.get('executive_summary', [])
+            if exec_items:
+                for item in exec_items:
+                    source = item.get('source', {})
+                    out += f"{item.get('text', '')}\n"
+                    out += f"*Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n\n"
+            else:
+                out += "No executive summary available.\n\n"
+        else:
+            # Old format: string
+            out += f"{summary.get('executive_summary', 'No summary available')}\n\n"
+        
+        return out
+
+    @staticmethod
+    def _md_timeline(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the timeline markdown section."""
+        out = ""
+        # Timeline
+        if summary.get('timeline'):
+            out += "## Timeline of Events\n\n"
+            for event in summary['timeline']:
+                if is_new_format:
+                    source = event.get('source', {})
+                    out += f"- **{event.get('date', 'N/A')}**: {event.get('event', '')}\n"
+                    out += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
+                else:
+                    out += f"- **{event.get('date', 'N/A')}**: {event.get('event', '')} {event.get('source', '')}\n"
+            out += "\n"
+        
+        return out
+
+    @staticmethod
+    def _md_key_arguments(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the key arguments markdown section."""
+        out = ""
+        # Key Arguments
+        if summary.get('key_arguments'):
+            out += "## Key Arguments\n\n"
+            if is_new_format:
+                args = summary['key_arguments']
+                if args.get('claimant'):
+                    out += "### Claimant/Plaintiff Arguments\n\n"
+                    for arg in args['claimant']:
+                        source = arg.get('source', {})
+                        out += f"- {arg.get('text', '')}\n"
+                        out += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
+                    out += "\n"
+                if args.get('defendant'):
+                    out += "### Defendant/Respondent Arguments\n\n"
+                    for arg in args['defendant']:
+                        source = arg.get('source', {})
+                        out += f"- {arg.get('text', '')}\n"
+                        out += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
+                    out += "\n"
+            else:
+                # Old format
+                for arg in summary['key_arguments']:
+                    out += f"- {arg.get('argument', '')} {arg.get('source', '')}\n"
+                out += "\n"
+        
+        return out
+
+    @staticmethod
+    def _md_open_issues(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the open issues markdown section."""
+        out = ""
+        # Open Issues
+        if summary.get('open_issues'):
+            out += "## Open Issues\n\n"
+            for issue in summary['open_issues']:
+                if is_new_format:
+                    source = issue.get('source', {})
+                    out += f"- {issue.get('text', '')}\n"
+                    out += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
+                else:
+                    out += f"- {issue.get('issue', '')} {issue.get('source', '')}\n"
+            out += "\n"
+        
+        return out
+
+    @staticmethod
+    def _md_citations(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the citations markdown section."""
+        out = ""
+        # Citations
+        if summary.get('citations'):
+            out += "## Source Citations\n\n"
+            for citation in summary['citations']:
+                if is_new_format:
+                    out += f"- **{citation.get('chunk_id', '')}**: Page {citation.get('page', 0)}, Type: {citation.get('chunk_type', 'unknown')}\n"
+                else:
+                    out += f"**{citation.get('citation', '')}**\n"
+                    out += f"> {citation.get('text', '')}\n\n"
+        
+        return out
+
+    def _render_markdown_report(self, summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the markdown-format case summary report."""
+        report = "# Case File Summary\n\n"
+        report += self._md_case_spine(summary, is_new_format)
+        report += self._md_executive_summary(summary, is_new_format)
+        report += self._md_timeline(summary, is_new_format)
+        report += self._md_key_arguments(summary, is_new_format)
+        report += self._md_open_issues(summary, is_new_format)
+        report += self._md_citations(summary, is_new_format)
+        return report
+
+    @staticmethod
+    def _text_case_spine(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the case spine text section."""
+        out = ""
+        if is_new_format and summary.get('case_spine'):
+            spine = summary['case_spine']
+            out += f"Case: {spine.get('case_name', 'N/A')}\n"
+            out += f"Court: {spine.get('court', 'N/A')}\n"
+            out += f"Date: {spine.get('date', 'N/A')}\n\n"
+        
+        return out
+
+    @staticmethod
+    def _text_executive_summary(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the executive summary text section."""
+        out = ""
+        out += "Executive Summary:\n" + "-" * 50 + "\n"
+        if is_new_format:
+            for item in summary.get('executive_summary', []):
+                out += f"{item.get('text', '')}\n"
+        else:
+            out += f"{summary.get('executive_summary', '')}\n"
+        
+        return out
+
+    @staticmethod
+    def _text_timeline(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the timeline text section."""
+        out = ""
+        if summary.get('timeline'):
+            out += "\nTimeline:\n" + "-" * 50 + "\n"
+            for event in summary['timeline']:
+                out += f"{event.get('date', 'N/A')}: {event.get('event', '')}\n"
+        
+        return out
+
+    @staticmethod
+    def _text_key_arguments(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the key arguments text section."""
+        out = ""
+        if summary.get('key_arguments'):
+            out += "\nKey Arguments:\n" + "-" * 50 + "\n"
+            if is_new_format:
+                args = summary['key_arguments']
+                if args.get('claimant'):
+                    out += "Claimant Arguments:\n"
+                    for arg in args['claimant']:
+                        out += f"- {arg.get('text', '')}\n"
+                if args.get('defendant'):
+                    out += "Defendant Arguments:\n"
+                    for arg in args['defendant']:
+                        out += f"- {arg.get('text', '')}\n"
+            else:
+                for arg in summary['key_arguments']:
+                    out += f"- {arg.get('argument', '')}\n"
+        
+        return out
+
+    @staticmethod
+    def _text_open_issues(summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the open issues text section."""
+        out = ""
+        if summary.get('open_issues'):
+            out += "\nOpen Issues:\n" + "-" * 50 + "\n"
+            for issue in summary['open_issues']:
+                if is_new_format:
+                    out += f"- {issue.get('text', '')}\n"
+                else:
+                    out += f"- {issue.get('issue', '')}\n"
+        
+        return out
+
+    def _render_text_report(self, summary: Dict[str, Any], is_new_format: bool) -> str:
+        """Render the plain-text-format case summary report."""
+        report = f"""Case File Summary
+{'=' * 50}
+
+"""
+        report += self._text_case_spine(summary, is_new_format)
+        report += self._text_executive_summary(summary, is_new_format)
+        report += self._text_timeline(summary, is_new_format)
+        report += self._text_key_arguments(summary, is_new_format)
+        report += self._text_open_issues(summary, is_new_format)
+        return report
+
     def generate_summary_report(
         self,
         summary: Dict[str, Any],
@@ -1102,158 +1372,15 @@ JSON response:"""
         """
         Generate a human-readable summary report.
         Handles both old and new summary formats.
-        
+
         Args:
             summary: Summary dictionary (new format with case_spine, or old format)
             format: Output format ('markdown' or 'text')
-            
+
         Returns:
             Formatted report string
         """
-        # Detect format: new format has case_spine, old format has executive_summary as string
         is_new_format = 'case_spine' in summary
-        
         if format == 'markdown':
-            report = "# Case File Summary\n\n"
-            
-            # Case Spine (new format only)
-            if is_new_format and summary.get('case_spine'):
-                spine = summary['case_spine']
-                report += "## Case Spine\n\n"
-                report += f"- **Case:** {spine.get('case_name', 'N/A')}\n"
-                report += f"- **Court:** {spine.get('court', 'N/A')}\n"
-                report += f"- **Date:** {spine.get('date', 'N/A')}\n"
-                report += f"- **Parties:** {', '.join(spine.get('parties', []))}\n"
-                report += f"- **Procedural Posture:** {spine.get('procedural_posture', 'N/A')}\n"
-                if spine.get('core_issues'):
-                    report += "- **Core Issues:**\n"
-                    for issue in spine['core_issues']:
-                        report += f"  - {issue}\n"
-                report += "\n"
-            
-            # Executive Summary
-            report += "## Executive Summary\n\n"
-            if is_new_format:
-                # New format: array of items
-                exec_items = summary.get('executive_summary', [])
-                if exec_items:
-                    for item in exec_items:
-                        source = item.get('source', {})
-                        report += f"{item.get('text', '')}\n"
-                        report += f"*Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n\n"
-                else:
-                    report += "No executive summary available.\n\n"
-            else:
-                # Old format: string
-                report += f"{summary.get('executive_summary', 'No summary available')}\n\n"
-            
-            # Timeline
-            if summary.get('timeline'):
-                report += "## Timeline of Events\n\n"
-                for event in summary['timeline']:
-                    if is_new_format:
-                        source = event.get('source', {})
-                        report += f"- **{event.get('date', 'N/A')}**: {event.get('event', '')}\n"
-                        report += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
-                    else:
-                        report += f"- **{event.get('date', 'N/A')}**: {event.get('event', '')} {event.get('source', '')}\n"
-                report += "\n"
-            
-            # Key Arguments
-            if summary.get('key_arguments'):
-                report += "## Key Arguments\n\n"
-                if is_new_format:
-                    args = summary['key_arguments']
-                    if args.get('claimant'):
-                        report += "### Claimant/Plaintiff Arguments\n\n"
-                        for arg in args['claimant']:
-                            source = arg.get('source', {})
-                            report += f"- {arg.get('text', '')}\n"
-                            report += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
-                        report += "\n"
-                    if args.get('defendant'):
-                        report += "### Defendant/Respondent Arguments\n\n"
-                        for arg in args['defendant']:
-                            source = arg.get('source', {})
-                            report += f"- {arg.get('text', '')}\n"
-                            report += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
-                        report += "\n"
-                else:
-                    # Old format
-                    for arg in summary['key_arguments']:
-                        report += f"- {arg.get('argument', '')} {arg.get('source', '')}\n"
-                    report += "\n"
-            
-            # Open Issues
-            if summary.get('open_issues'):
-                report += "## Open Issues\n\n"
-                for issue in summary['open_issues']:
-                    if is_new_format:
-                        source = issue.get('source', {})
-                        report += f"- {issue.get('text', '')}\n"
-                        report += f"  *Source: Page {source.get('page', 0)}, Chunk {source.get('chunk_id', '')}*\n"
-                    else:
-                        report += f"- {issue.get('issue', '')} {issue.get('source', '')}\n"
-                report += "\n"
-            
-            # Citations
-            if summary.get('citations'):
-                report += "## Source Citations\n\n"
-                for citation in summary['citations']:
-                    if is_new_format:
-                        report += f"- **{citation.get('chunk_id', '')}**: Page {citation.get('page', 0)}, Type: {citation.get('chunk_type', 'unknown')}\n"
-                    else:
-                        report += f"**{citation.get('citation', '')}**\n"
-                        report += f"> {citation.get('text', '')}\n\n"
-            
-            return report
-        
-        else:  # text format
-            report = f"""Case File Summary
-{'=' * 50}
-
-"""
-            if is_new_format and summary.get('case_spine'):
-                spine = summary['case_spine']
-                report += f"Case: {spine.get('case_name', 'N/A')}\n"
-                report += f"Court: {spine.get('court', 'N/A')}\n"
-                report += f"Date: {spine.get('date', 'N/A')}\n\n"
-            
-            report += "Executive Summary:\n" + "-" * 50 + "\n"
-            if is_new_format:
-                for item in summary.get('executive_summary', []):
-                    report += f"{item.get('text', '')}\n"
-            else:
-                report += f"{summary.get('executive_summary', '')}\n"
-            
-            if summary.get('timeline'):
-                report += "\nTimeline:\n" + "-" * 50 + "\n"
-                for event in summary['timeline']:
-                    report += f"{event.get('date', 'N/A')}: {event.get('event', '')}\n"
-            
-            if summary.get('key_arguments'):
-                report += "\nKey Arguments:\n" + "-" * 50 + "\n"
-                if is_new_format:
-                    args = summary['key_arguments']
-                    if args.get('claimant'):
-                        report += "Claimant Arguments:\n"
-                        for arg in args['claimant']:
-                            report += f"- {arg.get('text', '')}\n"
-                    if args.get('defendant'):
-                        report += "Defendant Arguments:\n"
-                        for arg in args['defendant']:
-                            report += f"- {arg.get('text', '')}\n"
-                else:
-                    for arg in summary['key_arguments']:
-                        report += f"- {arg.get('argument', '')}\n"
-            
-            if summary.get('open_issues'):
-                report += "\nOpen Issues:\n" + "-" * 50 + "\n"
-                for issue in summary['open_issues']:
-                    if is_new_format:
-                        report += f"- {issue.get('text', '')}\n"
-                    else:
-                        report += f"- {issue.get('issue', '')}\n"
-            
-            return report
-
+            return self._render_markdown_report(summary, is_new_format)
+        return self._render_text_report(summary, is_new_format)

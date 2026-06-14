@@ -14,6 +14,7 @@ from backend.config import settings
 
 from backend.services.document_ingestion import DocumentIngestionService
 from backend.services.structured_clause_extraction import StructuredClauseExtractionService, ExtractedClause
+from backend.utils.log_safety import sanitize_for_log
 
 logger = logging.getLogger(__name__)
 
@@ -216,7 +217,7 @@ DOCUMENT TEXT:
         # Always use deterministic structured extraction
         if use_structured:
             try:
-                logger.info(f"Extracting clauses using deterministic structured extraction for document_id={document_id}")
+                logger.info(f"Extracting clauses using deterministic structured extraction for document_id={sanitize_for_log(document_id)}")
                 extracted_clauses = self.structured_extractor.extract_structured_clauses(
                     str(file_path), document_id
                 )
