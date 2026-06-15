@@ -200,7 +200,7 @@ class EvidenceGuardrailService:
         # #endregion
 
         # Holistic fallback: when sentence coverage is zero but chunks exist, check full-answer vs chunks
-        if coverage_ratio == 0.0 and evidence_score == "none" and decision == "fail" and not injection and chunks:
+        if grounded_count == 0 and evidence_score == "none" and decision == "fail" and not injection and chunks:
             # #region agent log
             _dbg({"location": "evidence_guardrail_service.check.holistic_enter", "message": "holistic fallback entered", "data": {}, "hypothesisId": "A"})
             # #endregion

@@ -262,8 +262,10 @@ class VectorStore:
             )
         
         # Normalize query embedding to unit length (to match stored vectors).
+        # Guard against the degenerate (near-)zero vector to avoid divide-by-zero;
+        # real embeddings have norm ~1, so this only rejects all-zero/degenerate input.
         query_norm = float(np.linalg.norm(query_embedding))
-        if query_norm == 0.0:
+        if query_norm < 1e-12:
             return []
         query_embedding = query_embedding / query_norm
         
