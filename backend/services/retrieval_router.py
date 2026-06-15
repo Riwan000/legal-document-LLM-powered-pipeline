@@ -109,7 +109,7 @@ class RetrievalRouter:
         # Engine 4 — Category batch (triggered by category query + "all clauses"/"summarize all")
         category_slug = self._query_type_to_category(query_types)
         if category_slug and self._is_category_batch_query(query):
-            res = self._category_engine(query_embedding, category_slug, document_id, top_k)
+            res = self._category_engine(category_slug, document_id, top_k)
             _merge(res, 0.8, "category_engine")
 
         # Engine 6 — Title/first-page (triggered by summary or classification intent)
@@ -231,7 +231,6 @@ class RetrievalRouter:
 
     def _category_engine(
         self,
-        query_embedding: np.ndarray,
         category_slug: str,
         document_id: Optional[str],
         top_k: int,
