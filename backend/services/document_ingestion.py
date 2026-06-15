@@ -37,7 +37,6 @@ def detect_document_language(pages: List[Tuple[str, int]]) -> str:
     Accepts list of (text, page_number) or list of PageInfo (uses .text).
     """
     sample_text = ""
-    sample_size = min(5, len(pages))
     indices = [0] + [len(pages) // 2] + list(range(min(3, len(pages))))
 
     for idx in set(indices):

@@ -292,7 +292,7 @@ class EvidenceExplorerService:
 
         matches: List[Tuple[float, Dict[str, Any]]] = []
         for clause in clauses:
-            heading_hits, body_hits, score = score_clause(clause, expanded_keywords)
+            heading_hits, _, score = score_clause(clause, expanded_keywords)
             if heading_hits >= 1 or score > 0:
                 matches.append((score, clause))
         matches.sort(key=lambda x: x[0], reverse=True)

@@ -47,7 +47,6 @@ class CaseSpineBuilder:
         
         # Generate spine with retry
         spine_data = None
-        last_error = None
         for attempt in range(2):  # Retry once
             try:
                 spine_data = self._generate_spine(context, attempt)
@@ -57,7 +56,6 @@ class CaseSpineBuilder:
                 # Memory errors should be propagated immediately, don't retry
                 raise
             except Exception as e:
-                last_error = e
                 if attempt == 1:  # Last attempt
                     raise ValueError(f"Failed to build case spine after retry: {str(e)}")
                 continue

@@ -554,8 +554,8 @@ class VectorStore:
         self.metadata = kept_metadata
         try:
             self.save()
-        except Exception as e:
-            logging.error("Failed to save vector store after delete_document(%s): %s", document_id, e)
+        except Exception:
+            logging.exception("Failed to save vector store after delete_document(%s)", document_id)
 
         return deleted_count
     
@@ -680,7 +680,7 @@ class VectorStore:
         return {
             'total_vectors': self.index.ntotal,
             'embedding_dimension': self.embedding_dim,
-            'unique_documents': len(set(m['document_id'] for m in self.metadata)),
+            'unique_documents': len({m['document_id'] for m in self.metadata}),
             'total_chunks': len(self.metadata)
         }
 

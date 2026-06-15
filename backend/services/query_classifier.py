@@ -331,9 +331,6 @@ class QueryClassifier:
         Returns:
             True if query is out of scope (hard exclusion only)
         """
-        if covered_topics is None:
-            covered_topics = settings.COVERED_TOPICS
-        
         query_lower = query.lower()
         
         # Step 1: Hard out-of-scope only (immediate exclusion)

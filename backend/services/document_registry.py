@@ -336,7 +336,7 @@ class DocumentRegistry:
         # Ensure caches reflect latest flags for prior versions of this document_id.
         # This is important for unit tests that keep a reference to doc1 returned
         # from the first call and expect its `is_latest` to change after version 2.
-        for (doc_id, ver), cached in list(self._record_cache.items()):
+        for (doc_id, ver), cached in self._record_cache.items():
             if doc_id == document_id and isinstance(ver, int) and ver < version:
                 cached["is_latest"] = False
 
