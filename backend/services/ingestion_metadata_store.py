@@ -120,7 +120,12 @@ class IngestionMetadataStore:
             d = dict(row)
             d["structure_detected"] = bool(d.get("structure_detected", 0))
             ca = d.get("created_at")
-            created_at = datetime.fromisoformat(ca) if isinstance(ca, str) else (ca if ca is not None else datetime.now())
+            if isinstance(ca, str):
+                created_at = datetime.fromisoformat(ca)
+            elif ca is not None:
+                created_at = ca
+            else:
+                created_at = datetime.now()
             out.append(IngestionMetadata(
                 document_id=d["document_id"],
                 ingestion_version=d["ingestion_version"],

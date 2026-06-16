@@ -28,6 +28,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Word tokenizer: runs of 3+ word characters (used by keyword-overlap engines).
+_WORD_PATTERN = r"\b\w{3,}\b"
+
 # Map query_type slug → legal_category slug (for category engine)
 _QUERY_TYPE_TO_CATEGORY: Dict[str, str] = {
     "termination": "termination",
@@ -106,7 +109,7 @@ class RetrievalRouter:
         # Engine 4 — Category batch (triggered by category query + "all clauses"/"summarize all")
         category_slug = self._query_type_to_category(query_types)
         if category_slug and self._is_category_batch_query(query):
-            res = self._category_engine(query_embedding, category_slug, document_id, top_k)
+            res = self._category_engine(category_slug, document_id, top_k)
             _merge(res, 0.8, "category_engine")
 
         # Engine 6 — Title/first-page (triggered by summary or classification intent)
@@ -152,7 +155,7 @@ class RetrievalRouter:
                 continue
             text = (entry.get("text") or "").lower()
             # Simple term overlap score
-            query_words = set(re.findall(r"\b\w{3,}\b", query_lower)) - {"what", "does", "mean", "the", "define"}
+            query_words = set(re.findall(_WORD_PATTERN, query_lower)) - {"what", "does", "mean", "the", "define"}
             hits = sum(1 for w in query_words if w in text)
             score = min(1.0, hits / max(len(query_words), 1))
             if score > 0:
@@ -196,8 +199,8 @@ class RetrievalRouter:
                 continue
 
             # Partial title overlap
-            query_words = set(re.findall(r"\b\w{3,}\b", query_lower))
-            title_words = set(re.findall(r"\b\w{3,}\b", clause_title))
+            query_words = set(re.findall(_WORD_PATTERN, query_lower))
+            title_words = set(re.findall(_WORD_PATTERN, clause_title))
             overlap = query_words & title_words
             if overlap:
                 score = len(overlap) / max(len(query_words), 1)
@@ -228,7 +231,6 @@ class RetrievalRouter:
 
     def _category_engine(
         self,
-        query_embedding: np.ndarray,
         category_slug: str,
         document_id: Optional[str],
         top_k: int,
@@ -317,7 +319,7 @@ class RetrievalRouter:
           5. Return top-k across diverse pages.
         """
         keywords = [
-            w for w in re.findall(r"\b\w{3,}\b", query.lower())
+            w for w in re.findall(_WORD_PATTERN, query.lower())
             if w not in _BINARY_STRIP_WORDS
         ]
         if not keywords:

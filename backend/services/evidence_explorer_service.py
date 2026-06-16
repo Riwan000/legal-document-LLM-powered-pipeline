@@ -103,11 +103,11 @@ class EvidenceExplorerService:
 
         include_retrieval_debug = getattr(request, "debug", False)
         if mode == "both":
-            response, debug = self._run_both(request.document_id, request.query, top_k, expanded_keywords, ocr_noise_detected, include_retrieval_debug)
+            response, debug = self._run_both(request.document_id, request.query, top_k, expanded_keywords, include_retrieval_debug)
         elif mode == "clauses":
-            response, debug = self._run_clauses(request.document_id, request.query, top_k, expanded_keywords, ocr_noise_detected, include_retrieval_debug)
+            response, debug = self._run_clauses(request.document_id, request.query, top_k, expanded_keywords, include_retrieval_debug)
         else:
-            response, debug = self._run_text(request.document_id, request.query, top_k, expanded_keywords, ocr_noise_detected, include_retrieval_debug)
+            response, debug = self._run_text(request.document_id, request.query, top_k, expanded_keywords, include_retrieval_debug)
 
         debug["mode"] = mode
         debug["expanded_keywords"] = expanded_keywords
@@ -127,7 +127,6 @@ class EvidenceExplorerService:
         query: str,
         top_k: int,
         expanded_keywords: List[str],
-        ocr_noise_detected: bool,
         include_retrieval_debug: bool = False,
     ) -> Tuple[EvidenceExplorerResponse, Dict[str, Any]]:
         """
@@ -231,7 +230,6 @@ class EvidenceExplorerService:
         query: str,
         top_k: int,
         expanded_keywords: List[str],
-        ocr_noise_detected: bool,
         include_retrieval_debug: bool = False,
     ) -> Tuple[EvidenceExplorerResponse, Dict[str, Any]]:
         """
@@ -292,7 +290,7 @@ class EvidenceExplorerService:
 
         matches: List[Tuple[float, Dict[str, Any]]] = []
         for clause in clauses:
-            heading_hits, body_hits, score = score_clause(clause, expanded_keywords)
+            heading_hits, _, score = score_clause(clause, expanded_keywords)
             if heading_hits >= 1 or score > 0:
                 matches.append((score, clause))
         matches.sort(key=lambda x: x[0], reverse=True)
@@ -362,15 +360,14 @@ class EvidenceExplorerService:
         query: str,
         top_k: int,
         expanded_keywords: List[str],
-        ocr_noise_detected: bool,
         include_retrieval_debug: bool = False,
     ) -> Tuple[EvidenceExplorerResponse, Dict[str, Any]]:
         """
         Both mode: run clauses first; if any clause hits return those; else text mode.
         """
         clause_response, clause_debug = self._run_clauses(
-            document_id, query, top_k, expanded_keywords, ocr_noise_detected, include_retrieval_debug
+            document_id, query, top_k, expanded_keywords, include_retrieval_debug
         )
         if clause_response.results:
             return clause_response, clause_debug
-        return self._run_text(document_id, query, top_k, expanded_keywords, ocr_noise_detected, include_retrieval_debug)
+        return self._run_text(document_id, query, top_k, expanded_keywords, include_retrieval_debug)

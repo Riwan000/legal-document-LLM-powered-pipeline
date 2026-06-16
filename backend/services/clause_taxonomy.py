@@ -239,9 +239,8 @@ class ClauseTaxonomyService:
         # String-keyed (profile types without enum values)
         for slug, keywords in self.string_type_keywords.items():
             score = sum(1 for kw in keywords if kw in text_lower)
-            if score > 0:
-                if slug not in all_scores:   # skip if already scored by enum path
-                    all_scores[slug] = score
+            if score > 0 and slug not in all_scores:   # skip if already scored by enum path
+                all_scores[slug] = score
 
         if not all_scores:
             return "other"

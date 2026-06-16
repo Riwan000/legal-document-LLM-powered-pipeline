@@ -83,7 +83,7 @@ def enforce_non_prescriptive_language_in_obj(obj: Any, *, step: str) -> Any:
     if isinstance(obj, tuple):
         return tuple(enforce_non_prescriptive_language_in_obj(x, step=step) for x in obj)
     if isinstance(obj, dict):
-        for k, v in list(obj.items()):
+        for k, v in obj.items():
             obj[k] = enforce_non_prescriptive_language_in_obj(v, step=step)
         return obj
     # Unknown type: leave as-is (caller should apply to model_dump if needed).

@@ -37,9 +37,9 @@ class ClauseValidator:
         # Check 2: Raw text preservation
         for evidence in clause.evidence:
             if not evidence.raw_text:
-                errors.append(f"Evidence block missing raw_text (required for audit trail)")
+                errors.append("Evidence block missing raw_text (required for audit trail)")
             if not evidence.clean_text:
-                errors.append(f"Evidence block missing clean_text")
+                errors.append("Evidence block missing clean_text")
             # Ensure raw_text is not overwritten (should be different from clean_text if OCR was used)
             if evidence.raw_text == evidence.clean_text and 'OCR' in str(clause.metadata.get('is_ocr', '')):
                 # This is OK - no OCR was needed
@@ -48,7 +48,7 @@ class ClauseValidator:
         # Check 3: Precise location metadata
         for evidence in clause.evidence:
             if evidence.page is None or evidence.page < 1:
-                errors.append(f"Evidence block missing valid page number")
+                errors.append("Evidence block missing valid page number")
             # Paragraph and line range are optional but should be present if available
         
         # Check 4: Incompatible category check

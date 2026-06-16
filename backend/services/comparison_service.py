@@ -258,10 +258,9 @@ class ComparisonService:
         
         # Parse diff into structured format
         differences = []
-        current_diff = None
-        
+
         for line in diff:
-            if line.startswith('---') or line.startswith('+++'):
+            if line.startswith(('---', '+++')):
                 # Header lines, skip
                 continue
             elif line.startswith('@@'):

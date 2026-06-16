@@ -137,10 +137,8 @@ Text:
         self,
         chunk_text: str,
         chunk_id: str,
-        page_number: int,
         chunk_index: int,
-        total_chunks: int,
-        document_id: str
+        total_chunks: int
     ) -> str:
         """
         Classify a chunk into one of the allowed types.
@@ -149,17 +147,15 @@ Text:
         Args:
             chunk_text: Text content of chunk
             chunk_id: Stable chunk identifier
-            page_number: Page number
             chunk_index: Chunk index within document
             total_chunks: Total number of chunks
-            document_id: Document ID
-            
+
         Returns:
             One of the allowed chunk types
         """
         # Try heuristic classification first
         heuristic_type = self._classify_by_heuristics(
-            chunk_text, page_number, chunk_index, total_chunks
+            chunk_text, chunk_index, total_chunks
         )
         
         if heuristic_type:
@@ -171,7 +167,6 @@ Text:
     def _classify_by_heuristics(
         self,
         text: str,
-        page_number: int,
         chunk_index: int,
         total_chunks: int
     ) -> Optional[str]:
@@ -362,10 +357,8 @@ JSON response:"""
                 chunk_type = self.classify_chunk(
                     chunk_text=chunk.get('text', ''),
                     chunk_id=chunk.get('chunk_id', ''),
-                    page_number=chunk.get('page_number', 0),
                     chunk_index=chunk.get('chunk_index', 0),
-                    total_chunks=total_chunks,
-                    document_id=chunk.get('document_id', '')
+                    total_chunks=total_chunks
                 )
                 chunk['chunk_type'] = chunk_type
         

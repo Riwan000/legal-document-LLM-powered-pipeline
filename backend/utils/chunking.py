@@ -49,7 +49,6 @@ class TextChunker:
         char_overlap = chunk_overlap * 4
         
         chunks = []
-        start = 0
         chunk_index = 0
         
         # Split text into sentences for better chunking

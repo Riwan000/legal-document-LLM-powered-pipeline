@@ -262,8 +262,10 @@ class VectorStore:
             )
         
         # Normalize query embedding to unit length (to match stored vectors).
+        # Guard against the degenerate (near-)zero vector to avoid divide-by-zero;
+        # real embeddings have norm ~1, so this only rejects all-zero/degenerate input.
         query_norm = float(np.linalg.norm(query_embedding))
-        if query_norm == 0.0:
+        if query_norm < 1e-12:
             return []
         query_embedding = query_embedding / query_norm
         
@@ -554,8 +556,8 @@ class VectorStore:
         self.metadata = kept_metadata
         try:
             self.save()
-        except Exception as e:
-            logging.error("Failed to save vector store after delete_document(%s): %s", document_id, e)
+        except Exception:
+            logging.exception("Failed to save vector store after delete_document(%s)", document_id)
 
         return deleted_count
     
@@ -680,7 +682,7 @@ class VectorStore:
         return {
             'total_vectors': self.index.ntotal,
             'embedding_dimension': self.embedding_dim,
-            'unique_documents': len(set(m['document_id'] for m in self.metadata)),
+            'unique_documents': len({m['document_id'] for m in self.metadata}),
             'total_chunks': len(self.metadata)
         }
 

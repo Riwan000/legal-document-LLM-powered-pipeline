@@ -12,9 +12,16 @@ from backend.models.case_summary import (
 )
 
 
+# Substrings in an LLM error message that indicate an out-of-memory / process
+# crash (as opposed to a recoverable generation error).
+_LLM_MEMORY_ERROR_PATTERNS = [
+    'mem_buffer', 'ggml_assert', 'process has terminated', 'out of memory', 'cudamalloc',
+]
+
+
 class CaseSectionSummarizers:
     """Generates individual sections of case summary."""
-    
+
     def __init__(self):
         """Initialize summarizers."""
         self.ollama_client = ollama.Client(host=settings.OLLAMA_BASE_URL)
@@ -126,7 +133,7 @@ JSON response:"""
         except Exception as e:
             error_msg = str(e).lower()
             # Check for memory/process errors
-            if any(pattern in error_msg for pattern in ['mem_buffer', 'ggml_assert', 'process has terminated', 'out of memory', 'cudamalloc']):
+            if any(pattern in error_msg for pattern in _LLM_MEMORY_ERROR_PATTERNS):
                 print(f"Error generating executive summary: LLM memory/process error - {e}")
                 # Re-raise to be caught by summarization service
                 raise RuntimeError(f"LLM memory or process error during executive summary generation: {str(e)}")
@@ -238,7 +245,7 @@ JSON response:"""
             
         except Exception as e:
             error_msg = str(e).lower()
-            if any(pattern in error_msg for pattern in ['mem_buffer', 'ggml_assert', 'process has terminated', 'out of memory', 'cudamalloc']):
+            if any(pattern in error_msg for pattern in _LLM_MEMORY_ERROR_PATTERNS):
                 print(f"Error generating timeline: LLM memory/process error - {e}")
                 raise RuntimeError(f"LLM memory or process error during timeline generation: {str(e)}")
             print(f"Error generating timeline: {e}")
@@ -451,7 +458,7 @@ JSON response:"""
             
         except Exception as e:
             error_msg = str(e).lower()
-            if any(pattern in error_msg for pattern in ['mem_buffer', 'ggml_assert', 'process has terminated', 'out of memory', 'cudamalloc']):
+            if any(pattern in error_msg for pattern in _LLM_MEMORY_ERROR_PATTERNS):
                 print(f"Error generating open issues: LLM memory/process error - {e}")
                 raise RuntimeError(f"LLM memory or process error during open issues generation: {str(e)}")
             print(f"Error generating open issues: {e}")
@@ -513,7 +520,7 @@ JSON response:"""
             
         except Exception as e:
             error_msg = str(e).lower()
-            if any(pattern in error_msg for pattern in ['mem_buffer', 'ggml_assert', 'process has terminated', 'out of memory', 'cudamalloc']):
+            if any(pattern in error_msg for pattern in _LLM_MEMORY_ERROR_PATTERNS):
                 print(f"Error generating arguments: LLM memory/process error - {e}")
                 raise RuntimeError(f"LLM memory or process error during arguments generation: {str(e)}")
             print(f"Error generating arguments: {e}")

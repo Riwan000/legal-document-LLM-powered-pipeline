@@ -119,7 +119,7 @@ class FileParser:
         try:
             dpi = getattr(settings, "OCR_DPI", 200)
             images = convert_from_path(str(file_path), dpi=dpi, first_page=min(page_numbers), last_page=max(page_numbers))
-            page_map = {i: page_num for i, page_num in enumerate(range(min(page_numbers), max(page_numbers) + 1), start=0)}
+            page_map = dict(enumerate(range(min(page_numbers), max(page_numbers) + 1)))
 
             # Extract text from specified pages using OCR (one page at a time to limit subprocess buffer)
             for img_idx, image in enumerate(images):

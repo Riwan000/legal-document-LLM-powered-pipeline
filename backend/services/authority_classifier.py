@@ -31,7 +31,6 @@ class AuthorityClassifier:
     def classify_authority(
         self,
         clause_text: str,
-        clause_type: str,
         jurisdiction: Optional[str] = None
     ) -> AuthorityLevel:
         """
@@ -39,7 +38,6 @@ class AuthorityClassifier:
         
         Args:
             clause_text: Clause text content
-            clause_type: Clause type category
             jurisdiction: Optional jurisdiction
             
         Returns:

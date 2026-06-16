@@ -817,10 +817,8 @@ class SummarizationService:
                 chunk_type = self.chunk_classifier.classify_chunk(
                     chunk_text=chunk.get('text', ''),
                     chunk_id=chunk.get('chunk_id', ''),
-                    page_number=chunk.get('page_number', 0),
                     chunk_index=chunk.get('chunk_index', i),
-                    total_chunks=total_chunks,
-                    document_id=document_id
+                    total_chunks=total_chunks
                 )
                 chunk['chunk_type'] = chunk_type
                 needs_update = True
