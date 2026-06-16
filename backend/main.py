@@ -11,7 +11,7 @@ from pathlib import Path
 import uuid
 import shutil
 import hashlib
-from typing import Optional, List
+from typing import Optional, List, Annotated
 from datetime import datetime
 import os
 import threading
@@ -42,6 +42,7 @@ from backend.services.ingestion_metadata_store import IngestionMetadataStore
 from backend.models.document_structure import IngestionMetadata
 from backend.models.workflow import WorkflowContext
 from backend.services.guardrails import WORKFLOW_DISCLAIMER
+from backend.utils.path_safety import resolve_within, UnsafePathError
 from backend import workflow_store
 
 # Conversational RAG
@@ -66,6 +67,7 @@ from backend.utils.chunking import TextChunker
 
 # Agent layer (see plans/agentic-orchestrator.md)
 from backend.agent.executor import AgentExecutor
+from backend.agent.planner import LLMPlanner
 from backend.agent.rule_planner import RuleBasedPlanner
 from backend.agent.run_store import get_run as get_agent_run
 from backend.agent.tool_registry import ToolRegistry
@@ -242,7 +244,7 @@ async def _initialize_services():
     document_classification_service = DocumentClassificationService()
     print("Document classification service initialized")
 
-    # Agent layer: tool registry + planner + executor (Phase 1: rule-based planner)
+    # Agent layer: tool registry + planner + executor
     agent_registry = ToolRegistry(tool_timeout_s=settings.AGENT_TOOL_TIMEOUT_S)
     register_all_tools(
         agent_registry,
@@ -251,12 +253,23 @@ async def _initialize_services():
             comparison_service=comparison_service,
             summarization_service=summarization_service,
             document_registry=document_registry,
+            rag_service=rag_service,
+            extracted_clause_store=extracted_clause_store,
         ),
     )
+    if settings.AGENT_PLANNER == "llm":
+        # LLM planner gets an error-recovery turn on tool failures (fail_fast=False).
+        agent_planner = LLMPlanner(registry=agent_registry)
+        agent_fail_fast = False
+    else:
+        agent_planner = RuleBasedPlanner(query_classifier=QueryClassifier())
+        agent_fail_fast = True
     agent_executor = AgentExecutor(
         registry=agent_registry,
-        planner=RuleBasedPlanner(query_classifier=QueryClassifier()),
+        planner=agent_planner,
         document_registry=document_registry,
+        guardrail_service=evidence_guardrail,
+        fail_fast=agent_fail_fast,
     )
     print(f"Agent layer initialized ({len(agent_registry.specs())} tools, planner={settings.AGENT_PLANNER})")
 
@@ -314,12 +327,12 @@ async def extract_clauses_help():
     }
 
 
-@app.post("/api/extract-clauses")
+@app.post("/api/extract-clauses", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}, 504: {"description": "Gateway timeout"}})
 async def extract_clauses(
-    document_id: str = Form(...),
-    file_path: Optional[str] = Form(None),
-    use_structured: bool = Form(True),
-    include_telemetry: bool = Form(False)
+    document_id: Annotated[str, Form()],
+    file_path: Annotated[Optional[str], Form()] = None,
+    use_structured: Annotated[bool, Form()] = True,
+    include_telemetry: Annotated[bool, Form()] = False
 ):
     """
     Extract clauses from a document using deterministic structure-first extraction.
@@ -366,9 +379,18 @@ async def extract_clauses(
     if not file_path:
         # Search in documents directory
         file_path = _find_document_path(document_id)
-        
+
         if not file_path:
             raise HTTPException(status_code=404, detail="Document file not found")
+    else:
+        # Security (S2083 / path traversal): a client-supplied path must resolve
+        # inside the approved storage directories. Reject anything that escapes.
+        try:
+            file_path = str(resolve_within(
+                file_path, [settings.DOCUMENTS_PATH, settings.TEMPLATES_PATH]
+            ))
+        except UnsafePathError:
+            raise HTTPException(status_code=400, detail="Invalid file path")
 
     # Step 0.2 (API): Ensure the clause extractor service is initialized.
     # Only require the extractor after we've validated the request and located the file.
@@ -443,7 +465,7 @@ async def extract_clauses(
         raise HTTPException(status_code=500, detail=f"Error extracting clauses: {str(e)}")
 
 
-@app.get("/api/clauses/{document_id}")
+@app.get("/api/clauses/{document_id}", responses={500: {"description": "Internal server error"}})
 async def get_document_clauses(document_id: str):
     """
     Get all clauses for a document.
@@ -470,7 +492,7 @@ async def get_document_clauses(document_id: str):
         raise HTTPException(status_code=500, detail=f"Error retrieving clauses: {str(e)}")
 
 
-@app.get("/api/clauses/single/{clause_id}")
+@app.get("/api/clauses/single/{clause_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_clause(clause_id: str):
     """
     Get a specific clause by ID.
@@ -498,13 +520,13 @@ async def get_clause(clause_id: str):
         raise HTTPException(status_code=500, detail=f"Error retrieving clause: {str(e)}")
 
 
-@app.post("/api/clauses/query")
+@app.post("/api/clauses/query", responses={500: {"description": "Internal server error"}})
 async def query_clauses(
-    document_id: Optional[str] = Form(None),
-    clause_type: Optional[str] = Form(None),
-    authority_level: Optional[str] = Form(None),
-    jurisdiction: Optional[str] = Form(None),
-    can_override: Optional[bool] = Form(None)
+    document_id: Annotated[Optional[str], Form()] = None,
+    clause_type: Annotated[Optional[str], Form()] = None,
+    authority_level: Annotated[Optional[str], Form()] = None,
+    jurisdiction: Annotated[Optional[str], Form()] = None,
+    can_override: Annotated[Optional[bool], Form()] = None
 ):
     """
     Query clauses by filters.
@@ -568,7 +590,6 @@ async def ai_health_check():
     try:
         # This will lazily load the heavy embedding model if available.
         get_embedding_model()
-        return {"ai_models": "ready"}
     except Exception as e:
         # Do not leak internal errors; just report not_ready with minimal detail.
         return JSONResponse(
@@ -579,13 +600,42 @@ async def ai_health_check():
             },
         )
 
+    # Agent planner model availability (warning-level: server stays healthy,
+    # agent runs fail cleanly if the model is missing).
+    agent_info = {"agent_planner": settings.AGENT_PLANNER}
+    if settings.AGENT_PLANNER == "llm":
+        agent_info["agent_model"] = settings.AGENT_MODEL
+        try:
+            import ollama as _ollama
 
-@app.post("/api/upload", response_model=DocumentUploadResponse)
+            tags = _ollama.Client(host=settings.OLLAMA_BASE_URL).list()
+            models = [
+                (m.get("name") or m.get("model") or "") if isinstance(m, dict)
+                else (getattr(m, "model", "") or "")
+                for m in (tags.get("models", []) if isinstance(tags, dict) else getattr(tags, "models", []))
+            ]
+            base = settings.AGENT_MODEL.split(":")[0]
+            agent_info["agent_model_ready"] = any(
+                m == settings.AGENT_MODEL or m.startswith(settings.AGENT_MODEL) or m.startswith(base)
+                for m in models
+            )
+        except Exception:
+            agent_info["agent_model_ready"] = False
+        if not agent_info["agent_model_ready"]:
+            agent_info["agent_model_hint"] = (
+                f"Pull the planner model with: ollama pull {settings.AGENT_MODEL} "
+                "(or set AGENT_PLANNER=rules for the deterministic fallback)."
+            )
+
+    return {"ai_models": "ready", **agent_info}
+
+
+@app.post("/api/upload", response_model=DocumentUploadResponse, responses={400: {"description": "Bad request"}, 500: {"description": "Internal server error"}})
 async def upload_document(
-    file: UploadFile = File(...),
-    document_type: str = Form("document"),
-    force_reingest: bool = Form(False),
-    display_name: Optional[str] = Form(default=None)
+    file: Annotated[UploadFile, File()],
+    document_type: Annotated[str, Form()] = "document",
+    force_reingest: Annotated[bool, Form()] = False,
+    display_name: Annotated[Optional[str], Form()] = None
 ):
     """
     Upload and ingest a document.
@@ -892,7 +942,7 @@ async def upload_document(
             raise HTTPException(status_code=500, detail=f"Error ingesting document: {str(e)}")
 
 
-@app.get("/api/documents/{document_id}/classification")
+@app.get("/api/documents/{document_id}/classification", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def get_document_classification(document_id: str):
     """Return stored classification for a document."""
     global document_registry
@@ -904,13 +954,13 @@ async def get_document_classification(document_id: str):
     return result
 
 
-@app.post("/api/search")
+@app.post("/api/search", responses={500: {"description": "Internal server error"}})
 async def search_documents(
-    query: str = Form(...),
-    top_k: Optional[int] = Form(None),
-    document_id: Optional[str] = Form(None),
-    generate_response: bool = Form(True),
-    response_language: Optional[str] = Form(None)
+    query: Annotated[str, Form()],
+    top_k: Annotated[Optional[int], Form()] = None,
+    document_id: Annotated[Optional[str], Form()] = None,
+    generate_response: Annotated[bool, Form()] = True,
+    response_language: Annotated[Optional[str], Form()] = None
 ):
     """
     Search documents using RAG.
@@ -969,12 +1019,12 @@ async def search_documents(
         raise HTTPException(status_code=500, detail=f"Error searching: {str(e)}")
 
 
-@app.post("/api/compare")
+@app.post("/api/compare", responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def compare_contracts(
-    contract_id: str = Form(...),
-    template_id: str = Form(...),
-    contract_path: Optional[str] = Form(None),
-    template_path: Optional[str] = Form(None)
+    contract_id: Annotated[str, Form()],
+    template_id: Annotated[str, Form()],
+    contract_path: Annotated[Optional[str], Form()] = None,
+    template_path: Annotated[Optional[str], Form()] = None
 ):
     """
     Compare a contract against a template.
@@ -997,14 +1047,30 @@ async def compare_contracts(
             if potential_path.exists():
                 contract_path = str(potential_path)
                 break
-    
+    else:
+        # Security (S2083 / path traversal): validate client-supplied path.
+        try:
+            contract_path = str(resolve_within(
+                contract_path, [settings.DOCUMENTS_PATH, settings.TEMPLATES_PATH]
+            ))
+        except UnsafePathError:
+            raise HTTPException(status_code=400, detail="Invalid contract path")
+
     if not template_path:
         for ext in ['.pdf', '.docx', '.doc']:
             potential_path = settings.TEMPLATES_PATH / f"{template_id}{ext}"
             if potential_path.exists():
                 template_path = str(potential_path)
                 break
-    
+    else:
+        # Security (S2083 / path traversal): validate client-supplied path.
+        try:
+            template_path = str(resolve_within(
+                template_path, [settings.DOCUMENTS_PATH, settings.TEMPLATES_PATH]
+            ))
+        except UnsafePathError:
+            raise HTTPException(status_code=400, detail="Invalid template path")
+
     if not contract_path or not template_path:
         raise HTTPException(status_code=404, detail="Contract or template file not found")
 
@@ -1031,12 +1097,12 @@ async def compare_contracts(
         raise HTTPException(status_code=500, detail=f"Error comparing contracts: {str(e)}")
 
 
-@app.post("/api/contract-review")
+@app.post("/api/contract-review", responses={500: {"description": "Internal server error"}})
 async def contract_review(
-    contract_id: str = Form(...),
-    contract_type: str = Form("employment"),
-    jurisdiction: Optional[str] = Form(None),
-    review_depth: Optional[str] = Form("standard"),
+    contract_id: Annotated[str, Form()],
+    contract_type: Annotated[str, Form()] = "employment",
+    jurisdiction: Annotated[Optional[str], Form()] = None,
+    review_depth: Annotated[Optional[str], Form()] = "standard",
 ):
     """
     Execute Contract Review workflow. Returns WorkflowContext envelope:
@@ -1075,7 +1141,7 @@ async def contract_review(
         raise HTTPException(status_code=500, detail=f"Contract review failed: {str(e)}")
 
 
-@app.get("/api/workflow/{workflow_id}/state")
+@app.get("/api/workflow/{workflow_id}/state", responses={404: {"description": "Not found"}})
 async def get_workflow_state(workflow_id: str):
     """
     Return workflow state for the given workflow_id. Fast, non-blocking.
@@ -1087,7 +1153,7 @@ async def get_workflow_state(workflow_id: str):
     return state
 
 
-@app.post("/api/agent/run", response_model=AgentRunResponse, tags=["Agent"])
+@app.post("/api/agent/run", response_model=AgentRunResponse, tags=["Agent"], responses={500: {"description": "Internal server error"}})
 async def agent_run(request: AgentRunRequest):
     """
     Run an agentic request: the planner routes the natural-language task to
@@ -1103,7 +1169,7 @@ async def agent_run(request: AgentRunRequest):
         raise HTTPException(status_code=500, detail=f"Agent run failed: {str(e)}")
 
 
-@app.get("/api/agent/run/{run_id}", tags=["Agent"])
+@app.get("/api/agent/run/{run_id}", tags=["Agent"], responses={404: {"description": "Not found"}})
 async def get_agent_run_by_id(run_id: str):
     """Return a stored agent run by id. 404 if unknown or evicted."""
     run = get_agent_run(run_id)
@@ -1112,7 +1178,7 @@ async def get_agent_run_by_id(run_id: str):
     return run
 
 
-@app.get("/api/agent/tools", tags=["Agent"])
+@app.get("/api/agent/tools", tags=["Agent"], responses={500: {"description": "Internal server error"}})
 async def list_agent_tools():
     """List registered agent tools (introspection/debugging)."""
     global agent_registry
@@ -1121,12 +1187,12 @@ async def list_agent_tools():
     return {"tools": [spec.model_dump() for spec in agent_registry.specs()]}
 
 
-@app.post("/api/explore")
+@app.post("/api/explore", responses={422: {"description": "Validation error"}, 500: {"description": "Internal server error"}})
 async def document_explorer(
-    document_id: str = Form(...),
-    query: str = Form(...),
-    top_k: Optional[int] = Form(None),
-    mode: str = Form("text"),
+    document_id: Annotated[str, Form()],
+    query: Annotated[str, Form()],
+    top_k: Annotated[Optional[int], Form()] = None,
+    mode: Annotated[str, Form()] = "text",
 ):
     """
     Document Explorer: RAG-backed search within a single document.
@@ -1179,13 +1245,13 @@ async def document_explorer(
         raise HTTPException(status_code=500, detail=f"Document Explorer failed: {str(e)}")
 
 
-@app.post("/api/explore-evidence")
+@app.post("/api/explore-evidence", responses={422: {"description": "Validation error"}, 500: {"description": "Internal server error"}})
 async def explore_evidence(
-    document_id: str = Form(...),
-    query: str = Form(...),
-    top_k: Optional[int] = Form(None),
-    mode: str = Form("text"),
-    debug: bool = Form(False),
+    document_id: Annotated[str, Form()],
+    query: Annotated[str, Form()],
+    top_k: Annotated[Optional[int], Form()] = None,
+    mode: Annotated[str, Form()] = "text",
+    debug: Annotated[bool, Form()] = False,
 ):
     """
     Evidence Explorer: deterministic evidence retrieval within a single document.
@@ -1238,13 +1304,13 @@ async def explore_evidence(
         raise HTTPException(status_code=500, detail=f"Evidence Explorer failed: {str(e)}")
 
 
-@app.post("/api/explore-answer")
+@app.post("/api/explore-answer", responses={500: {"description": "Internal server error"}})
 async def explore_answer(
-    document_id: str = Form(...),
-    query: str = Form(...),
-    top_k: Optional[int] = Form(None),
-    response_language: Optional[str] = Form(None),
-    debug: bool = Form(False),
+    document_id: Annotated[str, Form()],
+    query: Annotated[str, Form()],
+    top_k: Annotated[Optional[int], Form()] = None,
+    response_language: Annotated[Optional[str], Form()] = None,
+    debug: Annotated[bool, Form()] = False,
 ):
     """
     RAG Answer Explorer: single-document RAG answer + citations.
@@ -1269,11 +1335,11 @@ async def explore_answer(
         raise HTTPException(status_code=500, detail=f"RAG Answer Explorer failed: {str(e)}")
 
 
-@app.post("/api/summarize")
+@app.post("/api/summarize", responses={500: {"description": "Internal server error"}})
 async def summarize_case_file(
-    document_id: str = Form(...),
-    top_k: int = Form(10),
-    include_report: bool = Form(False)
+    document_id: Annotated[str, Form()],
+    top_k: Annotated[int, Form()] = 10,
+    include_report: Annotated[bool, Form()] = False
 ):
     """
     Generate summary of a case file (PRD-compliant).
@@ -1324,9 +1390,9 @@ async def summarize_case_file(
         raise HTTPException(status_code=500, detail=f"Error summarizing case file: {str(e)}")
 
 
-@app.post("/api/due-diligence-memo")
+@app.post("/api/due-diligence-memo", responses={500: {"description": "Internal server error"}})
 async def due_diligence_memo(
-    document_id: str = Form(...),
+    document_id: Annotated[str, Form()],
 ):
     """
     Due Diligence Memo workflow (v0.2): returns WorkflowContext envelope.
@@ -1341,9 +1407,9 @@ async def due_diligence_memo(
         raise HTTPException(status_code=500, detail=f"Due diligence memo failed: {str(e)}")
 
 
-@app.post("/api/summarize/stream")
+@app.post("/api/summarize/stream", responses={500: {"description": "Internal server error"}})
 async def summarize_case_file_stream(
-    document_id: str = Form(...)
+    document_id: Annotated[str, Form()]
 ):
     """
     Stream case summary via Server-Sent Events (SSE).
@@ -1367,12 +1433,12 @@ async def summarize_case_file_stream(
     return StreamingResponse(event_generator(), media_type="text/event-stream", headers=headers)
 
 
-@app.post("/api/search-bilingual")
+@app.post("/api/search-bilingual", responses={500: {"description": "Internal server error"}})
 async def search_bilingual(
-    query: str = Form(...),
-    response_language: Optional[str] = Form(None),
-    top_k: Optional[int] = Form(None),
-    document_id: Optional[str] = Form(None)
+    query: Annotated[str, Form()],
+    response_language: Annotated[Optional[str], Form()] = None,
+    top_k: Annotated[Optional[int], Form()] = None,
+    document_id: Annotated[Optional[str], Form()] = None
 ):
     """
     Bilingual search with automatic language detection.
@@ -1403,11 +1469,11 @@ async def search_bilingual(
         raise HTTPException(status_code=500, detail=f"Error in bilingual search: {str(e)}")
 
 
-@app.post("/api/translate")
+@app.post("/api/translate", responses={422: {"description": "Validation error"}, 503: {"description": "Service unavailable"}})
 async def translate_batch(
-    texts: str = Form(...),          # JSON-encoded list[str]
-    target_lang: str = Form("ar"),
-    source_lang: str = Form("en"),
+    texts: Annotated[str, Form()],          # JSON-encoded list[str]
+    target_lang: Annotated[str, Form()] = "ar",
+    source_lang: Annotated[str, Form()] = "en",
 ):
     """Batch-translate a list of text strings. Returns {translations: list[str]}."""
     import json as _json
@@ -1483,7 +1549,7 @@ async def list_documents(include_versions: bool = True):
     return DocumentListResponse(documents=documents)
 
 
-@app.put("/api/documents/{document_id}/rename", response_model=DocumentRenameResponse)
+@app.put("/api/documents/{document_id}/rename", response_model=DocumentRenameResponse, responses={400: {"description": "Bad request"}, 404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def rename_document(
     document_id: str,
     request: DocumentRenameRequest
@@ -1525,7 +1591,7 @@ async def rename_document(
     )
 
 
-@app.delete("/api/documents/{document_id}")
+@app.delete("/api/documents/{document_id}", responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}})
 async def delete_document_endpoint(document_id: str):
     """
     Permanently delete a document and its artifacts.
@@ -1619,7 +1685,7 @@ async def get_stats():
     }
 
 
-@app.post("/api/admin/clear-all")
+@app.post("/api/admin/clear-all", responses={500: {"description": "Internal server error"}})
 async def clear_all_documents():
     """
     Delete every document and all associated artifacts from the system.
@@ -1700,7 +1766,7 @@ async def clear_all_documents():
 # Conversational RAG endpoints
 # ---------------------------------------------------------------------------
 
-@app.post("/api/chat/session", response_model=CreateSessionResponse, tags=["Chat"])
+@app.post("/api/chat/session", response_model=CreateSessionResponse, tags=["Chat"], responses={500: {"description": "Internal server error"}, 503: {"description": "Service unavailable"}})
 async def create_chat_session(body: CreateSessionRequest):
     """
     Create a new conversational RAG session bound to a document.
@@ -1726,7 +1792,7 @@ async def create_chat_session(body: CreateSessionRequest):
         raise HTTPException(status_code=500, detail=str(exc))
 
 
-@app.post("/api/chat/{session_id}", response_model=ChatMessageResponse, tags=["Chat"])
+@app.post("/api/chat/{session_id}", response_model=ChatMessageResponse, tags=["Chat"], responses={404: {"description": "Not found"}, 409: {"description": "Conflict"}, 500: {"description": "Internal server error"}, 503: {"description": "Service unavailable"}})
 async def send_chat_message(session_id: str, body: ChatMessageRequest):
     """
     Send a message in an existing chat session and receive a grounded answer.
@@ -1752,7 +1818,7 @@ async def send_chat_message(session_id: str, body: ChatMessageRequest):
         raise HTTPException(status_code=500, detail=str(exc))
 
 
-@app.get("/api/chat/{session_id}", response_model=SessionHistoryResponse, tags=["Chat"])
+@app.get("/api/chat/{session_id}", response_model=SessionHistoryResponse, tags=["Chat"], responses={404: {"description": "Not found"}, 503: {"description": "Service unavailable"}})
 async def get_chat_session(session_id: str):
     """Retrieve the full message history for a session."""
     if session_manager is None:
@@ -1771,7 +1837,7 @@ async def get_chat_session(session_id: str):
         raise HTTPException(status_code=404, detail=str(exc))
 
 
-@app.delete("/api/chat/{session_id}", tags=["Chat"])
+@app.delete("/api/chat/{session_id}", tags=["Chat"], responses={404: {"description": "Not found"}, 503: {"description": "Service unavailable"}})
 async def delete_chat_session(session_id: str):
     """Delete a chat session and all its history."""
     if session_manager is None:
